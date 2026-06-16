@@ -1,14 +1,14 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from modules.todo.application.create_todo.handler import CreateTodoHandler
-from modules.todo.application.list_todo.handler import GetTodosQueryHandler
-from modules.todo.application.update_todo.handler import UpdateTodoHandler
-from modules.todo.domain.repositories.todo_repository import TodoRepository
-from modules.todo.infrastucture.repositories.user_repository import (
+from src.modules.todo.application.create_todo.handler import CreateTodoHandler
+from src.modules.todo.application.list_todo.handler import GetTodosQueryHandler
+from src.modules.todo.application.update_todo.handler import UpdateTodoHandler
+from src.modules.todo.domain.repositories.todo_repository import TodoRepository
+from src.modules.todo.infrastucture.repositories.todo_repository import (
     SQLAlchemyTodoRepository,
 )
-from src.core.database import get_db
+from src.core.database.session import get_db
 
 
 def get_todo_repository(db: AsyncSession = Depends(get_db)) -> TodoRepository:

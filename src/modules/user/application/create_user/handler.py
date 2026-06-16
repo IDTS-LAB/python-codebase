@@ -1,8 +1,8 @@
-from core.security.password import PasswordSerrvice
-from modules.user.application.create_user.command import CreateUserCommand
-from modules.user.application.repository.user_repository import UserRepository
-from modules.user.domain.entities.user import User
-from modules.user.domain.exceptions.user_exception import UserAlreadyExistsError
+from src.core.security.password import PasswordSerrvice
+from src.modules.user.application.create_user.command import CreateUserCommand
+from src.modules.user.domain.repositories.user_repository import UserRepository
+from src.modules.user.domain.entities.user import User
+from src.modules.user.domain.exceptions.user_exception import UserAlreadyExistsError
 
 
 class CreateUserHandler:

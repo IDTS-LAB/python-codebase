@@ -2,8 +2,8 @@ from datetime import datetime, timedelta, timezone
 
 from jose import JWTError, jwt
 
-from src.core.config import settings
-from src.modules.user.domain.exceptions import InvalidCredentialsError
+from src.core.config.setting import settings
+from src.shared.exceptions.credential_exception import InvalidCredentialsError
 
 
 class JWTService:

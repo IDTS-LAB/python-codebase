@@ -3,9 +3,9 @@ from uuid import UUID
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from modules.todo.domain.repositories.todo_repository import TodoRepository
-from modules.todo.infrastucture.models.todo_model import TodoModel
-from src.modules.todo.domain.entities import Todo
+from src.modules.todo.domain.repositories.todo_repository import TodoRepository
+from src.modules.todo.infrastucture.models.todo_model import TodoModel
+from src.modules.todo.domain.entities.todo import Todo
 
 
 class SQLAlchemyTodoRepository(TodoRepository):

@@ -1,12 +1,12 @@
 from uuid import UUID
 
-from modules.todo.application.update_todo.command import UpdateTodoCommand
-from modules.todo.domain.entities.todo import Todo
-from modules.todo.domain.exceptions.todo_exception import (
+from src.modules.todo.application.update_todo.command import UpdateTodoCommand
+from src.modules.todo.domain.entities.todo import Todo
+from src.modules.todo.domain.exceptions.todo_exception import (
     TodoNotFoundError,
     UnauthorizedTodoAccessError,
 )
-from modules.todo.domain.repositories.todo_repository import TodoRepository
+from src.modules.todo.domain.repositories.todo_repository import TodoRepository
 
 
 class UpdateTodoHandler:

@@ -3,9 +3,9 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from modules.user.domain.entities.user import User
-from modules.user.domain.repositories.user_repository import UserRepository
-from modules.user.intrastructure.models.user_model import UserModel
+from src.modules.user.domain.entities.user import User
+from src.modules.user.domain.repositories.user_repository import UserRepository
+from src.modules.user.intrastructure.models.user_model import UserModel
 
 
 class SQLAlchemyUserRepository(UserRepository):

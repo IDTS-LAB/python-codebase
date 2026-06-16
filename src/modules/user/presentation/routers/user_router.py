@@ -1,19 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
-from core.security.jwt import JWTService
-from core.security.password import PasswordSerrvice
-from modules.user.application.create_user.command import CreateUserCommand
-from modules.user.application.create_user.handler import CreateUserHandler
-from modules.user.application.repository.user_repository import UserRepository
-from modules.user.domain.exceptions.user_exception import UserAlreadyExistsError
-from modules.user.presentation.dependencies import (
+from src.core.security.jwt import JWTService
+from src.core.security.password import PasswordSerrvice
+from src.modules.user.application.create_user.command import CreateUserCommand
+from src.modules.user.application.create_user.handler import CreateUserHandler
+from src.modules.user.domain.repositories.user_repository import UserRepository
+from src.modules.user.domain.exceptions.user_exception import UserAlreadyExistsError
+from src.modules.user.presentation.dependencies import (
     get_current_user,
     get_register_handler,
     get_user_repository,
 )
-from modules.user.presentation.schemas.request import CreateUserRequest
-from modules.user.presentation.schemas.response import TokenResponse
+from src.modules.user.presentation.schemas.request import CreateUserRequest
+from src.modules.user.presentation.schemas.response import TokenResponse
 
 router = APIRouter(
     prefix="/auth",

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
 
-from modules.todo.domain.entities.todo import Todo
+from src.modules.todo.domain.entities.todo import Todo
 
 
 class TodoRepository(ABC):

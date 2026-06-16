@@ -1,8 +1,8 @@
 from uuid import UUID
 
-from modules.todo.application.create_todo.command import CreateTodoCommand
-from modules.todo.domain.entities.todo import Todo
-from modules.todo.domain.repositories.todo_repository import TodoRepository
+from src.modules.todo.application.create_todo.command import CreateTodoCommand
+from src.modules.todo.domain.entities.todo import Todo
+from src.modules.todo.domain.repositories.todo_repository import TodoRepository
 
 
 class CreateTodoHandler:

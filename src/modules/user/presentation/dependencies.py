@@ -1,11 +1,11 @@
 from fastapi import Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.database.session import get_db
-from core.security.jwt import JWTService
-from modules.user.application.create_user.handler import CreateUserHandler
-from modules.user.application.repository.user_repository import UserRepository
-from modules.user.intrastructure.repositories.user_repository import (
+from src.core.database.session import get_db
+from src.core.security.jwt import JWTService
+from src.modules.user.application.create_user.handler import CreateUserHandler
+from src.modules.user.domain.repositories.user_repository import UserRepository
+from src.modules.user.intrastructure.repositories.user_repository import (
     SQLAlchemyUserRepository,
 )
 

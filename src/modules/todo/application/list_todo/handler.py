@@ -1,6 +1,6 @@
-from modules.todo.application.list_todo.query import GetTodosQuery
-from modules.todo.domain.repositories.todo_repository import TodoRepository
-from src.modules.todo.domain.entities import Todo
+from src.modules.todo.application.list_todo.query import GetTodosQuery
+from src.modules.todo.domain.repositories.todo_repository import TodoRepository
+from src.modules.todo.domain.entities.todo import Todo
 
 
 class GetTodosQueryHandler:

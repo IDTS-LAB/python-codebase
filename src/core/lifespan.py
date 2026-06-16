@@ -2,8 +2,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from shared.database.model import Base
-from src.core.database import engine
+from src.shared.database.model import Base
+from src.core.database.session import engine
 
 
 @asynccontextmanager

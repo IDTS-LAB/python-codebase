@@ -2,19 +2,19 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from modules.todo.application.create_todo.command import CreateTodoCommand
-from modules.todo.application.create_todo.handler import CreateTodoHandler
-from modules.todo.application.list_todo.handler import GetTodosQueryHandler
-from modules.todo.application.list_todo.query import GetTodosQuery
-from modules.todo.application.update_todo.command import UpdateTodoCommand
-from modules.todo.application.update_todo.handler import UpdateTodoHandler
-from modules.todo.presentation.dependency import (
+from src.modules.todo.application.create_todo.command import CreateTodoCommand
+from src.modules.todo.application.create_todo.handler import CreateTodoHandler
+from src.modules.todo.application.list_todo.handler import GetTodosQueryHandler
+from src.modules.todo.application.list_todo.query import GetTodosQuery
+from src.modules.todo.application.update_todo.command import UpdateTodoCommand
+from src.modules.todo.application.update_todo.handler import UpdateTodoHandler
+from src.modules.todo.presentation.dependency import (
     get_create_todo_handler,
     get_get_todos_query_handler,
     get_update_todo_handler,
 )
-from modules.user.presentation.dependencies import get_current_user
-from src.modules.todo.domain.exceptions import (
+from src.modules.user.presentation.dependencies import get_current_user
+from src.modules.todo.domain.exceptions.todo_exception import (
     TodoNotFoundError,
     UnauthorizedTodoAccessError,
 )

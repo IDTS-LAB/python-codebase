@@ -1,8 +1,8 @@
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
-from shared.database.model import Base
+from src.shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
+from src.shared.database.model import Base
 
 
 class UserModel(

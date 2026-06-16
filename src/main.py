@@ -1,10 +1,14 @@
 from fastapi import FastAPI
 
-from core import lifespan
-from modules.todo.presentation.routers import todo_router
-from modules.user.presentation.routers import user_router
+from src.core import lifespan
+from src.modules.todo.presentation.routers.todo_router import router as todo_router
+from src.modules.user.presentation.routers.user_router import router as user_router
 
-app = FastAPI(title="Todo Modulith API", version="1.0.0", lifespan=lifespan)
+app = FastAPI(
+    title="Todo Modulith API", 
+    version="1.0.0", 
+    lifespan=lifespan.lifespan,
+)
 
 # Include Module Routers
 app.include_router(user_router)
