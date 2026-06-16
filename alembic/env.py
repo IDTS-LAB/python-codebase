@@ -9,6 +9,9 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 from src.core.config.setting import settings
 from src.modules.todo.infrastructure.models.todo_model import TodoModel  # noqa: F401
+from src.modules.user.infrastructure.models.refresh_token_model import (
+    RefreshTokenModel,  # noqa: F401
+)
 from src.modules.user.infrastructure.models.user_model import UserModel  # noqa: F401
 from src.shared.database.model import Base
 

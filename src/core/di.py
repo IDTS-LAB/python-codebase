@@ -9,7 +9,10 @@ from src.modules.user.infrastructure.repositories.user_repository import (
     SQLAlchemyUserRepository,
 )
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="/api/v1/auth/login",
+    refreshUrl="/api/v1/auth/refresh",
+)
 
 
 def get_db_session(db: AsyncSession = Depends(get_db)) -> AsyncSession:

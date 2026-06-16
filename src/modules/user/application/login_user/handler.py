@@ -1,14 +1,27 @@
+import hashlib
+from datetime import datetime, timedelta, timezone
+
+from src.core.config.setting import settings
 from src.core.security.jwt import JWTService
 from src.core.security.password import PasswordSerrvice
 from src.modules.user.application.login_user.command import LoginUserCommand
+from src.modules.user.domain.entities.refresh_token import RefreshToken
 from src.modules.user.domain.exceptions.user_exception import UserNotFoundError
+from src.modules.user.domain.repositories.refresh_token_repository import (
+    RefreshTokenRepository,
+)
 from src.modules.user.domain.repositories.user_repository import UserRepository
 from src.shared.exceptions.credential_exception import InvalidCredentialsError
 
 
 class LoginUserCommandHandler:
-    def __init__(self, user_repository: UserRepository):
+    def __init__(
+        self,
+        user_repository: UserRepository,
+        refresh_token_repository: RefreshTokenRepository,
+    ):
         self._user_repository = user_repository
+        self._refresh_token_repository = refresh_token_repository
 
     async def execute(self, command: LoginUserCommand) -> dict[str, str]:
         user = await self._user_repository.get_by_email(command.username)
@@ -20,12 +33,20 @@ class LoginUserCommandHandler:
         ):
             raise InvalidCredentialsError("Incorrect email or password")
 
-        access_token = JWTService.create_access_token(
-            data={
-                "fullname": user.fullname,
-                "email": user.email,
-                "sub": str(user.id),
-            }
+        access_token = JWTService.create_access_token(data={"sub": str(user.id)})
+
+        refresh_token_str = JWTService.create_refresh_token(data={"sub": str(user.id)})
+        token_hash = hashlib.sha256(refresh_token_str.encode()).hexdigest()
+        expires_at = datetime.now(timezone.utc) + timedelta(
+            minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES
         )
 
-        return {"access_token": access_token}
+        new_rt = RefreshToken.create(
+            user_id=user.id, token_hash=token_hash, expires_at=expires_at
+        )
+        await self._refresh_token_repository.save(new_rt)
+
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token_str,
+        }
