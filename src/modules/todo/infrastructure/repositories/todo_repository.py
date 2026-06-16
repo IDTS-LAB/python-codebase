@@ -3,9 +3,9 @@ from uuid import UUID
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.todo.domain.repositories.todo_repository import TodoRepository
-from src.modules.todo.infrastucture.models.todo_model import TodoModel
 from src.modules.todo.domain.entities.todo import Todo
+from src.modules.todo.domain.repositories.todo_repository import TodoRepository
+from src.modules.todo.infrastructure.models.todo_model import TodoModel
 
 
 class SQLAlchemyTodoRepository(TodoRepository):
@@ -49,7 +49,7 @@ class SQLAlchemyTodoRepository(TodoRepository):
             is_completed=todo.is_completed,
             user_id=todo.user_id,
         )
-        self.db.add(model)
+        model = await self.db.merge(model)
         await self.db.commit()
         await self.db.refresh(model)
         return Todo(

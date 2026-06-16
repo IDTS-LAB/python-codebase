@@ -1,20 +1,27 @@
 from fastapi import FastAPI
 
+import src.core.routers.api.v1 as v1_router
 from src.core import lifespan
-from src.modules.todo.presentation.routers.todo_router import router as todo_router
-from src.modules.user.presentation.routers.user_router import router as user_router
+from src.core.bootstrap.middleware import register_middleware
+from src.core.config.setting import settings
 
 app = FastAPI(
-    title="Todo Modulith API", 
-    version="1.0.0", 
+    title=settings.APP_NAME,
+    version="1.0.0",
     lifespan=lifespan.lifespan,
+    swagger_ui_parameters={
+        "persistAuthorization": True,
+        "displayRequestDuration": True,
+        "filter": True,
+        "deepLinking": True,
+        "tryItOutEnabled": True,
+    },
 )
 
-# Include Module Routers
-app.include_router(user_router)
-app.include_router(todo_router)
+register_middleware(app=app)
+v1_router.register_router(app=app)
 
 
-@app.get("/health")
+@app.get("/health", tags=["Health Check"])
 def health_check():
     return {"status": "healthy"}

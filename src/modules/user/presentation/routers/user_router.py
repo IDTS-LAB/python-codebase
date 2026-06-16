@@ -1,34 +1,36 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 
-from src.core.security.jwt import JWTService
-from src.core.security.password import PasswordSerrvice
-from src.modules.user.application.create_user.command import CreateUserCommand
-from src.modules.user.application.create_user.handler import CreateUserHandler
-from src.modules.user.domain.repositories.user_repository import UserRepository
-from src.modules.user.domain.exceptions.user_exception import UserAlreadyExistsError
-from src.modules.user.presentation.dependencies import (
-    get_current_user,
-    get_register_handler,
-    get_user_repository,
+from src.core.di import get_current_user
+from src.modules.user.application.detail_user.handler import DetailUserQueryHandler
+from src.modules.user.application.detail_user.query import DetailUserQuery
+from src.modules.user.application.login_user.command import LoginUserCommand
+from src.modules.user.application.login_user.handler import LoginUserCommandHandler
+from src.modules.user.application.register_user.command import RegisterUserCommand
+from src.modules.user.application.register_user.handler import (
+    RegisterUserCommandHandler,
 )
-from src.modules.user.presentation.schemas.request import CreateUserRequest
+from src.modules.user.domain.exceptions.user_exception import UserAlreadyExistsError
+from src.modules.user.presentation.dependency import (
+    get_login_handler,
+    get_register_handler,
+    get_user_detail_handler,
+)
+from src.modules.user.presentation.schemas.request import (
+    CreateUserRequest,
+)
 from src.modules.user.presentation.schemas.response import TokenResponse
 
-router = APIRouter(
-    prefix="/auth",
-    tags=["Authentication"],
-)
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(
     request: CreateUserRequest,
-    handler: CreateUserHandler = Depends(get_register_handler),
+    handler: RegisterUserCommandHandler = Depends(get_register_handler),
 ):
     try:
-        command = CreateUserCommand(
+        command = RegisterUserCommand(
             email=request.username,
             password=request.password,
         )
@@ -41,22 +43,22 @@ async def register(
 
 @router.post("/login", response_model=TokenResponse)
 async def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    repo: UserRepository = Depends(get_user_repository),
+    form: OAuth2PasswordRequestForm = Depends(),
+    handler: LoginUserCommandHandler = Depends(get_login_handler),
 ):
-    # TODO: need to move to query
-    user = await repo.get_by_email(form_data.username)
-    if not user or not PasswordSerrvice.verify_password(
-        form_data.password, user.hashed_password
-    ):
-        raise HTTPException(status_code=401, detail="Incorrect email or password")
-
-    token = JWTService.create_access_token(data={"sub": str(user.id)})
-    # TODO: move reponse to generic with schema
-    return {"access_token": token, "token_type": "bearer"}
+    command = LoginUserCommand(username=form.username, password=form.password)
+    result = await handler.execute(command=command)
+    return {"access_token": result["access_token"], "token_type": "bearer"}
 
 
 @router.get("/me")
-async def get_me(current_user: dict = Depends(get_current_user)):
-    # TODO: move reponse to generic with schema
-    return {"id": str(current_user.id), "email": current_user.email}
+async def get_me(
+    current_user: dict = Depends(get_current_user),
+    handler: DetailUserQueryHandler = Depends(get_user_detail_handler),
+):
+    user = await handler.execute(
+        DetailUserQuery(
+            user_id=current_user.get("id"),
+        )
+    )
+    return {"id": str(user.id), "email": user.email}

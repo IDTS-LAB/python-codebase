@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.user.domain.entities.user import User
 from src.modules.user.domain.repositories.user_repository import UserRepository
-from src.modules.user.intrastructure.models.user_model import UserModel
+from src.modules.user.infrastructure.models.user_model import UserModel
 
 
 class SQLAlchemyUserRepository(UserRepository):
@@ -24,28 +24,42 @@ class SQLAlchemyUserRepository(UserRepository):
             id=user_model.id,
             email=user_model.email,
             password=user_model.password,
+            username=user_model.username,
+            fullname=user_model.fullname,
+            birthday=user_model.birthday,
         )
 
     async def get_by_id(self, user_id: UUID) -> User | None:
-        result = await self.db.execute(select(UserModel).where(UserModel.id == user_id))
+        result = await self._db.execute(select(UserModel).where(UserModel.id == user_id))
         user_model = result.scalar_one_or_none()
         if not user_model:
             return None
         return User(
             id=user_model.id,
             email=user_model.email,
-            hashed_password=user_model.hashed_password,
+            password=user_model.password,
+            username=user_model.username,
+            fullname=user_model.fullname,
+            birthday=user_model.birthday,
         )
 
     async def save(self, user: User) -> User:
         user_model = UserModel(
-            id=user.id, email=user.email, hashed_password=user.hashed_password
+            id=user.id,
+            email=user.email,
+            password=user.password,
+            username=user.username,
+            fullname=user.fullname,
+            birthday=user.birthday,
         )
-        self.db.add(user_model)
-        await self.db.commit()
-        await self.db.refresh(user_model)
+        self._db.add(user_model)
+        await self._db.commit()
+        await self._db.refresh(user_model)
         return User(
             id=user_model.id,
             email=user_model.email,
-            hashed_password=user_model.hashed_password,
+            password=user_model.password,
+            username=user_model.username,
+            fullname=user_model.fullname,
+            birthday=user_model.birthday,
         )

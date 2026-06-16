@@ -19,4 +19,7 @@ COPY src ./src
 EXPOSE 8000
 
 # Run application
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+COPY start.sh ./script/start.sh
+RUN chmod +x start.sh
+
+CMD ["./script/start.sh"]
