@@ -1,0 +1,41 @@
+from uuid import UUID
+
+from modules.todo.application.update_todo.command import UpdateTodoCommand
+from modules.todo.domain.entities.todo import Todo
+from modules.todo.domain.exceptions.todo_exception import (
+    TodoNotFoundError,
+    UnauthorizedTodoAccessError,
+)
+from modules.todo.domain.repositories.todo_repository import TodoRepository
+
+
+class UpdateTodoHandler:
+    def __init__(self, todo_repo: TodoRepository):
+        self.todo_repo = todo_repo
+
+    async def execute(
+        self, todo_id: UUID, command: UpdateTodoCommand, user_id: UUID
+    ) -> Todo:
+        todo = await self.todo_repo.get_by_id(todo_id)
+        if not todo:
+            raise TodoNotFoundError("Todo not found")
+        if todo.user_id != user_id:
+            raise UnauthorizedTodoAccessError(
+                "You do not have permission to update this todo"
+            )
+
+        # TODO: move to validation.py
+        if command.title is not None:
+            todo.title = command.title
+
+        if command.description is not None:
+            todo.description = command.description
+
+        # TODO: move to complete_todo application
+        if command.is_completed is not None:
+            if command.is_completed:
+                todo.mark_completed()
+            else:
+                todo.is_completed = False
+
+        return await self.todo_repo.save(todo)
