@@ -40,6 +40,18 @@ class FakeRefreshTokenRepository:
         return None
 
 
+class FakeUnitOfWork:
+    def __init__(self):
+        self.committed = False
+        self.rolled_back = False
+
+    async def commit(self):
+        self.committed = True
+
+    async def rollback(self):
+        self.rolled_back = True
+
+
 def test_login_persists_refresh_token_expiry_in_minutes(monkeypatch):
     async def run():
         monkeypatch.setattr(settings, "REFRESH_TOKEN_EXPIRE_MINUTES", 15)
@@ -48,11 +60,13 @@ def test_login_persists_refresh_token_expiry_in_minutes(monkeypatch):
             password=PasswordSerrvice.hash("plain-secret"),
         )
         refresh_token_repo = FakeRefreshTokenRepository()
+        unit_of_work = FakeUnitOfWork()
 
         before = datetime.now(timezone.utc)
         result = await LoginUserCommandHandler(
             FakeUserRepository(user),
             refresh_token_repo,
+            unit_of_work,
         ).execute(
             LoginUserCommand(
                 username="person@example.com",
@@ -66,5 +80,7 @@ def test_login_persists_refresh_token_expiry_in_minutes(monkeypatch):
         expires_at = refresh_token_repo.saved_token.expires_at.timestamp()
         assert before.timestamp() + (15 * 60) <= expires_at
         assert expires_at <= after.timestamp() + (15 * 60)
+        assert unit_of_work.committed is True
+        assert unit_of_work.rolled_back is False
 
     asyncio.run(run())

@@ -1,7 +1,7 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.database.session import get_db
+from src.core.database.session import get_db, get_unit_of_work
 from src.modules.user.application.detail_user.handler import DetailUserQueryHandler
 from src.modules.user.application.login_user.handler import LoginUserCommandHandler
 from src.modules.user.application.refresh_token.handler import (
@@ -20,6 +20,7 @@ from src.modules.user.infrastructure.repositories.refresh_token_repository impor
 from src.modules.user.infrastructure.repositories.user_repository import (
     SQLAlchemyUserRepository,
 )
+from src.shared.unit_of_work import UnitOfWork
 
 
 def get_user_repository(db: AsyncSession = Depends(get_db)) -> UserRepository:
@@ -34,15 +35,17 @@ def get_refresh_token_repository(
 
 def get_register_handler(
     repo: UserRepository = Depends(get_user_repository),
+    unit_of_work: UnitOfWork = Depends(get_unit_of_work),
 ) -> RegisterUserCommandHandler:
-    return RegisterUserCommandHandler(repo)
+    return RegisterUserCommandHandler(repo, unit_of_work)
 
 
 def get_login_handler(
     user_repo: UserRepository = Depends(get_user_repository),
     refresh_token_repo: RefreshTokenRepository = Depends(get_refresh_token_repository),
+    unit_of_work: UnitOfWork = Depends(get_unit_of_work),
 ) -> LoginUserCommandHandler:
-    return LoginUserCommandHandler(user_repo, refresh_token_repo)
+    return LoginUserCommandHandler(user_repo, refresh_token_repo, unit_of_work)
 
 
 def get_user_detail_handler(
@@ -53,5 +56,6 @@ def get_user_detail_handler(
 
 def get_refresh_token_handler(
     refresh_token_repo: RefreshTokenRepository = Depends(get_refresh_token_repository),
+    unit_of_work: UnitOfWork = Depends(get_unit_of_work),
 ) -> RefreshTokenCommandHandler:
-    return RefreshTokenCommandHandler(refresh_token_repo)
+    return RefreshTokenCommandHandler(refresh_token_repo, unit_of_work)

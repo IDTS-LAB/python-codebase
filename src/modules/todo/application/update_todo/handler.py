@@ -7,11 +7,13 @@ from src.modules.todo.domain.exceptions.todo_exception import (
     UnauthorizedTodoAccessError,
 )
 from src.modules.todo.domain.repositories.todo_repository import TodoRepository
+from src.shared.unit_of_work import UnitOfWork
 
 
 class UpdateTodoHandler:
-    def __init__(self, todo_repo: TodoRepository):
+    def __init__(self, todo_repo: TodoRepository, unit_of_work: UnitOfWork):
         self.todo_repo = todo_repo
+        self._unit_of_work = unit_of_work
 
     async def execute(
         self, todo_id: UUID, command: UpdateTodoCommand, user_id: UUID
@@ -38,4 +40,10 @@ class UpdateTodoHandler:
             else:
                 todo.is_completed = False
 
-        return await self.todo_repo.save(todo)
+        try:
+            saved_todo = await self.todo_repo.save(todo)
+            await self._unit_of_work.commit()
+            return saved_todo
+        except Exception:
+            await self._unit_of_work.rollback()
+            raise

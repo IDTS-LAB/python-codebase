@@ -37,7 +37,7 @@ class SQLAlchemyRefreshTokenRepository(RefreshTokenRepository):
             is_revoked=refresh_token.is_revoked,
         )
         model = await self.db.merge(model)
-        await self.db.commit()
+        await self.db.flush()
         await self.db.refresh(model)
         return RefreshToken(
             id=model.id,
@@ -56,4 +56,4 @@ class SQLAlchemyRefreshTokenRepository(RefreshTokenRepository):
             )
             .values(is_revoked=True)
         )
-        await self.db.commit()
+        await self.db.flush()

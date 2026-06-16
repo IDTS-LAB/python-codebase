@@ -12,6 +12,7 @@ from src.modules.user.domain.repositories.refresh_token_repository import (
 )
 from src.modules.user.domain.repositories.user_repository import UserRepository
 from src.shared.exceptions.credential_exception import InvalidCredentialsError
+from src.shared.unit_of_work import UnitOfWork
 
 
 class LoginUserCommandHandler:
@@ -19,9 +20,11 @@ class LoginUserCommandHandler:
         self,
         user_repository: UserRepository,
         refresh_token_repository: RefreshTokenRepository,
+        unit_of_work: UnitOfWork,
     ):
         self._user_repository = user_repository
         self._refresh_token_repository = refresh_token_repository
+        self._unit_of_work = unit_of_work
 
     async def execute(self, command: LoginUserCommand) -> dict[str, str]:
         user = await self._user_repository.get_by_email(command.username)
@@ -41,10 +44,15 @@ class LoginUserCommandHandler:
             minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES
         )
 
-        new_rt = RefreshToken.create(
-            user_id=user.id, token_hash=token_hash, expires_at=expires_at
-        )
-        await self._refresh_token_repository.save(new_rt)
+        try:
+            new_rt = RefreshToken.create(
+                user_id=user.id, token_hash=token_hash, expires_at=expires_at
+            )
+            await self._refresh_token_repository.save(new_rt)
+            await self._unit_of_work.commit()
+        except Exception:
+            await self._unit_of_work.rollback()
+            raise
 
         return {
             "access_token": access_token,

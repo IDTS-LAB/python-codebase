@@ -50,7 +50,7 @@ class SQLAlchemyTodoRepository(TodoRepository):
             user_id=todo.user_id,
         )
         model = await self.db.merge(model)
-        await self.db.commit()
+        await self.db.flush()
         await self.db.refresh(model)
         return Todo(
             id=model.id,
@@ -62,4 +62,4 @@ class SQLAlchemyTodoRepository(TodoRepository):
 
     async def delete(self, todo_id: UUID) -> None:
         await self.db.execute(delete(TodoModel).where(TodoModel.id == todo_id))
-        await self.db.commit()
+        await self.db.flush()

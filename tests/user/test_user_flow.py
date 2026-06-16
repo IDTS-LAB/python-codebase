@@ -35,10 +35,23 @@ class FakeRequest:
         )()
 
 
+class FakeUnitOfWork:
+    def __init__(self):
+        self.committed = False
+        self.rolled_back = False
+
+    async def commit(self):
+        self.committed = True
+
+    async def rollback(self):
+        self.rolled_back = True
+
+
 def test_create_user_hashes_password_and_awaits_save():
     async def run():
         repo = FakeUserRepository()
-        handler = RegisterUserCommandHandler(repo)
+        unit_of_work = FakeUnitOfWork()
+        handler = RegisterUserCommandHandler(repo, unit_of_work)
 
         user = await handler.execute(
             RegisterUserCommand(email="person@example.com", password="plain-secret")
@@ -49,6 +62,8 @@ def test_create_user_hashes_password_and_awaits_save():
         assert user.password != "plain-secret"
         assert PasswordSerrvice.verify_password("plain-secret", user.password)
         assert repo.saved_user is user
+        assert unit_of_work.committed is True
+        assert unit_of_work.rolled_back is False
 
     asyncio.run(run())
 

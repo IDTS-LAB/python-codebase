@@ -27,19 +27,34 @@ class FakeTodoRepository:
         self.deleted_id = todo_id
 
 
+class FakeUnitOfWork:
+    def __init__(self):
+        self.committed = False
+        self.rolled_back = False
+
+    async def commit(self):
+        self.committed = True
+
+    async def rollback(self):
+        self.rolled_back = True
+
+
 def test_delete_todo_checks_ownership_before_delete():
     async def run():
         owner_id = uuid4()
         todo = Todo.create(title="Task", user_id=owner_id)
         repo = FakeTodoRepository(todo)
+        unit_of_work = FakeUnitOfWork()
 
         await delete_todo(
             todo_id=todo.id,
             current_user={"id": owner_id},
-            handler=DeleteTodoHandler(repo),
+            handler=DeleteTodoHandler(repo, unit_of_work),
         )
 
         assert repo.deleted_id == todo.id
+        assert unit_of_work.committed is True
+        assert unit_of_work.rolled_back is False
 
     asyncio.run(run())
 
@@ -52,7 +67,7 @@ def test_delete_todo_rejects_missing_todo():
             await delete_todo(
                 todo_id=uuid4(),
                 current_user={"id": uuid4()},
-                handler=DeleteTodoHandler(repo),
+                handler=DeleteTodoHandler(repo, FakeUnitOfWork()),
             )
 
         assert exc_info.value.status_code == 404
@@ -69,7 +84,7 @@ def test_delete_todo_rejects_wrong_owner():
             await delete_todo(
                 todo_id=todo.id,
                 current_user={"id": uuid4()},
-                handler=DeleteTodoHandler(repo),
+                handler=DeleteTodoHandler(repo, FakeUnitOfWork()),
             )
 
         assert exc_info.value.status_code == 403

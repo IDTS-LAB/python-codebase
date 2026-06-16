@@ -35,6 +35,26 @@ class FakeRefreshTokenRepository:
         return None
 
 
+class FakeUnitOfWork:
+    def __init__(self):
+        self.committed = False
+        self.rolled_back = False
+
+    async def commit(self):
+        self.committed = True
+
+    async def rollback(self):
+        self.rolled_back = True
+
+
+class FailingSecondSaveRefreshTokenRepository(FakeRefreshTokenRepository):
+    async def save(self, refresh_token: RefreshToken):
+        self.saved_tokens.append(refresh_token)
+        if len(self.saved_tokens) == 2:
+            raise RuntimeError("second save failed")
+        return refresh_token
+
+
 def test_refresh_token_command_uses_refresh_token_only():
     command = RefreshTokenCommand(token="raw-refresh-token")
 
@@ -51,7 +71,10 @@ def test_refresh_token_handler_dependency_uses_refresh_token_repository():
 
 def test_refresh_token_rejects_unknown_token():
     async def run():
-        handler = RefreshTokenCommandHandler(FakeRefreshTokenRepository())
+        handler = RefreshTokenCommandHandler(
+            FakeRefreshTokenRepository(),
+            FakeUnitOfWork(),
+        )
 
         with pytest.raises(InvalidRefreshTokenError, match="Invalid refresh token"):
             await handler.execute(RefreshTokenCommand(token="unknown-token"))
@@ -70,8 +93,9 @@ def test_refresh_token_rotates_token_and_revokes_existing_token():
             expires_at=datetime.now(timezone.utc) + timedelta(days=1),
         )
         repo = FakeRefreshTokenRepository(stored_token)
+        unit_of_work = FakeUnitOfWork()
 
-        result = await RefreshTokenCommandHandler(repo).execute(
+        result = await RefreshTokenCommandHandler(repo, unit_of_work).execute(
             RefreshTokenCommand(token=raw_token)
         )
 
@@ -81,6 +105,8 @@ def test_refresh_token_rotates_token_and_revokes_existing_token():
         assert repo.saved_tokens[0] is stored_token
         assert repo.saved_tokens[1].user_id == user_id
         assert repo.saved_tokens[1].is_revoked is False
+        assert unit_of_work.committed is True
+        assert unit_of_work.rolled_back is False
 
     asyncio.run(run())
 
@@ -101,13 +127,39 @@ def test_refresh_token_rotation_persists_new_expiry_in_minutes(monkeypatch):
             expires_at=datetime.now(timezone.utc) + timedelta(days=1),
         )
         repo = FakeRefreshTokenRepository(stored_token)
+        unit_of_work = FakeUnitOfWork()
 
         before = datetime.now(timezone.utc)
-        await RefreshTokenCommandHandler(repo).execute(RefreshTokenCommand(token=raw_token))
+        await RefreshTokenCommandHandler(repo, unit_of_work).execute(
+            RefreshTokenCommand(token=raw_token)
+        )
         after = datetime.now(timezone.utc)
 
         new_refresh_token = repo.saved_tokens[1]
         assert before.timestamp() + (15 * 60) <= new_refresh_token.expires_at.timestamp()
         assert new_refresh_token.expires_at.timestamp() <= after.timestamp() + (15 * 60)
+
+    asyncio.run(run())
+
+
+def test_refresh_token_rotation_rolls_back_when_new_token_save_fails():
+    async def run():
+        raw_token = "raw-refresh-token"
+        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+        stored_token = RefreshToken.create(
+            user_id=uuid4(),
+            token_hash=token_hash,
+            expires_at=datetime.now(timezone.utc) + timedelta(days=1),
+        )
+        repo = FailingSecondSaveRefreshTokenRepository(stored_token)
+        unit_of_work = FakeUnitOfWork()
+
+        with pytest.raises(RuntimeError, match="second save failed"):
+            await RefreshTokenCommandHandler(repo, unit_of_work).execute(
+                RefreshTokenCommand(token=raw_token)
+            )
+
+        assert unit_of_work.committed is False
+        assert unit_of_work.rolled_back is True
 
     asyncio.run(run())

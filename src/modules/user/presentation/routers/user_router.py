@@ -96,3 +96,6 @@ async def get_me(
         )
     )
     return {"id": str(user.id), "email": user.email}
+
+
+# TODO: need logout endpoint

@@ -53,7 +53,7 @@ class SQLAlchemyUserRepository(UserRepository):
             birthday=user.birthday,
         )
         self._db.add(user_model)
-        await self._db.commit()
+        await self._db.flush()
         await self._db.refresh(user_model)
         return User(
             id=user_model.id,
