@@ -45,6 +45,14 @@ class FakeUnitOfWork:
         self.committed = False
         self.rolled_back = False
 
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, traceback):
+        if exc_type is not None or not self.committed:
+            await self.rollback()
+        return False
+
     async def commit(self):
         self.committed = True
 

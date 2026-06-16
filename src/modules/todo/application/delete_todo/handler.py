@@ -22,9 +22,6 @@ class DeleteTodoHandler:
                 "You do not have permission to delete this todo"
             )
 
-        try:
+        async with self._unit_of_work:
             await self.todo_repo.delete(todo_id)
             await self._unit_of_work.commit()
-        except Exception:
-            await self._unit_of_work.rollback()
-            raise

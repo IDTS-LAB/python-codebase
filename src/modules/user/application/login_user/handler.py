@@ -44,15 +44,12 @@ class LoginUserCommandHandler:
             minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES
         )
 
-        try:
+        async with self._unit_of_work:
             new_rt = RefreshToken.create(
                 user_id=user.id, token_hash=token_hash, expires_at=expires_at
             )
             await self._refresh_token_repository.save(new_rt)
             await self._unit_of_work.commit()
-        except Exception:
-            await self._unit_of_work.rollback()
-            raise
 
         return {
             "access_token": access_token,

@@ -35,7 +35,7 @@ class RefreshTokenCommandHandler:
         if stored_token.expires_at < datetime.now(timezone.utc):
             raise InvalidRefreshTokenError("Refresh token has expired")
 
-        try:
+        async with self._unit_of_work:
             stored_token.revoke()
             await self._refresh_token_repo.save(stored_token)
 
@@ -61,9 +61,6 @@ class RefreshTokenCommandHandler:
 
             await self._refresh_token_repo.save(new_refresh_token_entity)
             await self._unit_of_work.commit()
-        except Exception:
-            await self._unit_of_work.rollback()
-            raise
 
         return {
             "access_token": new_access_token,

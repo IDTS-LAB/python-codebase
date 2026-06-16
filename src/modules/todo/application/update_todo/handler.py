@@ -40,10 +40,7 @@ class UpdateTodoHandler:
             else:
                 todo.is_completed = False
 
-        try:
+        async with self._unit_of_work:
             saved_todo = await self.todo_repo.save(todo)
             await self._unit_of_work.commit()
             return saved_todo
-        except Exception:
-            await self._unit_of_work.rollback()
-            raise

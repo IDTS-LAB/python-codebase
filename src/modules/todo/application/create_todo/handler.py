@@ -15,10 +15,7 @@ class CreateTodoHandler:
         todo = Todo.create(
             title=command.title, user_id=user_id, description=command.description
         )
-        try:
+        async with self._unit_of_work:
             saved_todo = await self.todo_repo.save(todo)
             await self._unit_of_work.commit()
             return saved_todo
-        except Exception:
-            await self._unit_of_work.rollback()
-            raise

@@ -21,10 +21,7 @@ class RegisterUserCommandHandler:
             command.email,
             password=hashed_password,
         )
-        try:
+        async with self._unit_of_work:
             saved_user = await self._user_repository.save(user=user)
             await self._unit_of_work.commit()
             return saved_user
-        except Exception:
-            await self._unit_of_work.rollback()
-            raise
