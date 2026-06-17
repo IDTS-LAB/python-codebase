@@ -55,11 +55,23 @@ class FakeUnitOfWork:
         self.rolled_back = True
 
 
+class FakeAuthorizationService:
+    def __init__(self):
+        self.assigned_roles = []
+
+    async def can(self, subject: str, resource: str, action: str) -> bool:
+        return True
+
+    async def assign_role(self, subject: str, role: str) -> None:
+        self.assigned_roles.append((subject, role))
+
+
 def test_create_user_hashes_password_and_awaits_save():
     async def run():
         repo = FakeUserRepository()
         unit_of_work = FakeUnitOfWork()
-        handler = RegisterUserCommandHandler(repo, unit_of_work)
+        authorization_service = FakeAuthorizationService()
+        handler = RegisterUserCommandHandler(repo, unit_of_work, authorization_service)
 
         user = await handler.execute(
             RegisterUserCommand(email="person@example.com", password="plain-secret")
@@ -72,6 +84,7 @@ def test_create_user_hashes_password_and_awaits_save():
         assert repo.saved_user is user
         assert unit_of_work.committed is True
         assert unit_of_work.rolled_back is False
+        assert authorization_service.assigned_roles == [(str(user.id), "user")]
 
     asyncio.run(run())
 

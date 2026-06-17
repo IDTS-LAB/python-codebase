@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from src.core.di import get_current_user
+from src.core.authorization.dependencies import require_permission
+from src.core.authorization.permissions import ME_ACTION, USER_RESOURCE
 from src.modules.user.application.detail_user.handler import DetailUserQueryHandler
 from src.modules.user.application.detail_user.query import DetailUserQuery
 from src.modules.user.application.login_user.command import LoginUserCommand
@@ -87,7 +88,7 @@ async def refresh_token(
 
 @router.get("/me")
 async def get_me(
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(require_permission(USER_RESOURCE, ME_ACTION)),
     handler: DetailUserQueryHandler = Depends(get_user_detail_handler),
 ):
     user = await handler.execute(

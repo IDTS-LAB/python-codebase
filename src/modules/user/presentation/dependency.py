@@ -1,6 +1,8 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.core.authorization.dependencies import get_authorization_service
+from src.core.authorization.domain.service import AuthorizationService
 from src.core.database.session import get_db, get_unit_of_work
 from src.modules.user.application.detail_user.handler import DetailUserQueryHandler
 from src.modules.user.application.login_user.handler import LoginUserCommandHandler
@@ -36,8 +38,9 @@ def get_refresh_token_repository(
 def get_register_handler(
     repo: UserRepository = Depends(get_user_repository),
     unit_of_work: UnitOfWork = Depends(get_unit_of_work),
+    authorization_service: AuthorizationService = Depends(get_authorization_service),
 ) -> RegisterUserCommandHandler:
-    return RegisterUserCommandHandler(repo, unit_of_work)
+    return RegisterUserCommandHandler(repo, unit_of_work, authorization_service)
 
 
 def get_login_handler(

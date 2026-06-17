@@ -8,6 +8,21 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 from src.core.config.setting import settings
+from src.core.authorization.infrastructure.models.casbin_rule_model import (
+    CasbinRuleModel,  # noqa: F401
+)
+from src.core.authorization.infrastructure.models.permission_model import (
+    PermissionModel,  # noqa: F401
+)
+from src.core.authorization.infrastructure.models.role_model import (
+    RoleModel,  # noqa: F401
+)
+from src.core.authorization.infrastructure.models.role_permission_model import (
+    RolePermissionModel,  # noqa: F401
+)
+from src.core.authorization.infrastructure.models.user_has_role_model import (
+    UserHasRoleModel,  # noqa: F401
+)
 from src.modules.todo.infrastructure.models.todo_model import TodoModel  # noqa: F401
 from src.modules.user.infrastructure.models.refresh_token_model import (
     RefreshTokenModel,  # noqa: F401
