@@ -2,11 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from src.core.authorization.dependencies import require_permission
-from src.core.authorization.permissions import ME_ACTION, USER_RESOURCE
+from src.core.authorization.permissions import ME_ACTION, UPDATE_ACTION, USER_RESOURCE
 from src.modules.user.application.detail_user.handler import DetailUserQueryHandler
 from src.modules.user.application.detail_user.query import DetailUserQuery
 from src.modules.user.application.login_user.command import LoginUserCommand
 from src.modules.user.application.login_user.handler import LoginUserCommandHandler
+from src.modules.user.application.logout_user.command import LogoutUserCommand
+from src.modules.user.application.logout_user.handler import LogoutUserCommandHandler
 from src.modules.user.application.refresh_token.command import RefreshTokenCommand
 from src.modules.user.application.refresh_token.handler import (
     RefreshTokenCommandHandler,
@@ -18,6 +20,7 @@ from src.modules.user.application.register_user.handler import (
 from src.modules.user.domain.exceptions.user_exception import UserAlreadyExistsError
 from src.modules.user.presentation.dependency import (
     get_login_handler,
+    get_logout_handler,
     get_refresh_token_handler,
     get_register_handler,
     get_user_detail_handler,
@@ -69,9 +72,6 @@ async def refresh_token(
     handler: RefreshTokenCommandHandler = Depends(get_refresh_token_handler),
 ):
     try:
-        # Note: In strict rotation, we might not even require a valid access token here,
-        # just the refresh token. But requiring it adds a layer of security.
-        # We pass current_user["id"] to ensure the RT belongs to the user making the request.
         result = await handler.execute(
             RefreshTokenCommand(
                 token=request.refresh_token,
@@ -99,4 +99,9 @@ async def get_me(
     return {"id": str(user.id), "email": user.email}
 
 
-# TODO: need logout endpoint
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+async def logout(
+    current_user: dict = Depends(require_permission(USER_RESOURCE, UPDATE_ACTION)),
+    handler: LogoutUserCommandHandler = Depends(get_logout_handler),
+):
+    await handler.excute(LogoutUserCommand(user_id=str(current_user.get("id"))))

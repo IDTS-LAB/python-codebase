@@ -6,6 +6,7 @@ from src.core.authorization.domain.service import AuthorizationService
 from src.core.database.session import get_db, get_unit_of_work
 from src.modules.user.application.detail_user.handler import DetailUserQueryHandler
 from src.modules.user.application.login_user.handler import LoginUserCommandHandler
+from src.modules.user.application.logout_user.handler import LogoutUserCommandHandler
 from src.modules.user.application.refresh_token.handler import (
     RefreshTokenCommandHandler,
 )
@@ -62,3 +63,10 @@ def get_refresh_token_handler(
     unit_of_work: UnitOfWork = Depends(get_unit_of_work),
 ) -> RefreshTokenCommandHandler:
     return RefreshTokenCommandHandler(refresh_token_repo, unit_of_work)
+
+
+def get_logout_handler(
+    refresh_token_repo: RefreshTokenRepository = Depends(get_refresh_token_repository),
+    unit_of_work: UnitOfWork = Depends(get_unit_of_work),
+) -> LogoutUserCommandHandler:
+    return LogoutUserCommandHandler(refresh_token_repo, unit_of_work)

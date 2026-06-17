@@ -28,7 +28,7 @@ def require_permission(resource: str, action: str) -> Callable:
         ),
     ) -> dict:
         allowed = await authorization_service.can(
-            subject=str(current_user["id"]),
+            subject=str(current_user.get("id")),
             resource=resource,
             action=action,
         )
