@@ -1,11 +1,13 @@
 import asyncio
 from datetime import datetime, timezone
 
-from src.core.config.setting import settings
+from src.core.config.setting import get_settings
 from src.core.security.password import PasswordSerrvice
 from src.modules.user.application.login_user.command import LoginUserCommand
 from src.modules.user.application.login_user.handler import LoginUserCommandHandler
 from src.modules.user.domain.entities.user import User
+
+settings = get_settings()
 
 
 class FakeUserRepository:

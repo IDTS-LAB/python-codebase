@@ -1,7 +1,7 @@
 import hashlib
 from datetime import datetime, timedelta, timezone
 
-from src.core.config.setting import settings
+from src.core.config.setting import get_settings
 from src.core.security.jwt import JWTService
 from src.core.security.password import PasswordSerrvice
 from src.modules.user.application.login_user.command import LoginUserCommand
@@ -13,6 +13,8 @@ from src.modules.user.domain.repositories.refresh_token_repository import (
 from src.modules.user.domain.repositories.user_repository import UserRepository
 from src.shared.exceptions.credential_exception import InvalidCredentialsError
 from src.shared.unit_of_work import UnitOfWork
+
+settings = get_settings()
 
 
 class LoginUserCommandHandler:

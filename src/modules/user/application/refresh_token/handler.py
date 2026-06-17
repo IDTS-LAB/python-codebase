@@ -1,7 +1,7 @@
 import hashlib
 from datetime import datetime, timedelta, timezone
 
-from src.core.config.setting import settings
+from src.core.config.setting import get_settings
 from src.core.security.jwt import JWTService
 from src.modules.user.application.refresh_token.command import RefreshTokenCommand
 from src.modules.user.domain.entities.refresh_token import RefreshToken
@@ -10,6 +10,8 @@ from src.modules.user.domain.repositories.refresh_token_repository import (
 )
 from src.shared.exceptions.credential_exception import InvalidRefreshTokenError
 from src.shared.unit_of_work import UnitOfWork
+
+settings = get_settings()
 
 
 class RefreshTokenCommandHandler:

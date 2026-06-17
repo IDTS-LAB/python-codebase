@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.authorization.dependencies import get_authorization_service
 from src.core.authorization.domain.service import AuthorizationService
-from src.core.database.session import get_db, get_unit_of_work
+from src.core.database.postgres.session import get_db, get_unit_of_work
 from src.modules.user.application.detail_user.handler import DetailUserQueryHandler
 from src.modules.user.application.login_user.handler import LoginUserCommandHandler
 from src.modules.user.application.logout_user.handler import LogoutUserCommandHandler

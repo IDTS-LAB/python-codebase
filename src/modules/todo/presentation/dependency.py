@@ -1,9 +1,9 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.database.session import get_db, get_unit_of_work
-from src.modules.todo.application.delete_todo.handler import DeleteTodoHandler
+from src.core.database.postgres.session import get_db, get_unit_of_work
 from src.modules.todo.application.create_todo.handler import CreateTodoHandler
+from src.modules.todo.application.delete_todo.handler import DeleteTodoHandler
 from src.modules.todo.application.list_todo.handler import GetTodosQueryHandler
 from src.modules.todo.application.update_todo.handler import UpdateTodoHandler
 from src.modules.todo.domain.repositories.todo_repository import TodoRepository

@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.database.session import get_db
+from src.core.database.postgres.session import get_db
 from src.modules.user.infrastructure.repositories.user_repository import (
     SQLAlchemyUserRepository,
 )
@@ -13,10 +13,6 @@ oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/api/v1/auth/login",
     refreshUrl="/api/v1/auth/refresh",
 )
-
-
-def get_db_session(db: AsyncSession = Depends(get_db)) -> AsyncSession:
-    return db
 
 
 async def get_current_user(

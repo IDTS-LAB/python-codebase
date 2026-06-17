@@ -2,9 +2,11 @@ from datetime import datetime, timezone
 
 from jose import jwt
 
-from src.core.config.setting import settings
+from src.core.config.setting import get_settings
 from src.core.security import jwt as jwt_module
 from src.core.security.jwt import JWTService
+
+settings = get_settings()
 
 
 def test_refresh_token_expiry_setting_is_minutes_based():

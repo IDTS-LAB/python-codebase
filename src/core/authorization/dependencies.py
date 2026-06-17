@@ -10,8 +10,8 @@ from src.core.authorization.infrastructure.repositories.casbin_policy_repository
 from src.core.authorization.infrastructure.services.casbin_authorization_service import (
     CasbinAuthorizationService,
 )
-from src.core.database.session import get_db
-from src.core.di import get_current_user
+from src.core.database.postgres.session import get_db
+from src.core.dependency.auth import get_current_user
 
 
 def get_authorization_service(

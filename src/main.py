@@ -1,9 +1,13 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 
+import src.core.routers.admin as admin_router
 import src.core.routers.api.v1 as v1_router
 from src.core import lifespan
 from src.core.bootstrap.middleware import register_middleware
-from src.core.config.setting import settings
+from src.core.config.setting import get_settings
+from src.core.dependency.rate_limit import apply_global_rate_limit
+
+settings = get_settings()
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -16,10 +20,12 @@ app = FastAPI(
         "deepLinking": True,
         "tryItOutEnabled": True,
     },
+    dependencies=[Depends(apply_global_rate_limit)],
 )
 
 register_middleware(app=app)
 v1_router.register_router(app=app)
+admin_router.register_router(app=app)
 
 
 @app.get("/health", tags=["Health Check"])
