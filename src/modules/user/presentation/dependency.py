@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.authorization.dependencies import get_authorization_service
 from src.core.authorization.domain.service import AuthorizationService
 from src.core.database.postgres.session import get_db, get_unit_of_work
+from src.core.security.token_revocation import TokenRevocationService
 from src.modules.user.application.detail_user.handler import DetailUserQueryHandler
 from src.modules.user.application.login_user.handler import LoginUserCommandHandler
 from src.modules.user.application.logout_user.handler import LogoutUserCommandHandler
@@ -34,6 +35,10 @@ def get_refresh_token_repository(
     db: AsyncSession = Depends(get_db),
 ) -> RefreshTokenRepository:
     return SQLAlchemyRefreshTokenRepository(db)
+
+
+def get_token_revocation_service() -> TokenRevocationService:
+    return TokenRevocationService()
 
 
 def get_register_handler(
@@ -68,5 +73,12 @@ def get_refresh_token_handler(
 def get_logout_handler(
     refresh_token_repo: RefreshTokenRepository = Depends(get_refresh_token_repository),
     unit_of_work: UnitOfWork = Depends(get_unit_of_work),
+    token_revocation_service: TokenRevocationService = Depends(
+        get_token_revocation_service
+    ),
 ) -> LogoutUserCommandHandler:
-    return LogoutUserCommandHandler(refresh_token_repo, unit_of_work)
+    return LogoutUserCommandHandler(
+        refresh_token_repo,
+        unit_of_work,
+        token_revocation_service,
+    )

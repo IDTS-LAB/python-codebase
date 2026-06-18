@@ -66,7 +66,16 @@ def test_register_validation_rejects_short_password():
 
 def test_logout_validation_rejects_invalid_user_id():
     with pytest.raises(ValueError, match="User id must be a valid UUID"):
-        validate_logout_user_command(LogoutUserCommand(user_id="not-a-uuid"))
+        validate_logout_user_command(
+            LogoutUserCommand(user_id="not-a-uuid", access_token="access-token")
+        )
+
+
+def test_logout_validation_rejects_blank_access_token():
+    with pytest.raises(ValueError, match="Access token is required"):
+        validate_logout_user_command(
+            LogoutUserCommand(user_id=str(uuid4()), access_token=" ")
+        )
 
 
 def test_query_validation_accepts_valid_queries():

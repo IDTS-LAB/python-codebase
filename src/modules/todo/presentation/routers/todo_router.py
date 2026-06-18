@@ -2,8 +2,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from core.schemas.response import PaginatedResponse, SuccessResponse
-from modules.todo.presentation.schemas.response import TodoResponse
+from src.core.schemas.response import PaginatedResponse, SuccessResponse
+from src.modules.todo.presentation.schemas.response import TodoResponse
 from src.core.authorization.dependencies import require_permission
 from src.core.authorization.permissions import (
     CREATE_ACTION,

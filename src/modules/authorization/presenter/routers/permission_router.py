@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from core.authorization.dependencies import require_permission
+from src.core.authorization.dependencies import require_permission
 from src.core.authorization.infrastructure.services.casbin_authorization_service import (
     CasbinAuthorizationService,
 )

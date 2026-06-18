@@ -2,8 +2,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from core.authorization.dependencies import require_permission
-from core.authorization.permissions import (
+from src.core.authorization.dependencies import require_permission
+from src.core.authorization.permissions import (
     CREATE_ACTION,
     DELETE_ACTION,
     READ_ACTION,

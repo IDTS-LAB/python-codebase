@@ -5,6 +5,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 from src.core.security.jwt import JWTService
+from src.core.security.token_revocation import TokenRevocationService
 
 PUBLIC_PATHS = frozenset(
     {
@@ -43,6 +44,12 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
 
         try:
             payload = JWTService.decode_token(token)
+            if await TokenRevocationService.is_access_token_revoked(token):
+                return JSONResponse(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    content={"detail": "Token has been revoked"},
+                )
+
             user_id = payload.get("sub")
             if not user_id:
                 raise ValueError("Token missing 'sub' claim")
