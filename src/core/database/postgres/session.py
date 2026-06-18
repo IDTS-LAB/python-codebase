@@ -2,6 +2,7 @@ from collections.abc import AsyncGenerator
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import QueuePool
 
 from src.core.config.setting import get_settings
 from src.shared.database.unit_of_work import SQLAlchemyUnitOfWork
@@ -9,7 +10,17 @@ from src.shared.unit_of_work import UnitOfWork
 
 settings = get_settings()
 
-engine = create_async_engine(settings.DATABASE_URL, echo=False, future=True)
+engine = create_async_engine(
+    settings.DATABASE_URL,
+    echo=False,
+    future=True,
+    poolclass=QueuePool,
+    pool_size=settings.DATABASE_POOL_SIZE,
+    max_overflow=settings.DATABASE_MAX_OVERFLOW,
+    pool_pre_ping=True,
+    pool_timeout=settings.DATABASE_POOL_TIMEOUT,
+    pool_recycle=settings.DATABASE_POOL_RECYCLE,
+)
 AsyncSessionLocal = async_sessionmaker(
     engine, class_=AsyncSession, expire_on_commit=False, autoflush=False
 )

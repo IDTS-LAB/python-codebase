@@ -53,6 +53,10 @@ class Settings(BaseSettings):
     MAX_REQUEST_SIZE_MB: int = Field(
         alias="MAX_REQUEST_SIZE_MB", default=5 * 1024 * 1024
     )
+    DATABASE_POOL_SIZE: int = Field(alias="DATABASE_POOL_SIZE", default=20)
+    DATABASE_MAX_OVERFLOW: int = Field(alias="DATABASE_MAX_OVERFLOW", default=10)
+    DATABASE_POOL_TIMEOUT: int = Field(alias="DATABASE_POOL_TIMEOUT", default=30)
+    DATABASE_POOL_RECYCLE: int = Field(alias="DATABASE_POOL_RECYCLE", default=3600)
 
     @property
     def is_production(self) -> bool:
