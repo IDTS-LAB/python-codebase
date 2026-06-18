@@ -107,6 +107,41 @@ def test_structured_logging_middleware_logs_request_context(caplog):
     assert record.user_id == "user-123"
 
 
+def test_structured_logging_middleware_logs_exception_context(caplog):
+    async def run():
+        caplog.set_level(logging.ERROR, logger="src.core.middleware.structured_logging")
+        request = Request(
+            {
+                "type": "http",
+                "method": "POST",
+                "path": "/api/v1/todos/",
+                "headers": [],
+                "query_string": b"",
+                "server": ("testserver", 80),
+                "scheme": "http",
+                "client": ("testclient", 50000),
+            }
+        )
+        request.state.request_id = "request-456"
+        request.state.user_id = "user-456"
+
+        async def call_next(_request):
+            raise RuntimeError("write failed")
+
+        with pytest.raises(RuntimeError, match="write failed"):
+            await StructuredLoggingMiddleware(None).dispatch(request, call_next)
+
+    asyncio.run(run())
+
+    record = caplog.records[0]
+    assert record.method == "POST"
+    assert record.path == "/api/v1/todos/"
+    assert record.status_code == 500
+    assert record.request_id == "request-456"
+    assert record.user_id == "user-456"
+    assert record.error_type == "RuntimeError"
+
+
 def test_admin_router_exposes_liveness_and_readiness():
     app = FastAPI()
     register_admin_router(app)
