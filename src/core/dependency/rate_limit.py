@@ -50,7 +50,7 @@ async def apply_global_rate_limit(request: Request):
     if request.url.path in EXEMPT_PATHS:
         return
 
-    limit_str = settings.GLOBAL_RATE_LIMIT
+    limit_str = settings.RATE_LIMIT
     times_str, period = limit_str.split("/")
     times = int(times_str)
     seconds = 60 if "minute" in period else 1
