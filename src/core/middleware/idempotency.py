@@ -1,8 +1,8 @@
 import hashlib
 import json
 
-from fastapi import Request
-from fastapi.responses import Response
+from fastapi import Request, status
+from fastapi.responses import JSONResponse, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.core.config.setting import get_settings
@@ -24,12 +24,24 @@ class IdempotencyMiddleware(BaseHTTPMiddleware):
         if not idempotency_key:
             return await call_next(request)
 
+        request_body = await request.body()
+        request_body_hash = hashlib.sha256(request_body).hexdigest()
         redis = self._redis or await get_redis_client()
         cache_key = self._cache_key(request, idempotency_key)
 
         cached = await redis.get(cache_key)
         if cached:
             cached_response = json.loads(cached)
+            if cached_response.get("request_body_hash") != request_body_hash:
+                return JSONResponse(
+                    status_code=status.HTTP_409_CONFLICT,
+                    content={
+                        "detail": (
+                            "Idempotency-Key was already used with a different "
+                            "request body"
+                        )
+                    },
+                )
             return Response(
                 content=cached_response["body"],
                 status_code=cached_response["status_code"],
@@ -37,6 +49,7 @@ class IdempotencyMiddleware(BaseHTTPMiddleware):
                 headers={"X-Idempotent-Replay": "true"},
             )
 
+        request = self._rebuild_request(request, request_body)
         response = await call_next(request)
         body = await self._response_body(response)
 
@@ -49,6 +62,7 @@ class IdempotencyMiddleware(BaseHTTPMiddleware):
                         "body": body.decode(),
                         "status_code": response.status_code,
                         "media_type": response.media_type,
+                        "request_body_hash": request_body_hash,
                     }
                 ),
             )
@@ -66,6 +80,13 @@ class IdempotencyMiddleware(BaseHTTPMiddleware):
         raw = f"{auth_scope}:{request.url.path}:{idempotency_key}"
         digest = hashlib.sha256(raw.encode()).hexdigest()
         return f"idempotency:{digest}"
+
+    @staticmethod
+    def _rebuild_request(request: Request, body: bytes) -> Request:
+        async def receive():
+            return {"type": "http.request", "body": body, "more_body": False}
+
+        return Request(request.scope, receive)
 
     @staticmethod
     async def _response_body(response) -> bytes:

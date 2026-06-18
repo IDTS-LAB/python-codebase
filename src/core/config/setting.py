@@ -49,6 +49,7 @@ class Settings(BaseSettings):
     ACCOUNT_LOCKOUT_DURATION_MINUTES: int = Field(
         alias="ACCOUNT_LOCKOUT_DURATION_MINUTES", default=15
     )
+    LOG_FORMAT: str = Field(alias="LOG_FORMAT", default="json")
     MAX_REQUEST_SIZE_MB: int = Field(
         alias="MAX_REQUEST_SIZE_MB", default=5 * 1024 * 1024
     )
@@ -75,8 +76,25 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_production_security(self):
-        if self.is_production and self.SECRET_KEY == self.DEFAULT_SECRET_KEY:
+        if not self.is_production:
+            return self
+
+        if self.SECRET_KEY == self.DEFAULT_SECRET_KEY:
             raise ValueError("SECRET_KEY must be changed in production")
+        if not self.DATABASE_URL.strip():
+            raise ValueError("DATABASE_URL must be set in production")
+        if not self.REDIS_URL.strip():
+            raise ValueError("REDIS_URL must be set in production")
+        if not self.JWT_ISSUER.strip():
+            raise ValueError("JWT_ISSUER must be set in production")
+        if not self.JWT_AUDIENCE.strip():
+            raise ValueError("JWT_AUDIENCE must be set in production")
+        if self.ACCESS_TOKEN_EXPIRE_MINUTES <= 0:
+            raise ValueError("ACCESS_TOKEN_EXPIRE_MINUTES must be positive")
+        if self.REFRESH_TOKEN_EXPIRE_MINUTES <= 0:
+            raise ValueError("REFRESH_TOKEN_EXPIRE_MINUTES must be positive")
+        if "*" in self.cors_allow_origins:
+            raise ValueError("CORS_ALLOW_ORIGINS cannot be wildcard in production")
         return self
 
     model_config = SettingsConfigDict(

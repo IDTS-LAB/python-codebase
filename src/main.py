@@ -7,11 +7,14 @@ from src.core.bootstrap.exception import register_exception
 from src.core.bootstrap.middleware import register_middleware
 from src.core.config.setting import get_settings
 from src.core.dependency.rate_limit import apply_global_rate_limit
+from src.core.middleware.structured_logging import configure_logging
 
 settings = get_settings()
 
 
 def create_app(app_settings=settings) -> FastAPI:
+    configure_logging(app_settings.LOG_FORMAT)
+
     app = FastAPI(
         title=app_settings.APP_NAME,
         version="1.0.0",

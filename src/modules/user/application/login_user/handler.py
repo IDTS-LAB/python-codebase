@@ -9,7 +9,6 @@ from src.core.security.password import PasswordSerrvice
 from src.modules.user.application.login_user.command import LoginUserCommand
 from src.modules.user.application.login_user.validation import validate_login_user_command
 from src.modules.user.domain.entities.refresh_token import RefreshToken
-from src.modules.user.domain.exceptions.user_exception import UserNotFoundError
 from src.modules.user.domain.repositories.refresh_token_repository import (
     RefreshTokenRepository,
 )
@@ -52,7 +51,7 @@ class LoginUserCommandHandler:
         user = await self._user_repository.get_by_email(command.username)
         if user is None:
             await self._record_failed_login(command.username)
-            raise UserNotFoundError
+            raise InvalidCredentialsError("Incorrect email or password")
 
         if not user or not PasswordSerrvice.verify_password(
             command.password, user.password

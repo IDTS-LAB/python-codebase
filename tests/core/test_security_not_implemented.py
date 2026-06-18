@@ -142,6 +142,35 @@ def test_structured_logging_middleware_logs_exception_context(caplog):
     assert record.error_type == "RuntimeError"
 
 
+def test_structured_logging_formats_record_as_json():
+    from src.core.middleware.structured_logging import JsonLogFormatter
+
+    record = logging.LogRecord(
+        name="test",
+        level=logging.INFO,
+        pathname=__file__,
+        lineno=1,
+        msg="request completed",
+        args=(),
+        exc_info=None,
+    )
+    record.method = "GET"
+    record.path = "/api/v1/todos/"
+    record.status_code = 200
+    record.latency_ms = 1.5
+    record.request_id = "request-1"
+    record.user_id = "user-1"
+    record.error_type = None
+
+    payload = json.loads(JsonLogFormatter().format(record))
+
+    assert payload["message"] == "request completed"
+    assert payload["method"] == "GET"
+    assert payload["path"] == "/api/v1/todos/"
+    assert payload["status_code"] == 200
+    assert payload["request_id"] == "request-1"
+
+
 def test_admin_router_exposes_liveness_and_readiness():
     app = FastAPI()
     register_admin_router(app)
@@ -269,25 +298,60 @@ class FakeRedis:
         self.values[key] = value
 
 
+def build_post_request(body: bytes):
+    async def receive():
+        return {"type": "http.request", "body": body, "more_body": False}
+
+    return Request(
+        {
+            "type": "http",
+            "method": "POST",
+            "path": "/api/v1/todos/",
+            "headers": [
+                (b"idempotency-key", b"create-todo-1"),
+                (b"authorization", b"Bearer token"),
+                (b"content-type", b"application/json"),
+            ],
+            "query_string": b"",
+            "server": ("testserver", 80),
+            "scheme": "http",
+            "client": ("testclient", 50000),
+        },
+        receive,
+    )
+
+
 def test_idempotency_middleware_replays_cached_post_response():
     async def run():
         redis = FakeRedis()
         calls = 0
-        request = Request(
-            {
-                "type": "http",
-                "method": "POST",
-                "path": "/api/v1/todos/",
-                "headers": [
-                    (b"idempotency-key", b"create-todo-1"),
-                    (b"authorization", b"Bearer token"),
-                ],
-                "query_string": b"",
-                "server": ("testserver", 80),
-                "scheme": "http",
-                "client": ("testclient", 50000),
-            }
+        async def call_next(_request):
+            nonlocal calls
+            calls += 1
+            return JSONResponse({"created": True}, status_code=201)
+
+        middleware = IdempotencyMiddleware(None, redis=redis)
+        first = await middleware.dispatch(
+            build_post_request(b'{"title":"first"}'),
+            call_next,
         )
+        second = await middleware.dispatch(
+            build_post_request(b'{"title":"first"}'),
+            call_next,
+        )
+
+        assert first.status_code == 201
+        assert second.status_code == 201
+        assert json.loads(second.body.decode()) == {"created": True}
+        assert calls == 1
+
+    asyncio.run(run())
+
+
+def test_idempotency_middleware_rejects_same_key_with_different_body():
+    async def run():
+        redis = FakeRedis()
+        calls = 0
 
         async def call_next(_request):
             nonlocal calls
@@ -295,12 +359,20 @@ def test_idempotency_middleware_replays_cached_post_response():
             return JSONResponse({"created": True}, status_code=201)
 
         middleware = IdempotencyMiddleware(None, redis=redis)
-        first = await middleware.dispatch(request, call_next)
-        second = await middleware.dispatch(request, call_next)
+        first = await middleware.dispatch(
+            build_post_request(b'{"title":"first"}'),
+            call_next,
+        )
+        second = await middleware.dispatch(
+            build_post_request(b'{"title":"second"}'),
+            call_next,
+        )
 
         assert first.status_code == 201
-        assert second.status_code == 201
-        assert json.loads(second.body.decode()) == {"created": True}
+        assert second.status_code == 409
+        assert json.loads(second.body.decode())["detail"] == (
+            "Idempotency-Key was already used with a different request body"
+        )
         assert calls == 1
 
     asyncio.run(run())

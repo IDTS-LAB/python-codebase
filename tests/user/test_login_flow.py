@@ -1,11 +1,14 @@
 import asyncio
 from datetime import datetime, timezone
 
+import pytest
+
 from src.core.config.setting import get_settings
 from src.core.security.password import PasswordSerrvice
 from src.modules.user.application.login_user.command import LoginUserCommand
 from src.modules.user.application.login_user.handler import LoginUserCommandHandler
 from src.modules.user.domain.entities.user import User
+from src.shared.exceptions.credential_exception import InvalidCredentialsError
 
 settings = get_settings()
 
@@ -92,5 +95,27 @@ def test_login_persists_refresh_token_expiry_in_minutes(monkeypatch):
         assert expires_at <= after.timestamp() + (15 * 60)
         assert unit_of_work.committed is True
         assert unit_of_work.rolled_back is False
+
+    asyncio.run(run())
+
+
+def test_login_uses_generic_error_for_missing_user():
+    async def run():
+        user = User.create(
+            email="person@example.com",
+            password=PasswordSerrvice.hash("plain-secret"),
+        )
+
+        with pytest.raises(InvalidCredentialsError, match="Incorrect email or password"):
+            await LoginUserCommandHandler(
+                FakeUserRepository(user),
+                FakeRefreshTokenRepository(),
+                FakeUnitOfWork(),
+            ).execute(
+                LoginUserCommand(
+                    username="missing@example.com",
+                    password="plain-secret",
+                )
+            )
 
     asyncio.run(run())

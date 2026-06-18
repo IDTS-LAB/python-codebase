@@ -101,3 +101,33 @@ def test_production_settings_reject_default_secret_key():
             SECRET_KEY=Settings.DEFAULT_SECRET_KEY,
             _env_file=None,
         )
+
+
+def test_production_settings_reject_wildcard_cors():
+    with pytest.raises(ValueError, match="CORS_ALLOW_ORIGINS"):
+        Settings(
+            APP_ENV="production",
+            SECRET_KEY="production-secret",
+            CORS_ALLOW_ORIGINS="*",
+            _env_file=None,
+        )
+
+
+def test_production_settings_reject_invalid_token_ttl():
+    with pytest.raises(ValueError, match="ACCESS_TOKEN_EXPIRE_MINUTES"):
+        Settings(
+            APP_ENV="production",
+            SECRET_KEY="production-secret",
+            ACCESS_TOKEN_EXPIRE_MINUTES=0,
+            _env_file=None,
+        )
+
+
+def test_production_settings_reject_missing_service_urls():
+    with pytest.raises(ValueError, match="DATABASE_URL"):
+        Settings(
+            APP_ENV="production",
+            SECRET_KEY="production-secret",
+            DATABASE_URL="",
+            _env_file=None,
+        )
