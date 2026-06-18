@@ -1,5 +1,8 @@
 from src.core.security.password import PasswordSerrvice
 from src.modules.user.application.register_user.command import RegisterUserCommand
+from src.modules.user.application.register_user.validation import (
+    validate_register_user_command,
+)
 from src.modules.user.domain.entities.user import User
 from src.modules.user.domain.exceptions.user_exception import UserAlreadyExistsError
 from src.modules.user.domain.repositories.user_repository import UserRepository
@@ -20,6 +23,8 @@ class RegisterUserCommandHandler:
         self._authorization_service = authorization_service
 
     async def execute(self, command: RegisterUserCommand) -> User:
+        validate_register_user_command(command)
+
         existing = await self._user_repository.get_by_email(command.email)
         if existing:
             raise UserAlreadyExistsError("Email already registered")

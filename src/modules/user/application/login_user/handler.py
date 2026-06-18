@@ -5,6 +5,7 @@ from src.core.config.setting import get_settings
 from src.core.security.jwt import JWTService
 from src.core.security.password import PasswordSerrvice
 from src.modules.user.application.login_user.command import LoginUserCommand
+from src.modules.user.application.login_user.validation import validate_login_user_command
 from src.modules.user.domain.entities.refresh_token import RefreshToken
 from src.modules.user.domain.exceptions.user_exception import UserNotFoundError
 from src.modules.user.domain.repositories.refresh_token_repository import (
@@ -29,6 +30,8 @@ class LoginUserCommandHandler:
         self._unit_of_work = unit_of_work
 
     async def execute(self, command: LoginUserCommand) -> dict[str, str]:
+        validate_login_user_command(command)
+
         user = await self._user_repository.get_by_email(command.username)
         if user is None:
             raise UserNotFoundError

@@ -5,7 +5,7 @@ from jose import JWTError, jwt
 from src.core.config.setting import get_settings
 from src.shared.exceptions.credential_exception import InvalidCredentialsError
 
-settings = get_settings
+settings = get_settings()
 
 
 class JWTService:

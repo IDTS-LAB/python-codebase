@@ -4,6 +4,9 @@ from datetime import datetime, timedelta, timezone
 from src.core.config.setting import get_settings
 from src.core.security.jwt import JWTService
 from src.modules.user.application.refresh_token.command import RefreshTokenCommand
+from src.modules.user.application.refresh_token.validation import (
+    validate_refresh_token_command,
+)
 from src.modules.user.domain.entities.refresh_token import RefreshToken
 from src.modules.user.domain.repositories.refresh_token_repository import (
     RefreshTokenRepository,
@@ -27,6 +30,8 @@ class RefreshTokenCommandHandler:
         return hashlib.sha256(token.encode()).hexdigest()
 
     async def execute(self, command: RefreshTokenCommand) -> dict:
+        validate_refresh_token_command(command)
+
         token_hash = self._hash_token(command.token)
         stored_token = await self._refresh_token_repo.get_by_token_hash(token_hash)
 

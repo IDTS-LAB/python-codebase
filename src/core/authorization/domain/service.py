@@ -1,4 +1,8 @@
 from abc import ABC, abstractmethod
+from uuid import UUID
+
+from src.modules.authorization.domain.entities.permission import Permission
+from src.modules.authorization.domain.entities.role import Role
 
 
 class AuthorizationService(ABC):
@@ -12,4 +16,60 @@ class AuthorizationService(ABC):
 
     @abstractmethod
     async def get_roles_for_subject(self, subject: str) -> list[str]:
+        pass
+
+    @abstractmethod
+    async def create_role(self, role: Role) -> Role:
+        pass
+
+    @abstractmethod
+    async def update_role(self, role: Role) -> Role | None:
+        pass
+
+    @abstractmethod
+    async def delete_role(self, role_id: UUID) -> None:
+        pass
+
+    @abstractmethod
+    async def get_role(self, role_id: UUID) -> Role | None:
+        pass
+
+    @abstractmethod
+    async def list_roles(self) -> list[Role]:
+        pass
+
+    @abstractmethod
+    async def create_permission(self, permission: Permission) -> Permission:
+        pass
+
+    @abstractmethod
+    async def update_permission(self, permission: Permission) -> Permission | None:
+        pass
+
+    @abstractmethod
+    async def delete_permission(self, permission_id: UUID) -> None:
+        pass
+
+    @abstractmethod
+    async def get_permission(self, permission_id: UUID) -> Permission | None:
+        pass
+
+    @abstractmethod
+    async def list_permissions(self) -> list[Permission]:
+        pass
+
+    @abstractmethod
+    async def assign_permission_to_role(
+        self,
+        role_id: UUID,
+        permission_id: UUID,
+    ) -> None:
+        pass
+
+    @abstractmethod
+    async def remove_permission_from_role(
+        self,
+        role_id: UUID,
+        permission_id: UUID,
+    ) -> None:
         pass

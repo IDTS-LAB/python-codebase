@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from src.core.authorization.dependencies import require_permission
 from src.core.authorization.permissions import ME_ACTION, UPDATE_ACTION, USER_RESOURCE
+from src.core.schemas.response import SuccessResponse
 from src.modules.user.application.detail_user.handler import DetailUserQueryHandler
 from src.modules.user.application.detail_user.query import DetailUserQuery
 from src.modules.user.application.login_user.command import LoginUserCommand
@@ -45,14 +46,16 @@ async def register(
             email=request.username,
             password=request.password,
         )
-        user = await handler.execute(command)
-        # TODO: move reponse to generic with schema
-        return {"message": "User registered successfully", "user_id": str(user.id)}
+        await handler.execute(command)
+        return SuccessResponse(
+            message="User registered successfully",
+            data=None,
+        )
     except UserAlreadyExistsError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=SuccessResponse[TokenResponse])
 async def login(
     form: OAuth2PasswordRequestForm = Depends(),
     handler: LoginUserCommandHandler = Depends(get_login_handler),

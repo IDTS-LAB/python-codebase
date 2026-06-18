@@ -31,7 +31,10 @@ from src.modules.todo.presentation.dependency import (
 router = APIRouter(prefix="/todos", tags=["Todos"])
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_todo(
     command: CreateTodoCommand,
     current_user: dict = Depends(require_permission(TODO_RESOURCE, CREATE_ACTION)),

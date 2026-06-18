@@ -1,8 +1,12 @@
+from uuid import UUID
+
 from src.core.authorization.domain.service import AuthorizationService
 from src.core.authorization.infrastructure.repositories.casbin_policy_repository import (
     SQLAlchemyCasbinPolicyRepository,
 )
 from src.core.authorization.permissions import permission_key
+from src.modules.authorization.domain.entities.permission import Permission
+from src.modules.authorization.domain.entities.role import Role
 
 CASBIN_MODEL_TEXT = """
 [request_definition]
@@ -35,6 +39,53 @@ class CasbinAuthorizationService(AuthorizationService):
 
     async def get_roles_for_subject(self, subject: str) -> list[str]:
         return await self._policy_repository.get_roles_for_subject(subject)
+
+    async def create_role(self, role: Role) -> Role:
+        return await self._policy_repository.create_role(role)
+
+    async def update_role(self, role: Role) -> Role | None:
+        return await self._policy_repository.update_role(role)
+
+    async def delete_role(self, role_id: UUID) -> None:
+        await self._policy_repository.delete_role(role_id)
+
+    async def get_role(self, role_id: UUID) -> Role | None:
+        return await self._policy_repository.get_role(role_id)
+
+    async def list_roles(self) -> list[Role]:
+        return await self._policy_repository.list_roles()
+
+    async def create_permission(self, permission: Permission) -> Permission:
+        return await self._policy_repository.create_permission(permission)
+
+    async def update_permission(self, permission: Permission) -> Permission | None:
+        return await self._policy_repository.update_permission(permission)
+
+    async def delete_permission(self, permission_id: UUID) -> None:
+        await self._policy_repository.delete_permission(permission_id)
+
+    async def get_permission(self, permission_id: UUID) -> Permission | None:
+        return await self._policy_repository.get_permission(permission_id)
+
+    async def list_permissions(self) -> list[Permission]:
+        return await self._policy_repository.list_permissions()
+
+    async def assign_permission_to_role(
+        self,
+        role_id: UUID,
+        permission_id: UUID,
+    ) -> None:
+        await self._policy_repository.assign_permission_to_role(role_id, permission_id)
+
+    async def remove_permission_from_role(
+        self,
+        role_id: UUID,
+        permission_id: UUID,
+    ) -> None:
+        await self._policy_repository.remove_permission_from_role(
+            role_id,
+            permission_id,
+        )
 
     async def _build_enforcer(self):
         try:

@@ -1,7 +1,7 @@
 import asyncio
 from uuid import uuid4
 
-from src.core import di
+from src.core.dependency import auth
 from src.core.security.password import PasswordSerrvice
 from src.modules.user.application.register_user.command import RegisterUserCommand
 from src.modules.user.application.register_user.handler import (
@@ -93,9 +93,11 @@ def test_get_current_user_reads_user_id_from_request_state(monkeypatch):
     async def run():
         repo = FakeUserRepository()
         repo.user = User(id=uuid4(), email="person@example.com", password="hashed")
-        monkeypatch.setattr(di, "SQLAlchemyUserRepository", lambda db: repo)
+        monkeypatch.setattr(auth, "SQLAlchemyUserRepository", lambda db: repo)
 
-        current_user = await di.get_current_user(request=FakeRequest(repo.user.id), db=None)
+        current_user = await auth.get_current_user(
+            request=FakeRequest(repo.user.id), db=None
+        )
 
         assert current_user["id"] == repo.user.id
         assert current_user["email"] == repo.user.email

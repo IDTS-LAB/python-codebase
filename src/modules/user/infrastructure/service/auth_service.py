@@ -6,7 +6,7 @@ from passlib.context import CryptContext
 from src.core.config.setting import get_settings
 from src.modules.user.domain.exceptions import InvalidCredentialsError
 
-settings = get_settings
+settings = get_settings()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
