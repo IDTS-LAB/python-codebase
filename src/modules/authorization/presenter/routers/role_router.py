@@ -2,10 +2,19 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from core.authorization.dependencies import require_permission
+from core.authorization.permissions import (
+    CREATE_ACTION,
+    DELETE_ACTION,
+    READ_ACTION,
+    ROLE_RESOURCE,
+    UPDATE_ACTION,
+)
 from src.core.authorization.infrastructure.services.casbin_authorization_service import (
     CasbinAuthorizationService,
 )
 from src.core.database.postgres.session import get_unit_of_work
+from src.core.schemas.response import PaginatedResponse, SuccessResponse
 from src.modules.authorization.domain.entities.role import Role
 from src.modules.authorization.presenter.dependency import (
     get_casbin_authorization_service,
@@ -14,12 +23,18 @@ from src.modules.authorization.presenter.schema.request import (
     CreateRoleRequest,
     UpdateRoleRequest,
 )
+from src.modules.authorization.presenter.schema.response import RoleResponse
 from src.shared.unit_of_work import UnitOfWork
 
 router = APIRouter(prefix="/roles", tags=["Role"])
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[RoleResponse],
+    dependencies=[Depends(require_permission(ROLE_RESOURCE, CREATE_ACTION))],
+)
 async def create_role(
     request: CreateRoleRequest,
     service: CasbinAuthorizationService = Depends(get_casbin_authorization_service),
@@ -29,17 +44,31 @@ async def create_role(
     async with unit_of_work:
         created = await service.create_role(role)
         await unit_of_work.commit()
-    return _role_response(created)
+    return SuccessResponse(
+        message="create role success", success=True, data=_role_response(created)
+    )
 
 
-@router.get("/")
+@router.get(
+    "/",
+    response_model=PaginatedResponse[RoleResponse],
+    dependencies=[Depends(require_permission(ROLE_RESOURCE, READ_ACTION))],
+)
 async def list_roles(
     service: CasbinAuthorizationService = Depends(get_casbin_authorization_service),
 ):
-    return [_role_response(role) for role in await service.list_roles()]
+    return SuccessResponse(
+        message="fetch role success",
+        success=True,
+        data=[_role_response(role) for role in await service.list_roles()],
+    )
 
 
-@router.get("/{role_id}")
+@router.get(
+    "/{role_id}",
+    response_model=SuccessResponse[RoleResponse],
+    dependencies=[Depends(require_permission(ROLE_RESOURCE, READ_ACTION))],
+)
 async def get_role(
     role_id: UUID,
     service: CasbinAuthorizationService = Depends(get_casbin_authorization_service),
@@ -47,10 +76,16 @@ async def get_role(
     role = await service.get_role(role_id)
     if role is None:
         raise HTTPException(status_code=404, detail="Role not found")
-    return _role_response(role)
+    return SuccessResponse(
+        message="fetch role success", success=True, data=_role_response(role)
+    )
 
 
-@router.patch("/{role_id}")
+@router.patch(
+    "/{role_id}",
+    response_model=SuccessResponse[RoleResponse],
+    dependencies=[Depends(require_permission(ROLE_RESOURCE, UPDATE_ACTION))],
+)
 async def update_role(
     role_id: UUID,
     request: UpdateRoleRequest,
@@ -73,10 +108,16 @@ async def update_role(
     async with unit_of_work:
         updated = await service.update_role(role)
         await unit_of_work.commit()
-    return _role_response(updated)
+    return SuccessResponse(
+        message="update role success", success=True, data=_role_response(updated)
+    )
 
 
-@router.delete("/{role_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{role_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_permission(ROLE_RESOURCE, DELETE_ACTION))],
+)
 async def delete_role(
     role_id: UUID,
     service: CasbinAuthorizationService = Depends(get_casbin_authorization_service),
@@ -90,6 +131,7 @@ async def delete_role(
 @router.post(
     "/{role_id}/permissions/{permission_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_permission(ROLE_RESOURCE, CREATE_ACTION))],
 )
 async def assign_permission_to_role(
     role_id: UUID,
@@ -105,6 +147,7 @@ async def assign_permission_to_role(
 @router.delete(
     "/{role_id}/permissions/{permission_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_permission(ROLE_RESOURCE, DELETE_ACTION))],
 )
 async def remove_permission_from_role(
     role_id: UUID,
@@ -117,11 +160,12 @@ async def remove_permission_from_role(
         await unit_of_work.commit()
 
 
-def _role_response(role: Role | None) -> dict:
+def _role_response(role: Role | None) -> RoleResponse:
     if role is None:
         raise HTTPException(status_code=404, detail="Role not found")
-    return {
-        "id": str(role.id),
-        "name": role.name,
-        "description": role.description,
-    }
+
+    return RoleResponse(
+        id=str(role.id),
+        name=role.name,
+        description=role.description,
+    )

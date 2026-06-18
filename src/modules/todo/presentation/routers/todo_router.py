@@ -2,6 +2,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from core.schemas.response import PaginatedResponse, SuccessResponse
+from modules.todo.presentation.schemas.response import TodoResponse
 from src.core.authorization.dependencies import require_permission
 from src.core.authorization.permissions import (
     CREATE_ACTION,
@@ -34,6 +36,7 @@ router = APIRouter(prefix="/todos", tags=["Todos"])
 @router.post(
     "/",
     status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[TodoResponse],
 )
 async def create_todo(
     command: CreateTodoCommand,
@@ -41,23 +44,39 @@ async def create_todo(
     handler: CreateTodoHandler = Depends(get_create_todo_handler),
 ):
     todo = await handler.execute(command, user_id=current_user.get("id"))
-    return {"id": str(todo.id), "title": todo.title, "is_completed": todo.is_completed}
+    return SuccessResponse(
+        message="create todo success",
+        success=True,
+        data=TodoResponse(
+            id=str(todo.id),
+            title=todo.title,
+            is_completed=todo.is_completed,
+        ),
+    )
 
 
-@router.get("/")
+@router.get("/", response_model=PaginatedResponse[TodoResponse])
 async def get_todos(
     current_user: dict = Depends(require_permission(TODO_RESOURCE, READ_ACTION)),
     query: GetTodosQueryHandler = Depends(get_get_todos_query_handler),
 ):
     command = GetTodosQuery(user_id=current_user.get("id"))
     todos = await query.execute(command=command)
-    return [
-        {"id": str(t.id), "title": t.title, "is_completed": t.is_completed}
-        for t in todos
-    ]
+    return PaginatedResponse(
+        message="fetch todo success",
+        success=True,
+        data=[
+            TodoResponse(
+                id=str(todo.id),
+                title=todo.title,
+                is_completed=todo.is_completed,
+            )
+            for todo in todos
+        ],
+    )
 
 
-@router.patch("/{todo_id}")
+@router.patch("/{todo_id}", response_model=SuccessResponse[TodoResponse])
 async def update_todo(
     todo_id: UUID,
     command: UpdateTodoCommand,
@@ -66,12 +85,15 @@ async def update_todo(
 ):
     try:
         todo = await handler.execute(todo_id, command, user_id=current_user.get("id"))
-        return {
-            "id": str(todo.id),
-            "title": todo.title,
-            "is_completed": todo.is_completed,
-            "created_at": todo.created_at,
-        }
+        return SuccessResponse(
+            message="update todo success",
+            success=True,
+            data=TodoResponse(
+                id=str(todo.id),
+                title=todo.title,
+                is_completed=todo.is_completed,
+            ),
+        )
     except TodoNotFoundError:
         raise HTTPException(status_code=404, detail="Todo not found")
     except UnauthorizedTodoAccessError:

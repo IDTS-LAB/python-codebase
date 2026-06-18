@@ -2,11 +2,20 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from core.authorization.dependencies import require_permission
 from src.core.authorization.infrastructure.services.casbin_authorization_service import (
     CasbinAuthorizationService,
 )
-from src.core.authorization.permissions import permission_key
+from src.core.authorization.permissions import (
+    CREATE_ACTION,
+    DELETE_ACTION,
+    PERMISSION_RESOURCE,
+    READ_ACTION,
+    UPDATE_ACTION,
+    permission_key,
+)
 from src.core.database.postgres.session import get_unit_of_work
+from src.core.schemas.response import PaginatedResponse, SuccessResponse
 from src.modules.authorization.domain.entities.permission import Permission
 from src.modules.authorization.presenter.dependency import (
     get_casbin_authorization_service,
@@ -15,12 +24,18 @@ from src.modules.authorization.presenter.schema.request import (
     CreatePermissionRequest,
     UpdatePermissionRequest,
 )
+from src.modules.authorization.presenter.schema.response import PermissionResponse
 from src.shared.unit_of_work import UnitOfWork
 
 router = APIRouter(prefix="/permissions", tags=["Permission"])
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[PermissionResponse],
+    dependencies=[Depends(require_permission(PERMISSION_RESOURCE, CREATE_ACTION))],
+)
 async def create_permission(
     request: CreatePermissionRequest,
     service: CasbinAuthorizationService = Depends(get_casbin_authorization_service),
@@ -35,20 +50,37 @@ async def create_permission(
     async with unit_of_work:
         created = await service.create_permission(permission)
         await unit_of_work.commit()
-    return _permission_response(created)
+
+    return SuccessResponse(
+        success=True,
+        message="create permission success",
+        data=_permission_response(created),
+    )
 
 
-@router.get("/")
+@router.get(
+    "/",
+    response_model=PaginatedResponse[PermissionResponse],
+    dependencies=[Depends(require_permission(PERMISSION_RESOURCE, READ_ACTION))],
+)
 async def list_permissions(
     service: CasbinAuthorizationService = Depends(get_casbin_authorization_service),
 ):
-    return [
-        _permission_response(permission)
-        for permission in await service.list_permissions()
-    ]
+    return PaginatedResponse(
+        success=True,
+        message="fetch permission success",
+        data=[
+            _permission_response(permission)
+            for permission in await service.list_permissions()
+        ],
+    )
 
 
-@router.get("/{permission_id}")
+@router.get(
+    "/{permission_id}",
+    response_model=SuccessResponse[PermissionResponse],
+    dependencies=[Depends(require_permission(PERMISSION_RESOURCE, READ_ACTION))],
+)
 async def get_permission(
     permission_id: UUID,
     service: CasbinAuthorizationService = Depends(get_casbin_authorization_service),
@@ -56,10 +88,18 @@ async def get_permission(
     permission = await service.get_permission(permission_id)
     if permission is None:
         raise HTTPException(status_code=404, detail="Permission not found")
-    return _permission_response(permission)
+    return SuccessResponse(
+        success=True,
+        message="fetch permission success",
+        data=_permission_response(permission),
+    )
 
 
-@router.patch("/{permission_id}")
+@router.patch(
+    "/{permission_id}",
+    response_model=SuccessResponse[PermissionResponse],
+    dependencies=[Depends(require_permission(PERMISSION_RESOURCE, UPDATE_ACTION))],
+)
 async def update_permission(
     permission_id: UUID,
     request: UpdatePermissionRequest,
@@ -86,10 +126,19 @@ async def update_permission(
     async with unit_of_work:
         updated = await service.update_permission(permission)
         await unit_of_work.commit()
-    return _permission_response(updated)
+
+    return SuccessResponse(
+        success=True,
+        message="update permission success",
+        data=_permission_response(updated),
+    )
 
 
-@router.delete("/{permission_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{permission_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(require_permission(PERMISSION_RESOURCE, DELETE_ACTION))],
+)
 async def delete_permission(
     permission_id: UUID,
     service: CasbinAuthorizationService = Depends(get_casbin_authorization_service),
@@ -100,13 +149,13 @@ async def delete_permission(
         await unit_of_work.commit()
 
 
-def _permission_response(permission: Permission | None) -> dict:
+def _permission_response(permission: Permission | None) -> PermissionResponse:
     if permission is None:
         raise HTTPException(status_code=404, detail="Permission not found")
-    return {
-        "id": str(permission.id),
-        "key": permission.key,
-        "resource": permission.resource,
-        "action": permission.action,
-        "description": permission.description,
-    }
+    return PermissionResponse(
+        id=str(permission.id),
+        key=permission.key,
+        resource=permission.resource,
+        action=permission.action,
+        description=permission.description,
+    )

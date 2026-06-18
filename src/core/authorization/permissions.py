@@ -1,5 +1,7 @@
 TODO_RESOURCE = "todo"
 USER_RESOURCE = "user"
+ROLE_RESOURCE = "role"
+PERMISSION_RESOURCE = "permission"
 
 CREATE_ACTION = "create"
 READ_ACTION = "read"

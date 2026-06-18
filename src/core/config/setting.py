@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     APP_NAME: str = "Todo Modulith API"
+    APP_ENV: str = "development"
     DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/todo_db"
     REDIS_URL: str = "redis://:eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81@127.0.0.1:6379/0"
     SECRET_KEY: str = "super-secret-key-change-in-production"

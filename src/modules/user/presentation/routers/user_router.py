@@ -2,7 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from src.core.authorization.dependencies import require_permission
-from src.core.authorization.permissions import ME_ACTION, UPDATE_ACTION, USER_RESOURCE
+from src.core.authorization.permissions import (
+    ME_ACTION,
+    UPDATE_ACTION,
+    USER_RESOURCE,
+)
 from src.core.schemas.response import SuccessResponse
 from src.modules.user.application.detail_user.handler import DetailUserQueryHandler
 from src.modules.user.application.detail_user.query import DetailUserQuery
@@ -30,13 +34,17 @@ from src.modules.user.presentation.schemas.request import (
     CreateUserRequest,
     RefreshTokenRequest,
 )
-from src.modules.user.presentation.schemas.response import TokenResponse
+from src.modules.user.presentation.schemas.response import TokenResponse, UserResponse
 from src.shared.exceptions.credential_exception import InvalidRefreshTokenError
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
-@router.post("/register", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[UserResponse],
+)
 async def register(
     request: CreateUserRequest,
     handler: RegisterUserCommandHandler = Depends(get_register_handler),
@@ -46,10 +54,13 @@ async def register(
             email=request.username,
             password=request.password,
         )
-        await handler.execute(command)
+        user = await handler.execute(command)
         return SuccessResponse(
             message="User registered successfully",
-            data=None,
+            data=UserResponse(
+                id=user.id,
+                email=user.email,
+            ),
         )
     except UserAlreadyExistsError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -62,14 +73,18 @@ async def login(
 ):
     command = LoginUserCommand(username=form.username, password=form.password)
     result = await handler.execute(command=command)
-    return {
-        "access_token": result.get("access_token"),
-        "refresh_token": result.get("refresh_token"),
-        "token_type": "bearer",
-    }
+    return SuccessResponse(
+        message="Login success",
+        success=True,
+        data=TokenResponse(
+            access_token=result.get("access_token"),
+            refresh_token=result.get("refresh_token"),
+            token_type="bearer",
+        ),
+    )
 
 
-@router.post("/refresh", response_model=TokenResponse)
+@router.post("/refresh", response_model=SuccessResponse[TokenResponse])
 async def refresh_token(
     request: RefreshTokenRequest,
     handler: RefreshTokenCommandHandler = Depends(get_refresh_token_handler),
@@ -80,16 +95,20 @@ async def refresh_token(
                 token=request.refresh_token,
             )
         )
-        return {
-            "access_token": result.get("access_token"),
-            "refresh_token": result.get("refresh_token"),
-            "token_type": "bearer",
-        }
+        return SuccessResponse(
+            message="Refresh token success",
+            success=True,
+            data=TokenResponse(
+                access_token=result.get("access_token"),
+                refresh_token=result.get("refresh_token"),
+                token_type="bearer",
+            ),
+        )
     except InvalidRefreshTokenError as e:
         raise HTTPException(status_code=401, detail=str(e))
 
 
-@router.get("/me")
+@router.get("/me", response_model=SuccessResponse[UserResponse])
 async def get_me(
     current_user: dict = Depends(require_permission(USER_RESOURCE, ME_ACTION)),
     handler: DetailUserQueryHandler = Depends(get_user_detail_handler),
@@ -99,7 +118,14 @@ async def get_me(
             user_id=current_user.get("id"),
         )
     )
-    return {"id": str(user.id), "email": user.email}
+    return SuccessResponse(
+        success=True,
+        message="fetch user data success",
+        data=UserResponse(
+            id=str(user.id),
+            email=user.email,
+        ),
+    )
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
