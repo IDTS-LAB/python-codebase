@@ -10,7 +10,7 @@ COMPOSE_FILE := docker-compose.yml
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install run test lint import-check check migrate downgrade revision db-up db-down db-logs clean
+.PHONY: help install run test lint import-check security-scan check migrate downgrade revision db-up db-down db-logs clean
 
 help:
 	@echo "[make:help] Available commands:"
@@ -19,6 +19,7 @@ help:
 	@echo "  [make:test]          Run pytest"
 	@echo "  [make:lint]          Run Ruff checks"
 	@echo "  [make:import-check]  Verify src.main imports"
+	@echo "  [make:security-scan] Run dependency vulnerability scan with pip-audit"
 	@echo "  [make:check]         Run tests, lint, and import check"
 	@echo "  [make:migrate]       Apply Alembic migrations"
 	@echo "  [make:downgrade]     Roll back one Alembic migration"
@@ -47,6 +48,14 @@ lint:
 import-check:
 	@echo "[make:import-check] Verifying src.main imports"
 	@PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -c "import src.main; print('import ok')"
+
+security-scan:
+	@echo "[make:security-scan] Running dependency vulnerability scan"
+	@if ! command -v pip-audit >/dev/null 2>&1; then \
+		echo "[make:security-scan] pip-audit is not installed. Install it with: pip install pip-audit"; \
+		exit 1; \
+	fi
+	@pip-audit
 
 check: test lint import-check
 	@echo "[make:check] All checks completed"

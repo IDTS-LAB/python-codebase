@@ -4,6 +4,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.authorization.dependencies import get_authorization_service
 from src.core.authorization.domain.service import AuthorizationService
 from src.core.database.postgres.session import get_db, get_unit_of_work
+from src.core.security.account_lockout import AccountLockoutService
+from src.core.security.audit import AuditService
+from src.core.security.infrastructure.repositories.audit_log_repository import (
+    SQLAlchemyAuditRepository,
+)
+from src.core.security.infrastructure.repositories.login_attempt_repository import (
+    SQLAlchemyLoginAttemptRepository,
+)
 from src.core.security.token_revocation import TokenRevocationService
 from src.modules.user.application.detail_user.handler import DetailUserQueryHandler
 from src.modules.user.application.login_user.handler import LoginUserCommandHandler
@@ -41,6 +49,16 @@ def get_token_revocation_service() -> TokenRevocationService:
     return TokenRevocationService()
 
 
+def get_audit_service(db: AsyncSession = Depends(get_db)) -> AuditService:
+    return AuditService(SQLAlchemyAuditRepository(db))
+
+
+def get_account_lockout_service(
+    db: AsyncSession = Depends(get_db),
+) -> AccountLockoutService:
+    return AccountLockoutService(SQLAlchemyLoginAttemptRepository(db))
+
+
 def get_register_handler(
     repo: UserRepository = Depends(get_user_repository),
     unit_of_work: UnitOfWork = Depends(get_unit_of_work),
@@ -53,8 +71,18 @@ def get_login_handler(
     user_repo: UserRepository = Depends(get_user_repository),
     refresh_token_repo: RefreshTokenRepository = Depends(get_refresh_token_repository),
     unit_of_work: UnitOfWork = Depends(get_unit_of_work),
+    account_lockout_service: AccountLockoutService = Depends(
+        get_account_lockout_service
+    ),
+    audit_service: AuditService = Depends(get_audit_service),
 ) -> LoginUserCommandHandler:
-    return LoginUserCommandHandler(user_repo, refresh_token_repo, unit_of_work)
+    return LoginUserCommandHandler(
+        user_repo,
+        refresh_token_repo,
+        unit_of_work,
+        account_lockout_service,
+        audit_service,
+    )
 
 
 def get_user_detail_handler(

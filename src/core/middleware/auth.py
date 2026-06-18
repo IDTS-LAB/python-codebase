@@ -11,6 +11,8 @@ from src.shared.exceptions.credential_exception import InvalidCredentialsError
 PUBLIC_PATHS = frozenset(
     {
         "/health",
+        "/live",
+        "/ready",
         "/docs",
         "/docs/",
         "/redoc",
@@ -58,10 +60,10 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
 
             request.state.user_id = user_id
             request.state.token_payload = payload
-        except JWTError as e:
+        except JWTError:
             return JSONResponse(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                content={"detail": f"Invalid or expired token: {str(e)}"},
+                content={"detail": "Invalid or expired token"},
             )
         except InvalidCredentialsError as e:
             return JSONResponse(

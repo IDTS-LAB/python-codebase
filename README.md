@@ -490,21 +490,21 @@ Legend: `Implemented` means code exists in the repository. `Partial` means code 
 | Refresh Token Rotation | Required | Implemented | Refresh flow revokes the old refresh token and persists a new token. |
 | RBAC + Permissions | Required | Implemented | Casbin-backed role and permission checks are wired through route dependencies. |
 | Rate Limiting (Redis-backed) | Required | Implemented | Redis-backed limiter reads the configured `RATE_LIMIT` value. |
-| Security Headers Middleware | Required | Not Implemented | Add headers such as `X-Content-Type-Options`, `X-Frame-Options` or CSP `frame-ancestors`, `Referrer-Policy`, and production CSP. |
+| Security Headers Middleware | Required | Implemented | Adds `X-Content-Type-Options`, `X-Frame-Options`, CSP `frame-ancestors`, `Referrer-Policy`, and `Permissions-Policy`. |
 | CORS Configuration | Required | Implemented | CORS origins, methods, and headers are environment-driven through settings. |
-| Request ID Middleware | Required | Not Implemented | Add request/correlation ID generation and response header propagation. |
-| Audit Logging | Required | Not Implemented | Add audit events for sensitive auth, user, role, permission, and todo mutations. |
-| Structured Logging | Required | Not Implemented | Add structured application logs with request ID, method, path, status, latency, and user context when available. |
+| Request ID Middleware | Required | Implemented | Generates or propagates `X-Request-ID` and stores it on request state. |
+| Audit Logging | Required | Implemented | Adds global endpoint audit logging, domain audit events, and separate persisted error traces. |
+| Structured Logging | Required | Implemented | Logs request ID, method, path, status, latency, and user context when available. |
 | Global Exception Handling | Required | Implemented | Domain exceptions are registered explicitly and `Exception` is used only as the fallback handler. |
 | Input Validation | Required | Implemented | Pydantic schemas and application validation functions are used across user and todo flows. |
 | Password Hashing (Argon2 or bcrypt) | Required | Implemented | User auth service uses bcrypt hashing. |
-| Account Lockout | Required | Not Implemented | Add failed-login tracking and temporary lockout or throttling by account. |
+| Account Lockout | Required | Implemented | Tracks failed logins and temporarily locks accounts after configured thresholds. |
 | Token Revocation | Required | Implemented | Refresh tokens are revoked on rotation/logout, and access tokens are denylisted in Redis until expiry. |
 | OpenAPI Authentication | Required | Implemented | Swagger OAuth2 auth is configured, and docs/OpenAPI endpoints are disabled when `APP_ENV=production`. |
 | Health Check Endpoint | Required | Implemented | `/health` endpoint returns service health. |
-| Readiness/Liveness Endpoints | Required | Not Implemented | Add separate readiness and liveness endpoints for deployment orchestration. |
+| Readiness/Liveness Endpoints | Required | Implemented | Adds `/live` and `/ready` operational endpoints. |
 | Request Size Limiting | Required | Implemented | `LimitRequestSizeMiddleware` rejects oversized write requests. |
-| Idempotency Support (for applicable POST endpoints) | Optional but valuable | Not Implemented | Consider idempotency keys for retry-safe create/payment-like workflows. |
+| Idempotency Support (for applicable POST endpoints) | Optional but valuable | Implemented | Supports `Idempotency-Key` replay caching for POST responses. |
 | Database Migrations | Required | Implemented | Alembic is configured with migration commands in the README and Makefile. |
 | Dependency Injection | Required | Implemented | FastAPI dependencies wire repositories, handlers, auth, authorization, and database sessions. |
 | Configuration via Environment Variables | Required | Implemented | Pydantic settings read `.env` and reject the default secret key in production. |
@@ -512,18 +512,18 @@ Legend: `Implemented` means code exists in the repository. `Partial` means code 
 ### Next Implementation Checklist
 
 - [x] Fix and verify rate limit configuration wiring.
-- [ ] Add security headers middleware.
-- [ ] Add request ID middleware.
-- [ ] Add structured request logging.
-- [ ] Add audit logging for sensitive actions.
-- [ ] Add account lockout or equivalent failed-login protection.
+- [x] Add security headers middleware.
+- [x] Add request ID middleware.
+- [x] Add structured request logging.
+- [x] Add audit logging for sensitive actions.
+- [x] Add account lockout or equivalent failed-login protection.
 - [x] Disable or authenticate `/docs`, `/redoc`, and `/openapi.json` in production.
-- [ ] Add readiness and liveness endpoints.
+- [x] Add readiness and liveness endpoints.
 - [x] Add production config validation for secrets and unsafe defaults.
 - [x] Harden CORS through environment-driven allowed origins, methods, and headers.
-- [ ] Review exception responses to avoid leaking token parsing details or internal exception messages.
-- [ ] Add automated tests for request size limits, rate limiting, auth failures, authorization failures, CORS, security headers, and request IDs.
-- [ ] Add dependency vulnerability scanning to local or CI checks, for example `pip-audit` or an equivalent Poetry-compatible scanner.
+- [x] Review exception responses to avoid leaking token parsing details or internal exception messages.
+- [x] Add automated tests for request size limits, rate limiting, auth failures, authorization failures, CORS, security headers, and request IDs.
+- [x] Add dependency vulnerability scanning to local or CI checks, for example `pip-audit` or an equivalent Poetry-compatible scanner.
 
 ## Known Notes
 

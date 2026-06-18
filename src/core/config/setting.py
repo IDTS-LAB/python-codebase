@@ -35,6 +35,20 @@ class Settings(BaseSettings):
     )
     CORS_ALLOW_METHODS: str = Field(alias="CORS_ALLOW_METHODS", default="*")
     CORS_ALLOW_HEADERS: str = Field(alias="CORS_ALLOW_HEADERS", default="*")
+    SECURITY_CONTENT_SECURITY_POLICY: str = Field(
+        alias="SECURITY_CONTENT_SECURITY_POLICY",
+        default="default-src 'self'; frame-ancestors 'none'",
+    )
+    IDEMPOTENCY_TTL_SECONDS: int = Field(alias="IDEMPOTENCY_TTL_SECONDS", default=86400)
+    ACCOUNT_LOCKOUT_MAX_ATTEMPTS: int = Field(
+        alias="ACCOUNT_LOCKOUT_MAX_ATTEMPTS", default=5
+    )
+    ACCOUNT_LOCKOUT_WINDOW_MINUTES: int = Field(
+        alias="ACCOUNT_LOCKOUT_WINDOW_MINUTES", default=15
+    )
+    ACCOUNT_LOCKOUT_DURATION_MINUTES: int = Field(
+        alias="ACCOUNT_LOCKOUT_DURATION_MINUTES", default=15
+    )
     MAX_REQUEST_SIZE_MB: int = Field(
         alias="MAX_REQUEST_SIZE_MB", default=5 * 1024 * 1024
     )

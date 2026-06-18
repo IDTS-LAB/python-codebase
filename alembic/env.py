@@ -23,6 +23,15 @@ from src.core.authorization.infrastructure.models.user_has_role_model import (
     UserHasRoleModel,  # noqa: F401
 )
 from src.core.config.setting import get_settings
+from src.core.security.infrastructure.models.audit_log_model import (
+    AuditLogModel,  # noqa: F401
+)
+from src.core.security.infrastructure.models.error_trace_model import (
+    ErrorTraceModel,  # noqa: F401
+)
+from src.core.security.infrastructure.models.login_attempt_model import (
+    LoginAttemptModel,  # noqa: F401
+)
 from src.modules.todo.infrastructure.models.todo_model import TodoModel  # noqa: F401
 from src.modules.user.infrastructure.models.refresh_token_model import (
     RefreshTokenModel,  # noqa: F401
