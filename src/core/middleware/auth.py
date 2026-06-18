@@ -6,6 +6,7 @@ from starlette.responses import JSONResponse, Response
 
 from src.core.security.jwt import JWTService
 from src.core.security.token_revocation import TokenRevocationService
+from src.shared.exceptions.credential_exception import InvalidCredentialsError
 
 PUBLIC_PATHS = frozenset(
     {
@@ -44,6 +45,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
 
         try:
             payload = JWTService.decode_token(token)
+            JWTService.require_token_type(payload, JWTService.ACCESS_TOKEN_TYPE)
             if await TokenRevocationService.is_access_token_revoked(token):
                 return JSONResponse(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -60,6 +62,11 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
             return JSONResponse(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 content={"detail": f"Invalid or expired token: {str(e)}"},
+            )
+        except InvalidCredentialsError as e:
+            return JSONResponse(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                content={"detail": str(e)},
             )
         except Exception:
             return JSONResponse(

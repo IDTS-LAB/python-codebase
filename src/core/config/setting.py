@@ -19,6 +19,8 @@ class Settings(BaseSettings):
         alias="SECRET_KEY", default="super-secret-key-change-in-production"
     )
     ALGORITHM: str = Field(alias="ALGORITHM", default="HS256")
+    JWT_ISSUER: str = Field(alias="JWT_ISSUER", default="todo-modulith-api")
+    JWT_AUDIENCE: str = Field(alias="JWT_AUDIENCE", default="todo-modulith-client")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(
         alias="ACCESS_TOKEN_EXPIRE_MINUTES", default=30
     )

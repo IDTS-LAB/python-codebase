@@ -6,6 +6,7 @@ from uuid import uuid4
 
 import pytest
 
+from src.core.security.jwt import JWTService
 from src.modules.user.application.refresh_token.command import RefreshTokenCommand
 from src.modules.user.application.refresh_token import handler as refresh_handler_module
 from src.modules.user.application.refresh_token.handler import RefreshTokenCommandHandler
@@ -90,11 +91,32 @@ def test_refresh_token_rejects_unknown_token():
     asyncio.run(run())
 
 
+def test_refresh_token_rejects_access_token_even_when_hash_exists():
+    async def run():
+        user_id = uuid4()
+        access_token = JWTService.create_access_token({"sub": str(user_id)})
+        token_hash = hashlib.sha256(access_token.encode()).hexdigest()
+        stored_token = RefreshToken.create(
+            user_id=user_id,
+            token_hash=token_hash,
+            expires_at=datetime.now(timezone.utc) + timedelta(days=1),
+        )
+        handler = RefreshTokenCommandHandler(
+            FakeRefreshTokenRepository(stored_token),
+            FakeUnitOfWork(),
+        )
+
+        with pytest.raises(InvalidRefreshTokenError, match="Invalid refresh token"):
+            await handler.execute(RefreshTokenCommand(token=access_token))
+
+    asyncio.run(run())
+
+
 def test_refresh_token_rotates_token_and_revokes_existing_token():
     async def run():
-        raw_token = "raw-refresh-token"
-        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
         user_id = uuid4()
+        raw_token = JWTService.create_refresh_token({"sub": str(user_id)})
+        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
         stored_token = RefreshToken.create(
             user_id=user_id,
             token_hash=token_hash,
@@ -126,9 +148,9 @@ def test_refresh_token_rotation_persists_new_expiry_in_minutes(monkeypatch):
             "REFRESH_TOKEN_EXPIRE_MINUTES",
             15,
         )
-        raw_token = "raw-refresh-token"
-        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
         user_id = uuid4()
+        raw_token = JWTService.create_refresh_token({"sub": str(user_id)})
+        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
         stored_token = RefreshToken.create(
             user_id=user_id,
             token_hash=token_hash,
@@ -152,10 +174,11 @@ def test_refresh_token_rotation_persists_new_expiry_in_minutes(monkeypatch):
 
 def test_refresh_token_rotation_rolls_back_when_new_token_save_fails():
     async def run():
-        raw_token = "raw-refresh-token"
+        user_id = uuid4()
+        raw_token = JWTService.create_refresh_token({"sub": str(user_id)})
         token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
         stored_token = RefreshToken.create(
-            user_id=uuid4(),
+            user_id=user_id,
             token_hash=token_hash,
             expires_at=datetime.now(timezone.utc) + timedelta(days=1),
         )

@@ -233,7 +233,10 @@ APP_NAME=Todo Modulith API
 DATABASE_URL=
 SECRET_KEY=
 ALGORITHM=HS256
+JWT_ISSUER=todo-modulith-api
+JWT_AUDIENCE=todo-modulith-client
 ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_MINUTES=10080
 ```
 
 For local development without Docker, point `DATABASE_URL` at your local PostgreSQL host, for example:

@@ -9,10 +9,14 @@ def test_access_token_uses_standard_claim_payload():
     claims = JWTService.decode_token(token)
 
     assert claims["sub"] == "user-id"
+    assert claims["iss"]
+    assert claims["aud"]
     assert claims["token_type"] == "access"
     assert claims["jti"]
     assert claims["iat"]
+    assert claims["nbf"]
     assert claims["exp"]
+    assert claims["nbf"] <= claims["iat"]
     assert claims["iat"] <= claims["exp"]
 
 
@@ -22,10 +26,14 @@ def test_refresh_token_uses_standard_claim_payload():
     claims = JWTService.decode_token(token)
 
     assert claims["sub"] == "user-id"
+    assert claims["iss"]
+    assert claims["aud"]
     assert claims["token_type"] == "refresh"
     assert claims["jti"]
     assert claims["iat"]
+    assert claims["nbf"]
     assert claims["exp"]
+    assert claims["nbf"] <= claims["iat"]
     assert claims["iat"] <= claims["exp"]
 
 

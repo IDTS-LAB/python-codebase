@@ -40,3 +40,44 @@ def test_authentication_middleware_rejects_revoked_access_token(monkeypatch):
         assert response.status_code == 401
 
     asyncio.run(run())
+
+
+def test_authentication_middleware_rejects_refresh_token_on_protected_endpoint(
+    monkeypatch,
+):
+    async def run():
+        async def active_token(_token):
+            return False
+
+        monkeypatch.setattr(
+            TokenRevocationService,
+            "is_access_token_revoked",
+            active_token,
+        )
+
+        token = JWTService.create_refresh_token({"sub": "user-id"})
+        call_next_called = False
+        request = Request(
+            {
+                "type": "http",
+                "method": "GET",
+                "path": "/protected",
+                "headers": [(b"authorization", f"Bearer {token}".encode())],
+                "query_string": b"",
+                "server": ("testserver", 80),
+                "scheme": "http",
+                "client": ("testclient", 50000),
+            }
+        )
+
+        async def call_next(_request):
+            nonlocal call_next_called
+            call_next_called = True
+            return JSONResponse({"ok": True})
+
+        response = await AuthenticationMiddleware(None).dispatch(request, call_next)
+
+        assert response.status_code == 401
+        assert call_next_called is False
+
+    asyncio.run(run())
