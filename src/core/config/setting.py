@@ -12,11 +12,11 @@ class Settings(BaseSettings):
     APP_ENV: str = Field(alias="APP_ENV", default="development")
     DATABASE_URL: str = Field(
         alias="DATABASE_URL",
-        default="postgresql+asyncpg://user:password@localhost:5432/todo_db",
+        default="postgresql+asyncpg://postgres@localhost:5432/todo_db",
     )
     REDIS_URL: str = Field(
         alias="REDIS_URL",
-        default="redis://:eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81@127.0.0.1:6379/0",
+        default="redis://127.0.0.1:6379/0",
     )
     SECRET_KEY: str = Field(alias="SECRET_KEY", default=DEFAULT_SECRET_KEY)
     ALGORITHM: str = Field(alias="ALGORITHM", default="HS256")

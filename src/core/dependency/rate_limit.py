@@ -1,5 +1,6 @@
-from fastapi import HTTPException, Request
+from fastapi import Request
 from fastapi_limiter import FastAPILimiter
+from fastapi_limiter.depends import RateLimiter
 
 from src.core.config.setting import get_settings
 from src.core.database.redis.client import get_redis_client
@@ -54,20 +55,5 @@ async def apply_global_rate_limit(request: Request):
     times = int(times_str)
     seconds = 60 if "minute" in period else 1
 
-    # Get identifier for this request
-    identifier = await custom_identifier(request)
-
-    # Check rate limit
-    is_rate_limited = await FastAPILimiter.redis.incr(
-        f"fastapi-limiter:{identifier}:{request.scope.get('path')}"
-    )
-
-    # Set expiry on first request
-    if is_rate_limited == 1:
-        await FastAPILimiter.redis.expire(
-            f"fastapi-limiter:{identifier}:{request.scope.get('path')}", seconds
-        )
-
-    # Check if rate limit exceeded
-    if is_rate_limited > times:
-        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+    limiter = RateLimiter(times=times, seconds=seconds)
+    await limiter(request)
