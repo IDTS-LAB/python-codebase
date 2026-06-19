@@ -38,6 +38,30 @@ class PaginatedResponse(BaseModel, Generic[T]):
 
 
 # ==========================================
+# Cursor-Based Pagination
+# ==========================================
+class CursorMeta(BaseModel):
+    next_cursor: Optional[str] = Field(
+        default=None, description="Cursor for the next page. None if no more items."
+    )
+    prev_cursor: Optional[str] = Field(
+        default=None, description="Cursor for the previous page. None if at the start."
+    )
+    has_next: bool = Field(
+        ..., description="True if there are more items after this page"
+    )
+    has_prev: bool = Field(..., description="True if there are items before this page")
+    limit: int = Field(..., description="Number of items per page")
+
+
+class CursorPaginatedResponse(BaseModel, Generic[T]):
+    success: bool = Field(default=True)
+    message: str = Field(default="Cursor-paginated data retrieved successfully")
+    meta: CursorMeta
+    data: List[T]
+
+
+# ==========================================
 # 3. Standard Error Response
 # ==========================================
 class ErrorDetail(BaseModel):
