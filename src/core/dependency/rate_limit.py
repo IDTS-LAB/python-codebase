@@ -1,4 +1,4 @@
-from fastapi import HTTPException, Request, Response
+from fastapi import HTTPException, Request
 from fastapi_limiter import FastAPILimiter
 
 from src.core.config.setting import get_settings
