@@ -52,11 +52,7 @@ import-check:
 
 security-scan:
 	@echo "[make:security-scan] Running dependency vulnerability scan"
-	@if ! command -v pip-audit >/dev/null 2>&1; then \
-		echo "[make:security-scan] pip-audit is not installed. Install it with: pip install pip-audit"; \
-		exit 1; \
-	fi
-	@pip-audit
+	@PIP_CACHE_DIR=.cache/pip $(POETRY) run pip-audit --cache-dir .cache/pip-audit
 
 check: test lint import-check
 	@echo "[make:check] All checks completed"

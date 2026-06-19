@@ -34,16 +34,24 @@ The API is currently versioned under `/api/v1`.
 ## Features
 
 - User registration.
-- User login with JWT access tokens.
+- User login with JWT access and refresh tokens.
+- Refresh token rotation and logout/token revocation.
 - Authentication middleware that validates bearer tokens.
+- RBAC authorization with Casbin-backed roles and permissions.
 - Current-user lookup from authenticated request state.
 - Todo creation.
-- Todo listing by authenticated user.
+- Cursor-paginated todo listing by authenticated user.
 - Todo update with ownership checks.
 - Todo delete with ownership checks.
+- Role and permission management APIs.
+- Redis-backed rate limiting.
+- Request ID, structured logging, audit logging, and security headers.
+- Request size limiting and idempotency support.
+- Health, liveness, and readiness endpoints.
 - API route grouping under `/api/v1`.
 - Async SQLAlchemy persistence.
 - Alembic database migrations.
+- Database seeders for authorization data and optional users.
 - Pytest regression tests.
 - Ruff linting.
 
@@ -59,6 +67,8 @@ The API is currently versioned under `/api/v1`.
 - Pydantic and Pydantic Settings
 - Python JOSE for JWT handling
 - Passlib for password hashing
+- Casbin for authorization policies
+- Redis and fastapi-limiter for rate limiting and token revocation
 - Pytest
 - Ruff
 - Poetry
@@ -73,14 +83,22 @@ The API is currently versioned under `/api/v1`.
 │   ├── main.py                      # FastAPI application entrypoint
 │   ├── core/
 │   │   ├── bootstrap/               # Application bootstrap helpers
+│   │   ├── authorization/           # RBAC permissions, Casbin services, auth models
 │   │   ├── config/                  # Runtime settings
-│   │   ├── database/                # SQLAlchemy async session setup
-│   │   ├── middleware/              # Authentication middleware
+│   │   ├── database/                # PostgreSQL and Redis connection setup
+│   │   ├── dependency/              # Shared FastAPI dependencies
+│   │   ├── exceptions/              # Exception registration and handlers
+│   │   ├── middleware/              # Auth, audit, security, logging, request middleware
 │   │   ├── routers/                 # API router composition
-│   │   ├── security/                # JWT and password helpers
-│   │   ├── di.py                    # Shared dependency helpers
+│   │   ├── schemas/                 # Shared response schemas
+│   │   ├── security/                # JWT, password, revocation, audit helpers
+│   │   ├── seed/                    # Database seeding orchestration
+│   │   ├── utils/                   # Cursor pagination helpers
 │   │   └── lifespan.py              # FastAPI lifespan hook
 │   ├── modules/
+│   │   ├── authorization/
+│   │   │   ├── domain/              # Role and permission entities
+│   │   │   └── presenter/           # Role and permission routers/schemas
 │   │   ├── user/
 │   │   │   ├── application/         # User commands, queries, handlers
 │   │   │   ├── domain/              # User entity, exceptions, repository port
@@ -99,14 +117,14 @@ The API is currently versioned under `/api/v1`.
 ├── poetry.lock                      # Poetry lock file
 ├── alembic.ini                      # Alembic configuration
 ├── Dockerfile                       # Docker image definition
-└── docker-compose.yml               # Local API and PostgreSQL services
+└── docker-compose.yml               # Local API, PostgreSQL, and Redis services
 ```
 
 ## Architecture
 
 ### Modulith
 
-This is a single deployable application with module boundaries inside the codebase. The `user` and `todo` modules are independent feature areas under `src/modules`.
+This is a single deployable application with module boundaries inside the codebase. The `user`, `todo`, and `authorization` modules are independent feature areas under `src/modules`.
 
 ### Clean Architecture Direction
 
@@ -168,7 +186,7 @@ POST /api/v1/auth/login
 Request with Authorization: Bearer <token>
   -> AuthenticationMiddleware validates JWT
   -> request.state.user_id is set
-  -> route dependency resolves current user
+  -> route dependency checks role permission
   -> todo handler executes use case
   -> TodoRepository port
   -> SQLAlchemyTodoRepository
@@ -188,17 +206,35 @@ Current routes:
 ```text
 POST   /api/v1/auth/register
 POST   /api/v1/auth/login
+POST   /api/v1/auth/refresh
 GET    /api/v1/auth/me
+POST   /api/v1/auth/logout
 POST   /api/v1/todos/
-GET    /api/v1/todos/
+GET    /api/v1/todos/?cursor=<cursor>&limit=10
 PATCH  /api/v1/todos/{todo_id}
 DELETE /api/v1/todos/{todo_id}
+POST   /api/v1/roles/
+GET    /api/v1/roles/?cursor=<cursor>&limit=10
+GET    /api/v1/roles/{role_id}
+PATCH  /api/v1/roles/{role_id}
+DELETE /api/v1/roles/{role_id}
+POST   /api/v1/roles/{role_id}/permissions/{permission_id}
+DELETE /api/v1/roles/{role_id}/permissions/{permission_id}
+POST   /api/v1/permissions/
+GET    /api/v1/permissions/?cursor=<cursor>&limit=10
+GET    /api/v1/permissions/{permission_id}
+PATCH  /api/v1/permissions/{permission_id}
+DELETE /api/v1/permissions/{permission_id}
 GET    /health
+GET    /live
+GET    /ready
 ```
 
 Public routes:
 
 - `/health`
+- `/live`
+- `/ready`
 - `/docs`
 - `/redoc`
 - `/openapi.json`
@@ -210,6 +246,8 @@ Protected routes require:
 ```text
 Authorization: Bearer <access_token>
 ```
+
+Swagger UI, ReDoc, and OpenAPI JSON are disabled when `APP_ENV=production`.
 
 ## Prerequisites
 
@@ -230,18 +268,39 @@ Expected values:
 
 ```env
 APP_NAME=Todo Modulith API
+APP_ENV=production
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=
 POSTGRES_DB=todo_db
 REDIS_PASSWORD=
 DATABASE_URL=
+DATABASE_POOL_SIZE=20
+DATABASE_MAX_OVERFLOW=10
+DATABASE_POOL_TIMEOUT=30
+DATABASE_POOL_RECYCLE=3600
 REDIS_URL=
 SECRET_KEY=
+MAX_REQUEST_SIZE_MB=5242880
 ALGORITHM=HS256
 JWT_ISSUER=todo-modulith-api
 JWT_AUDIENCE=todo-modulith-client
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 REFRESH_TOKEN_EXPIRE_MINUTES=10080
+RATE_LIMIT=100/minute
+CORS_ALLOW_ORIGINS=http://localhost:3000
+CORS_ALLOW_METHODS=*
+CORS_ALLOW_HEADERS=*
+SECURITY_CONTENT_SECURITY_POLICY=default-src 'self'; frame-ancestors 'none'
+IDEMPOTENCY_TTL_SECONDS=86400
+ACCOUNT_LOCKOUT_MAX_ATTEMPTS=5
+ACCOUNT_LOCKOUT_WINDOW_MINUTES=15
+ACCOUNT_LOCKOUT_DURATION_MINUTES=15
+LOG_FORMAT=json
+SEED_ADMIN_EMAIL=
+SEED_ADMIN_PASSWORD=
+SEED_ADMIN_USERNAME=admin
+SEED_ADMIN_FULLNAME=System Administrator
+SEED_DEVELOPMENT_USERS_PASSWORD=
 ```
 
 For local development without Docker, point `DATABASE_URL` at your local PostgreSQL host, for example:
@@ -296,6 +355,13 @@ Health check:
 
 ```text
 http://localhost:8000/health
+```
+
+Operational checks:
+
+```text
+http://localhost:8000/live
+http://localhost:8000/ready
 ```
 
 ## Database and Migrations
@@ -394,6 +460,12 @@ Current check set:
 - `ruff check src tests scripts`
 - import check for `src.main`
 
+Dependency scanning is available separately:
+
+```bash
+make security-scan
+```
+
 ## Makefile Commands
 
 ```bash
@@ -403,6 +475,7 @@ make run
 make test
 make lint
 make import-check
+make security-scan
 make check
 make migrate
 make seed
@@ -416,7 +489,9 @@ make clean
 
 ## Docker Notes
 
-Run database and API services:
+Before starting Docker Compose, set non-empty `POSTGRES_PASSWORD`, `REDIS_PASSWORD`, and `SECRET_KEY` in `.env`. Compose intentionally fails fast when database or Redis passwords are missing.
+
+Run API, PostgreSQL, and Redis services:
 
 ```bash
 make db-up
@@ -433,8 +508,6 @@ Follow service logs:
 ```bash
 make db-logs
 ```
-
-Known Dockerfile note: `Dockerfile` currently references `start.sh`, while the actual script is under `scripts/start.sh`. If you plan to rely on Docker builds, align those paths first.
 
 ## Development Guide
 
@@ -569,5 +642,4 @@ Legend: `Implemented` means code exists in the repository. `Partial` means code 
 
 - `src/core/lifespan.py` still calls `Base.metadata.create_all`; with Alembic in place, production environments normally rely on migrations instead.
 - The project has a Pydantic v2 deprecation warning for class-based settings config.
-- The Dockerfile start script path needs alignment before relying on Docker builds.
 - The current architecture is clean enough for a learning modulith, but some flows can be made stricter by moving remaining business orchestration out of routers and into application handlers.
