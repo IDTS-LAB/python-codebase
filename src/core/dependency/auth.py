@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, Request, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.database.postgres.session import get_db
@@ -9,10 +9,12 @@ from src.modules.user.infrastructure.repositories.user_repository import (
     SQLAlchemyUserRepository,
 )
 
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/api/v1/auth/login",
-    refreshUrl="/api/v1/auth/refresh",
-)
+# oauth2_scheme = OAuth2PasswordBearer(
+#     tokenUrl="/api/v1/auth/login",
+#     refreshUrl="/api/v1/auth/refresh",
+# )
+
+oauth2_scheme = HTTPBearer(scheme_name="Authorization", auto_error=False)
 
 
 async def get_current_user(
