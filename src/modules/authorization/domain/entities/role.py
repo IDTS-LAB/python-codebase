@@ -6,7 +6,9 @@ from uuid import UUID, uuid4
 class Role:
     id: UUID
     name: str
-    description: str | None
+    description: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
 
     @classmethod
     def create(cls, name: str, description: str | None = None) -> "Role":

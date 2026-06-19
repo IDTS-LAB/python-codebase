@@ -1,8 +1,10 @@
+from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import delete, select
+from sqlalchemy import and_, delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.core.utils.cursor import CursorDirection
 from src.core.authorization.infrastructure.models.casbin_rule_model import (
     CasbinRuleModel,
 )
@@ -12,10 +14,10 @@ from src.core.authorization.infrastructure.models.permission_model import (
 from src.core.authorization.infrastructure.models.resource_model import (
     AuthorizationResourceModel,
 )
+from src.core.authorization.infrastructure.models.role_model import RoleModel
 from src.core.authorization.infrastructure.models.role_permission_model import (
     RolePermissionModel,
 )
-from src.core.authorization.infrastructure.models.role_model import RoleModel
 from src.core.authorization.infrastructure.models.user_has_role_model import (
     UserHasRoleModel,
 )
@@ -122,10 +124,7 @@ class SQLAlchemyCasbinPolicyRepository:
 
     async def list_resources(self) -> list[AuthorizationResource]:
         result = await self._db.execute(select(AuthorizationResourceModel))
-        return [
-            self._resource_from_model(model)
-            for model in result.scalars().all()
-        ]
+        return [self._resource_from_model(model) for model in result.scalars().all()]
 
     async def create_role(self, role: Role) -> Role:
         model = RoleModel(
@@ -138,7 +137,9 @@ class SQLAlchemyCasbinPolicyRepository:
         return self._role_from_model(model)
 
     async def get_role(self, role_id: UUID) -> Role | None:
-        result = await self._db.execute(select(RoleModel).where(RoleModel.id == role_id))
+        result = await self._db.execute(
+            select(RoleModel).where(RoleModel.id == role_id)
+        )
         model = result.scalar_one_or_none()
         if model is None:
             return None
@@ -148,8 +149,36 @@ class SQLAlchemyCasbinPolicyRepository:
         result = await self._db.execute(select(RoleModel))
         return [self._role_from_model(model) for model in result.scalars().all()]
 
+    async def list_roles_cursor(
+        self,
+        cursor_created_at: datetime | None = None,
+        cursor_id: UUID | None = None,
+        limit: int = 10,
+        direction: CursorDirection = CursorDirection.DIRECTION_NEXT,
+    ) -> tuple[list[Role], bool]:
+        query = select(RoleModel)
+        query = self._apply_cursor_pagination(
+            query,
+            RoleModel,
+            cursor_created_at,
+            cursor_id,
+            direction,
+        ).limit(limit + 1)
+
+        result = await self._db.execute(query)
+        models = list(result.scalars().all())
+        has_more = len(models) > limit
+        models = models[:limit]
+
+        if direction == CursorDirection.DIRECTION_PREV:
+            models = list(reversed(models))
+
+        return [self._role_from_model(model) for model in models], has_more
+
     async def update_role(self, role: Role) -> Role | None:
-        result = await self._db.execute(select(RoleModel).where(RoleModel.id == role.id))
+        result = await self._db.execute(
+            select(RoleModel).where(RoleModel.id == role.id)
+        )
         model = result.scalar_one_or_none()
         if model is None:
             return None
@@ -209,10 +238,33 @@ class SQLAlchemyCasbinPolicyRepository:
 
     async def list_permissions(self) -> list[Permission]:
         result = await self._db.execute(select(PermissionModel))
-        return [
-            self._permission_from_model(model)
-            for model in result.scalars().all()
-        ]
+        return [self._permission_from_model(model) for model in result.scalars().all()]
+
+    async def list_permissions_cursor(
+        self,
+        cursor_created_at: datetime | None = None,
+        cursor_id: UUID | None = None,
+        limit: int = 10,
+        direction: CursorDirection = CursorDirection.DIRECTION_NEXT,
+    ) -> tuple[list[Permission], bool]:
+        query = select(PermissionModel)
+        query = self._apply_cursor_pagination(
+            query,
+            PermissionModel,
+            cursor_created_at,
+            cursor_id,
+            direction,
+        ).limit(limit + 1)
+
+        result = await self._db.execute(query)
+        models = list(result.scalars().all())
+        has_more = len(models) > limit
+        models = models[:limit]
+
+        if direction == CursorDirection.DIRECTION_PREV:
+            models = list(reversed(models))
+
+        return [self._permission_from_model(model) for model in models], has_more
 
     async def update_permission(self, permission: Permission) -> Permission | None:
         result = await self._db.execute(
@@ -287,9 +339,13 @@ class SQLAlchemyCasbinPolicyRepository:
         result = await self._db.execute(
             select(RoleModel.name, PermissionModel.key)
             .join(RolePermissionModel, RolePermissionModel.role_id == RoleModel.id)
-            .join(PermissionModel, PermissionModel.id == RolePermissionModel.permission_id)
+            .join(
+                PermissionModel, PermissionModel.id == RolePermissionModel.permission_id
+            )
         )
-        return [(role_name, permission_key) for role_name, permission_key in result.all()]
+        return [
+            (role_name, permission_key) for role_name, permission_key in result.all()
+        ]
 
     async def remove_permission_from_role(
         self,
@@ -319,7 +375,9 @@ class SQLAlchemyCasbinPolicyRepository:
         populated = [value for value in values if value is not None]
         return (rule.ptype, *populated)
 
-    async def _get_or_create_resource(self, resource_key: str) -> AuthorizationResourceModel:
+    async def _get_or_create_resource(
+        self, resource_key: str
+    ) -> AuthorizationResourceModel:
         result = await self._db.execute(
             select(AuthorizationResourceModel).where(
                 AuthorizationResourceModel.key == resource_key,
@@ -384,6 +442,8 @@ class SQLAlchemyCasbinPolicyRepository:
             id=model.id,
             name=model.name,
             description=model.description,
+            created_at=model.created_at.isoformat(),
+            updated_at=model.updated_at.isoformat(),
         )
 
     def _resource_from_model(
@@ -404,4 +464,40 @@ class SQLAlchemyCasbinPolicyRepository:
             resource=model.resource,
             action=model.action,
             description=model.description,
+            created_at=model.created_at.isoformat(),
+            updated_at=model.updated_at.isoformat(),
         )
+
+    def _apply_cursor_pagination(
+        self,
+        query,
+        model,
+        cursor_created_at: datetime | None,
+        cursor_id: UUID | None,
+        direction: CursorDirection,
+    ):
+        if cursor_created_at and cursor_id:
+            if direction == CursorDirection.DIRECTION_NEXT:
+                query = query.where(
+                    or_(
+                        model.created_at < cursor_created_at,
+                        and_(
+                            model.created_at == cursor_created_at,
+                            model.id < cursor_id,
+                        ),
+                    )
+                )
+                return query.order_by(model.created_at.desc(), model.id.desc())
+
+            query = query.where(
+                or_(
+                    model.created_at > cursor_created_at,
+                    and_(
+                        model.created_at == cursor_created_at,
+                        model.id > cursor_id,
+                    ),
+                )
+            )
+            return query.order_by(model.created_at.asc(), model.id.asc())
+
+        return query.order_by(model.created_at.desc(), model.id.desc())

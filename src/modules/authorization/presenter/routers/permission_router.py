@@ -1,6 +1,8 @@
+from datetime import datetime
+from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from src.core.authorization.dependencies import require_permission
 from src.core.authorization.infrastructure.services.casbin_authorization_service import (
@@ -15,7 +17,12 @@ from src.core.authorization.permissions import (
     permission_key,
 )
 from src.core.database.postgres.session import get_unit_of_work
-from src.core.schemas.response import PaginatedResponse, SuccessResponse
+from src.core.schemas.response import (
+    CursorMeta,
+    CursorPaginatedResponse,
+    SuccessResponse,
+)
+from src.core.utils.cursor import CursorDirection, decode_cursor, encode_cursor
 from src.modules.authorization.domain.entities.permission import Permission
 from src.modules.authorization.presenter.dependency import (
     get_casbin_authorization_service,
@@ -60,19 +67,62 @@ async def create_permission(
 
 @router.get(
     "/",
-    response_model=PaginatedResponse[PermissionResponse],
+    response_model=CursorPaginatedResponse[PermissionResponse],
     dependencies=[Depends(require_permission(PERMISSION_RESOURCE, READ_ACTION))],
 )
 async def list_permissions(
+    cursor: Optional[str] = Query(
+        None, description="Cursor for pagination (from previous response)"
+    ),
+    limit: int = Query(10, ge=1, le=100, description="Number of items per page"),
     service: CasbinAuthorizationService = Depends(get_casbin_authorization_service),
 ):
-    return PaginatedResponse(
+    cursor_created_at = None
+    cursor_id = None
+    direction = CursorDirection.DIRECTION_NEXT
+    if cursor:
+        cursor_created_at, cursor_id, direction = decode_cursor(cursor)
+
+    permissions, has_more = await service.list_permissions_cursor(
+        cursor_created_at=cursor_created_at,
+        cursor_id=cursor_id,
+        limit=limit,
+        direction=direction,
+    )
+
+    next_cursor = None
+    prev_cursor = None
+
+    if has_more and permissions:
+        last_item = permissions[-1]
+        next_cursor = encode_cursor(
+            _created_at_datetime(last_item.created_at),
+            last_item.id,
+            CursorDirection.DIRECTION_NEXT,
+        )
+
+    if cursor and permissions:
+        first_item = permissions[0]
+        prev_cursor = encode_cursor(
+            _created_at_datetime(first_item.created_at),
+            first_item.id,
+            CursorDirection.DIRECTION_PREV,
+        )
+
+    return CursorPaginatedResponse(
         success=True,
         message="fetch permission success",
         data=[
             _permission_response(permission)
-            for permission in await service.list_permissions()
+            for permission in permissions
         ],
+        meta=CursorMeta(
+            next_cursor=next_cursor,
+            prev_cursor=prev_cursor,
+            has_next=has_more,
+            has_prev=cursor is not None,
+            limit=limit,
+        ),
     )
 
 
@@ -158,4 +208,14 @@ def _permission_response(permission: Permission | None) -> PermissionResponse:
         resource=permission.resource,
         action=permission.action,
         description=permission.description,
+        created_at=permission.created_at,
+        updated_at=permission.updated_at,
     )
+
+
+def _created_at_datetime(created_at: datetime | str | None) -> datetime:
+    if isinstance(created_at, datetime):
+        return created_at
+    if isinstance(created_at, str):
+        return datetime.fromisoformat(created_at)
+    raise HTTPException(status_code=500, detail="Permission timestamp is missing")

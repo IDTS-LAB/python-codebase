@@ -74,6 +74,7 @@ async def get_todos(
 ):
     cursor_created_at = None
     cursor_id = None
+    direction = None
     if cursor:
         cursor_created_at, cursor_id, direction = decode_cursor(cursor)
 

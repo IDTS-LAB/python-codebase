@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 from uuid import UUID
 
+from src.core.utils.cursor import CursorDirection
 from src.modules.authorization.domain.entities.permission import Permission
 from src.modules.authorization.domain.entities.role import Role
 
@@ -39,6 +41,16 @@ class AuthorizationService(ABC):
         pass
 
     @abstractmethod
+    async def list_roles_cursor(
+        self,
+        cursor_created_at: datetime | None = None,
+        cursor_id: UUID | None = None,
+        limit: int = 10,
+        direction: CursorDirection = CursorDirection.DIRECTION_NEXT,
+    ) -> tuple[list[Role], bool]:
+        pass
+
+    @abstractmethod
     async def create_permission(self, permission: Permission) -> Permission:
         pass
 
@@ -56,6 +68,16 @@ class AuthorizationService(ABC):
 
     @abstractmethod
     async def list_permissions(self) -> list[Permission]:
+        pass
+
+    @abstractmethod
+    async def list_permissions_cursor(
+        self,
+        cursor_created_at: datetime | None = None,
+        cursor_id: UUID | None = None,
+        limit: int = 10,
+        direction: CursorDirection = CursorDirection.DIRECTION_NEXT,
+    ) -> tuple[list[Permission], bool]:
         pass
 
     @abstractmethod

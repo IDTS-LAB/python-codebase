@@ -9,10 +9,16 @@ class Permission:
     resource: str
     action: str
     description: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
 
     @classmethod
     def create(
-        cls, key: str, resource: str, action: str, description: str | None
+        cls,
+        key: str,
+        resource: str,
+        action: str,
+        description: str | None,
     ) -> "Permission":
         return cls(
             id=uuid4(),

@@ -1,6 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
+from src.core.utils.cursor import CursorDirection
 from src.modules.todo.application.list_todo.query import GetTodosQuery
 from src.modules.todo.application.list_todo.validation import validate_get_todos_query
 from src.modules.todo.domain.entities.todo import Todo
@@ -27,7 +28,7 @@ class GetTodosCursorQuery:
         cursor_created_at: datetime | None = None,
         cursor_id: UUID | None = None,
         limit: int = 10,
-        direction: str = "next",
+        direction: CursorDirection = CursorDirection.DIRECTION_NEXT,
     ) -> tuple[list[Todo], bool]:
         """
         Returns: (items, has_more)
