@@ -1,11 +1,11 @@
 import pytest
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 
 from src.core.bootstrap.exception import register_exception
 from src.core.bootstrap.middleware import register_middleware
 from src.core.config.setting import Settings
 from src.core.dependency import rate_limit as rate_limit_module
-from src.core.dependency.rate_limit import apply_global_rate_limit
+from src.core.dependency.rate_limit import apply_global_rate_limit, custom_identifier
 from src.core.exceptions.handler import (
     DOMAIN_EXCEPTION_MAP,
     domain_exception_handler,
@@ -23,7 +23,7 @@ def test_rate_limit_uses_configured_rate_limit_setting(monkeypatch):
             self.seconds = seconds
             created_limiters.append(self)
 
-        async def __call__(self, request):
+        async def __call__(self, request, response):
             return None
 
     request = Request(
@@ -44,10 +44,77 @@ def test_rate_limit_uses_configured_rate_limit_setting(monkeypatch):
 
     import asyncio
 
-    asyncio.run(apply_global_rate_limit(request))
+    asyncio.run(apply_global_rate_limit(request, Response()))
 
     assert created_limiters[0].times == 42
     assert created_limiters[0].seconds == 60
+
+
+def test_rate_limit_passes_response_to_limiter(monkeypatch):
+    limiter_calls = []
+
+    class FakeLimiter:
+        def __init__(self, times: int, seconds: int):
+            self.times = times
+            self.seconds = seconds
+
+        async def __call__(self, request, response):
+            limiter_calls.append((request, response))
+
+    request = Request(
+        {
+            "type": "http",
+            "method": "GET",
+            "path": "/api/v1/todos/",
+            "headers": [],
+            "query_string": b"",
+            "server": ("testserver", 80),
+            "scheme": "http",
+            "client": ("testclient", 50000),
+        }
+    )
+    response = Response()
+
+    monkeypatch.setattr(rate_limit_module, "RateLimiter", FakeLimiter)
+
+    import asyncio
+
+    asyncio.run(apply_global_rate_limit(request, response))
+
+    assert limiter_calls == [(request, response)]
+
+
+def test_rate_limit_handles_included_router_entries():
+    class FakeRedis:
+        async def script_load(self, script):
+            return "sha"
+
+        async def evalsha(self, sha, keys, key, times, milliseconds):
+            return 0
+
+    app = create_app(Settings(APP_ENV="development"))
+    request = Request(
+        {
+            "type": "http",
+            "app": app,
+            "method": "GET",
+            "path": "/api/v1/todos/",
+            "headers": [],
+            "query_string": b"",
+            "server": ("testserver", 80),
+            "scheme": "http",
+            "client": ("testclient", 50000),
+        }
+    )
+
+    import asyncio
+    from fastapi_limiter import FastAPILimiter
+
+    async def run_rate_limit():
+        await FastAPILimiter.init(FakeRedis(), identifier=custom_identifier)
+        await apply_global_rate_limit(request, Response())
+
+    asyncio.run(run_rate_limit())
 
 
 def test_cors_middleware_uses_environment_driven_settings(monkeypatch):
