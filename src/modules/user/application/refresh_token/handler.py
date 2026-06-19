@@ -11,7 +11,10 @@ from src.modules.user.domain.entities.refresh_token import RefreshToken
 from src.modules.user.domain.repositories.refresh_token_repository import (
     RefreshTokenRepository,
 )
-from src.shared.exceptions.credential_exception import InvalidRefreshTokenError
+from src.shared.exceptions.credential_exception import (
+    InvalidCredentialsError,
+    InvalidRefreshTokenError,
+)
 from src.shared.unit_of_work import UnitOfWork
 
 settings = get_settings()
@@ -41,6 +44,15 @@ class RefreshTokenCommandHandler:
             raise InvalidRefreshTokenError("Refresh token has been revoked")
         if stored_token.expires_at < datetime.now(timezone.utc):
             raise InvalidRefreshTokenError("Refresh token has expired")
+
+        try:
+            payload = JWTService.decode_token(command.token)
+            JWTService.require_token_type(payload, JWTService.REFRESH_TOKEN_TYPE)
+        except InvalidCredentialsError:
+            raise InvalidRefreshTokenError("Invalid refresh token")
+
+        if payload.get("sub") != str(stored_token.user_id):
+            raise InvalidRefreshTokenError("Invalid refresh token")
 
         async with self._unit_of_work:
             stored_token.revoke()

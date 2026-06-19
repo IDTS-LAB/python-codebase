@@ -9,4 +9,4 @@ class RoleModel(Base, TimeStampMixin, SoftDeleteMixin):
     __tablename__ = "roles"
 
     name: Mapped[str] = mapped_column(String(100), unique=True, index=True)
-    descpription: Mapped[str] = mapped_column(String(255), nullable=True)
+    description: Mapped[str | None] = mapped_column(String(255), nullable=True)

@@ -1,8 +1,10 @@
+from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import delete, select
+from sqlalchemy import and_, delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.core.utils.cursor import CursorDirection
 from src.modules.todo.domain.entities.todo import Todo
 from src.modules.todo.domain.repositories.todo_repository import TodoRepository
 from src.modules.todo.infrastructure.models.todo_model import TodoModel
@@ -24,6 +26,70 @@ class SQLAlchemyTodoRepository(TodoRepository):
             is_completed=model.is_completed,
             user_id=model.user_id,
         )
+
+    async def get_by_user_cursor(
+        self,
+        user_id: UUID,
+        cursor_created_at: datetime | None = None,
+        cursor_id: UUID | None = None,
+        limit: int = 10,
+        direction: CursorDirection = CursorDirection.DIRECTION_NEXT,
+    ) -> tuple[list[Todo], bool]:
+        """
+        Cursor pagination logic:
+        - If direction="next": Get items AFTER the cursor (older items)
+        - If direction="prev": Get items BEFORE the cursor (newer items)
+        """
+        query = select(TodoModel).where(
+            TodoModel.user_id == user_id,
+            TodoModel.deleted_at.is_(None),
+        )
+
+        # Apply cursor filter if provided
+        if cursor_created_at and cursor_id:
+            if direction == CursorDirection.DIRECTION_NEXT:
+                # Get items older than cursor (created_at < cursor OR (created_at == cursor AND id < cursor_id))
+                query = query.where(
+                    or_(
+                        TodoModel.created_at < cursor_created_at,
+                        and_(
+                            TodoModel.created_at == cursor_created_at,
+                            TodoModel.id < cursor_id,
+                        ),
+                    )
+                )
+                query = query.order_by(TodoModel.created_at.desc(), TodoModel.id.desc())
+            else:
+                # Get items newer than cursor (created_at > cursor OR (created_at == cursor AND id > cursor_id))
+                query = query.where(
+                    or_(
+                        TodoModel.created_at > cursor_created_at,
+                        and_(
+                            TodoModel.created_at == cursor_created_at,
+                            TodoModel.id > cursor_id,
+                        ),
+                    )
+                )
+                query = query.order_by(TodoModel.created_at.asc(), TodoModel.id.asc())
+        else:
+            # No cursor, just get the first page
+            query = query.order_by(TodoModel.created_at.desc(), TodoModel.id.desc())
+
+        # Fetch limit + 1 to check if there are more items
+        query = query.limit(limit + 1)
+
+        result = await self.db.execute(query)
+        models = result.scalars().all()
+
+        # Check if there are more items
+        has_more = len(models) > limit
+        models = models[:limit]  # Trim to actual limit
+
+        # If we fetched "prev", reverse to maintain consistent order (newest first)
+        if direction == CursorDirection.DIRECTION_PREV:
+            models = list(reversed(models))
+
+        return [self._to_entity(m) for m in models], has_more
 
     async def get_all_by_user(self, user_id: UUID) -> list[Todo]:
         result = await self.db.execute(

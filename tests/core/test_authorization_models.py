@@ -4,6 +4,9 @@ from src.core.authorization.infrastructure.models.casbin_rule_model import (
 from src.core.authorization.infrastructure.models.permission_model import (
     PermissionModel,
 )
+from src.core.authorization.infrastructure.models.resource_model import (
+    AuthorizationResourceModel,
+)
 from src.core.authorization.infrastructure.models.role_model import (
     RoleModel,
 )
@@ -16,6 +19,7 @@ from src.core.authorization.infrastructure.models.user_has_role_model import (
 
 
 def test_authorization_tables_are_registered_in_metadata():
+    assert AuthorizationResourceModel.__tablename__ == "authorization_resources"
     assert RoleModel.__tablename__ == "roles"
     assert PermissionModel.__tablename__ == "permissions"
     assert RolePermissionModel.__tablename__ == "role_permissions"
@@ -24,10 +28,15 @@ def test_authorization_tables_are_registered_in_metadata():
 
 
 def test_authorization_models_have_expected_columns():
-    assert {"name"}.issubset(RoleModel.__table__.columns.keys())
-    assert {"key", "resource", "action"}.issubset(
+    assert {"key", "name", "description"}.issubset(
+        AuthorizationResourceModel.__table__.columns.keys()
+    )
+    assert {"name", "description"}.issubset(RoleModel.__table__.columns.keys())
+    assert "descpription" not in RoleModel.__table__.columns.keys()
+    assert {"key", "resource_id", "resource", "action", "description"}.issubset(
         PermissionModel.__table__.columns.keys()
     )
+    assert "descpription" not in PermissionModel.__table__.columns.keys()
     assert {"role_id", "permission_id"}.issubset(
         RolePermissionModel.__table__.columns.keys()
     )

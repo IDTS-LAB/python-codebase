@@ -1,20 +1,27 @@
+from datetime import datetime
+from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from core.authorization.dependencies import require_permission
-from core.authorization.permissions import (
+from src.core.authorization.dependencies import require_permission
+from src.core.authorization.infrastructure.services.casbin_authorization_service import (
+    CasbinAuthorizationService,
+)
+from src.core.authorization.permissions import (
     CREATE_ACTION,
     DELETE_ACTION,
     READ_ACTION,
     ROLE_RESOURCE,
     UPDATE_ACTION,
 )
-from src.core.authorization.infrastructure.services.casbin_authorization_service import (
-    CasbinAuthorizationService,
-)
 from src.core.database.postgres.session import get_unit_of_work
-from src.core.schemas.response import PaginatedResponse, SuccessResponse
+from src.core.schemas.response import (
+    CursorMeta,
+    CursorPaginatedResponse,
+    SuccessResponse,
+)
+from src.core.utils.cursor import CursorDirection, decode_cursor, encode_cursor
 from src.modules.authorization.domain.entities.role import Role
 from src.modules.authorization.presenter.dependency import (
     get_casbin_authorization_service,
@@ -51,16 +58,59 @@ async def create_role(
 
 @router.get(
     "/",
-    response_model=PaginatedResponse[RoleResponse],
+    response_model=CursorPaginatedResponse[RoleResponse],
     dependencies=[Depends(require_permission(ROLE_RESOURCE, READ_ACTION))],
 )
 async def list_roles(
+    cursor: Optional[str] = Query(
+        None, description="Cursor for pagination (from previous response)"
+    ),
+    limit: int = Query(10, ge=1, le=100, description="Number of items per page"),
     service: CasbinAuthorizationService = Depends(get_casbin_authorization_service),
 ):
-    return SuccessResponse(
+    cursor_created_at = None
+    cursor_id = None
+    direction = CursorDirection.DIRECTION_NEXT
+    if cursor:
+        cursor_created_at, cursor_id, direction = decode_cursor(cursor)
+
+    roles, has_more = await service.list_roles_cursor(
+        cursor_created_at=cursor_created_at,
+        cursor_id=cursor_id,
+        limit=limit,
+        direction=direction,
+    )
+
+    next_cursor = None
+    prev_cursor = None
+
+    if has_more and roles:
+        last_item = roles[-1]
+        next_cursor = encode_cursor(
+            _created_at_datetime(last_item.created_at),
+            last_item.id,
+            CursorDirection.DIRECTION_NEXT,
+        )
+
+    if cursor and roles:
+        first_item = roles[0]
+        prev_cursor = encode_cursor(
+            _created_at_datetime(first_item.created_at),
+            first_item.id,
+            CursorDirection.DIRECTION_PREV,
+        )
+
+    return CursorPaginatedResponse(
         message="fetch role success",
         success=True,
-        data=[_role_response(role) for role in await service.list_roles()],
+        data=[_role_response(role) for role in roles],
+        meta=CursorMeta(
+            next_cursor=next_cursor,
+            prev_cursor=prev_cursor,
+            has_next=has_more,
+            has_prev=cursor is not None,
+            limit=limit,
+        ),
     )
 
 
@@ -168,4 +218,14 @@ def _role_response(role: Role | None) -> RoleResponse:
         id=str(role.id),
         name=role.name,
         description=role.description,
+        created_at=role.created_at,
+        updated_at=role.updated_at,
     )
+
+
+def _created_at_datetime(created_at: datetime | str | None) -> datetime:
+    if isinstance(created_at, datetime):
+        return created_at
+    if isinstance(created_at, str):
+        return datetime.fromisoformat(created_at)
+    raise HTTPException(status_code=500, detail="Role timestamp is missing")

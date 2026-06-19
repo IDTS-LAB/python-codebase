@@ -1,4 +1,6 @@
-from fastapi import Request
+from types import SimpleNamespace
+
+from fastapi import Request, Response
 from fastapi_limiter import FastAPILimiter
 from fastapi_limiter.depends import RateLimiter
 
@@ -18,6 +20,31 @@ EXEMPT_PATHS = frozenset(
 
 
 settings = get_settings()
+
+
+def _rate_limiter_request(request: Request) -> Request:
+    if "app" not in request.scope:
+        return request
+
+    routes = []
+    for route in request.app.routes:
+        if hasattr(route, "path") and hasattr(route, "methods"):
+            routes.append(route)
+            continue
+
+        effective_route_contexts = getattr(route, "effective_route_contexts", None)
+        if effective_route_contexts is None:
+            continue
+
+        routes.extend(
+            nested_route
+            for nested_route in effective_route_contexts()
+            if hasattr(nested_route, "path") and hasattr(nested_route, "methods")
+        )
+
+    scope = dict(request.scope)
+    scope["app"] = SimpleNamespace(routes=routes)
+    return Request(scope, receive=request.receive)
 
 
 async def custom_identifier(request: Request) -> str:
@@ -46,14 +73,14 @@ async def close_rate_limiter():
     await redis_client.aclose()
 
 
-async def apply_global_rate_limit(request: Request):
+async def apply_global_rate_limit(request: Request, response: Response):
     if request.url.path in EXEMPT_PATHS:
         return
 
-    limit_str = settings.GLOBAL_RATE_LIMIT
+    limit_str = settings.RATE_LIMIT
     times_str, period = limit_str.split("/")
     times = int(times_str)
     seconds = 60 if "minute" in period else 1
 
     limiter = RateLimiter(times=times, seconds=seconds)
-    await limiter(request)
+    await limiter(_rate_limiter_request(request), response)

@@ -12,6 +12,7 @@ from src.modules.user.infrastructure.repositories.user_repository import (
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/api/v1/auth/login",
     refreshUrl="/api/v1/auth/refresh",
+    auto_error=False,
 )
 
 

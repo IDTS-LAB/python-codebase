@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from src.core.authorization.dependencies import require_permission
@@ -130,7 +130,15 @@ async def get_me(
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(
+    request: Request,
     current_user: dict = Depends(require_permission(USER_RESOURCE, UPDATE_ACTION)),
     handler: LogoutUserCommandHandler = Depends(get_logout_handler),
 ):
-    await handler.excute(LogoutUserCommand(user_id=str(current_user.get("id"))))
+    auth_header = request.headers.get("Authorization", "")
+    access_token = auth_header.removeprefix("Bearer ").strip()
+    await handler.execute(
+        LogoutUserCommand(
+            user_id=str(current_user.get("id")),
+            access_token=access_token,
+        )
+    )

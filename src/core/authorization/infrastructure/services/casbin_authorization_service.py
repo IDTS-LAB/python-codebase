@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from src.core.authorization.domain.service import AuthorizationService
@@ -5,6 +6,7 @@ from src.core.authorization.infrastructure.repositories.casbin_policy_repository
     SQLAlchemyCasbinPolicyRepository,
 )
 from src.core.authorization.permissions import permission_key
+from src.core.utils.cursor import CursorDirection
 from src.modules.authorization.domain.entities.permission import Permission
 from src.modules.authorization.domain.entities.role import Role
 
@@ -55,6 +57,20 @@ class CasbinAuthorizationService(AuthorizationService):
     async def list_roles(self) -> list[Role]:
         return await self._policy_repository.list_roles()
 
+    async def list_roles_cursor(
+        self,
+        cursor_created_at: datetime | None = None,
+        cursor_id: UUID | None = None,
+        limit: int = 10,
+        direction: CursorDirection = CursorDirection.DIRECTION_NEXT,
+    ) -> tuple[list[Role], bool]:
+        return await self._policy_repository.list_roles_cursor(
+            cursor_created_at=cursor_created_at,
+            cursor_id=cursor_id,
+            limit=limit,
+            direction=direction,
+        )
+
     async def create_permission(self, permission: Permission) -> Permission:
         return await self._policy_repository.create_permission(permission)
 
@@ -69,6 +85,20 @@ class CasbinAuthorizationService(AuthorizationService):
 
     async def list_permissions(self) -> list[Permission]:
         return await self._policy_repository.list_permissions()
+
+    async def list_permissions_cursor(
+        self,
+        cursor_created_at: datetime | None = None,
+        cursor_id: UUID | None = None,
+        limit: int = 10,
+        direction: CursorDirection = CursorDirection.DIRECTION_NEXT,
+    ) -> tuple[list[Permission], bool]:
+        return await self._policy_repository.list_permissions_cursor(
+            cursor_created_at=cursor_created_at,
+            cursor_id=cursor_id,
+            limit=limit,
+            direction=direction,
+        )
 
     async def assign_permission_to_role(
         self,

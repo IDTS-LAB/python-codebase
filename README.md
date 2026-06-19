@@ -28,6 +28,7 @@ The API is currently versioned under `/api/v1`.
 - [Docker Notes](#docker-notes)
 - [Development Guide](#development-guide)
 - [Troubleshooting](#troubleshooting)
+- [Security TODO](#security-todo)
 - [Known Notes](#known-notes)
 
 ## Features
@@ -229,16 +230,24 @@ Expected values:
 
 ```env
 APP_NAME=Todo Modulith API
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/todo_db
-SECRET_KEY=your-super-secret-production-key-here
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=
+POSTGRES_DB=todo_db
+REDIS_PASSWORD=
+DATABASE_URL=
+REDIS_URL=
+SECRET_KEY=
 ALGORITHM=HS256
+JWT_ISSUER=todo-modulith-api
+JWT_AUDIENCE=todo-modulith-client
 ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_MINUTES=10080
 ```
 
 For local development without Docker, point `DATABASE_URL` at your local PostgreSQL host, for example:
 
 ```env
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/todo_db
+DATABASE_URL=postgresql+asyncpg://postgres@localhost:5432/todo_db
 ```
 
 ## Local Setup
@@ -319,11 +328,45 @@ With Make:
 
 ```bash
 make migrate
+make seed
 make revision name="add todo due date"
 make downgrade
 ```
 
 Important: migration autogeneration depends on importing all SQLAlchemy models in `alembic/env.py`, so new module models must be imported there or through a central model registry.
+
+Seed baseline authorization data after applying migrations:
+
+```bash
+make seed
+```
+
+The seeder is idempotent. It creates default authorization resources, the default `admin` and `user` roles, default permissions, role-permission links, and matching Casbin policies without duplicating existing records.
+
+To seed an initial admin user, set these environment variables before running `make seed`:
+
+```env
+SEED_ADMIN_EMAIL=admin@example.com
+SEED_ADMIN_PASSWORD=
+SEED_ADMIN_USERNAME=admin
+SEED_ADMIN_FULLNAME=System Administrator
+```
+
+If `SEED_ADMIN_EMAIL` or `SEED_ADMIN_PASSWORD` is empty, user seeding is skipped. Existing users are not modified.
+
+When `APP_ENV=development`, the seeder can also create demo users with different roles. Set a shared development password before running `make seed`:
+
+```env
+SEED_DEVELOPMENT_USERS_PASSWORD=
+```
+
+Development demo accounts:
+
+- `user@example.com` with the `user` role
+- `manager@example.com` with the `manager` role
+- `viewer@example.com` with the `viewer` role
+
+These users are skipped outside development and are not updated if they already exist.
 
 ## Testing and Quality Checks
 
@@ -348,7 +391,7 @@ make check
 Current check set:
 
 - `pytest -q`
-- `ruff check src tests`
+- `ruff check src tests scripts`
 - import check for `src.main`
 
 ## Makefile Commands
@@ -362,6 +405,7 @@ make lint
 make import-check
 make check
 make migrate
+make seed
 make downgrade
 make revision name="migration message"
 make db-up
@@ -476,9 +520,53 @@ Authorization: Bearer <token>
 
 The token must contain a `sub` claim with a valid user id.
 
+## Security TODO
+
+Legend: `Implemented` means code exists in the repository. `Partial` means code exists but still needs a fix, test, or production hardening.
+
+| Category | Recommended | Current Status | Notes |
+| --- | --- | --- | --- |
+| JWT Authentication | Required | Implemented | `AuthenticationMiddleware` validates bearer tokens for non-public routes. |
+| Refresh Token Rotation | Required | Implemented | Refresh flow revokes the old refresh token and persists a new token. |
+| RBAC + Permissions | Required | Implemented | Casbin-backed role and permission checks are wired through route dependencies. |
+| Rate Limiting (Redis-backed) | Required | Implemented | Redis-backed limiter reads the configured `RATE_LIMIT` value. |
+| Security Headers Middleware | Required | Implemented | Adds `X-Content-Type-Options`, `X-Frame-Options`, CSP `frame-ancestors`, `Referrer-Policy`, and `Permissions-Policy`. |
+| CORS Configuration | Required | Implemented | CORS origins, methods, and headers are environment-driven through settings. |
+| Request ID Middleware | Required | Implemented | Generates or propagates `X-Request-ID` and stores it on request state. |
+| Audit Logging | Required | Implemented | Adds global endpoint audit logging, domain audit events, and separate persisted error traces. |
+| Structured Logging | Required | Implemented | Logs request ID, method, path, status, latency, and user context when available. |
+| Global Exception Handling | Required | Implemented | Domain exceptions are registered explicitly and `Exception` is used only as the fallback handler. |
+| Input Validation | Required | Implemented | Pydantic schemas and application validation functions are used across user and todo flows. |
+| Password Hashing (Argon2 or bcrypt) | Required | Implemented | User auth service uses bcrypt hashing. |
+| Account Lockout | Required | Implemented | Tracks failed logins and temporarily locks accounts after configured thresholds. |
+| Token Revocation | Required | Implemented | Refresh tokens are revoked on rotation/logout, and access tokens are denylisted in Redis until expiry. |
+| OpenAPI Authentication | Required | Implemented | Swagger OAuth2 auth is configured, and docs/OpenAPI endpoints are disabled when `APP_ENV=production`. |
+| Health Check Endpoint | Required | Implemented | `/health` endpoint returns service health. |
+| Readiness/Liveness Endpoints | Required | Implemented | Adds `/live` and `/ready` operational endpoints. |
+| Request Size Limiting | Required | Implemented | `LimitRequestSizeMiddleware` rejects oversized write requests. |
+| Idempotency Support (for applicable POST endpoints) | Optional but valuable | Implemented | Supports `Idempotency-Key` replay caching for POST responses. |
+| Database Migrations | Required | Implemented | Alembic is configured with migration commands in the README and Makefile. |
+| Dependency Injection | Required | Implemented | FastAPI dependencies wire repositories, handlers, auth, authorization, and database sessions. |
+| Configuration via Environment Variables | Required | Implemented | Pydantic settings read `.env` and reject the default secret key in production. |
+
+### Next Implementation Checklist
+
+- [x] Fix and verify rate limit configuration wiring.
+- [x] Add security headers middleware.
+- [x] Add request ID middleware.
+- [x] Add structured request logging.
+- [x] Add audit logging for sensitive actions.
+- [x] Add account lockout or equivalent failed-login protection.
+- [x] Disable or authenticate `/docs`, `/redoc`, and `/openapi.json` in production.
+- [x] Add readiness and liveness endpoints.
+- [x] Add production config validation for secrets and unsafe defaults.
+- [x] Harden CORS through environment-driven allowed origins, methods, and headers.
+- [x] Review exception responses to avoid leaking token parsing details or internal exception messages.
+- [x] Add automated tests for request size limits, rate limiting, auth failures, authorization failures, CORS, security headers, and request IDs.
+- [x] Add dependency vulnerability scanning to local or CI checks, for example `pip-audit` or an equivalent Poetry-compatible scanner.
+
 ## Known Notes
 
-- `alembic/env.py` currently prints metadata debug output during migrations.
 - `src/core/lifespan.py` still calls `Base.metadata.create_all`; with Alembic in place, production environments normally rely on migrations instead.
 - The project has a Pydantic v2 deprecation warning for class-based settings config.
 - The Dockerfile start script path needs alignment before relying on Docker builds.
