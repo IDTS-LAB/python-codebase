@@ -57,6 +57,10 @@ class Settings(BaseSettings):
         alias="SEED_ADMIN_FULLNAME",
         default="System Administrator",
     )
+    SEED_DEVELOPMENT_USERS_PASSWORD: str = Field(
+        alias="SEED_DEVELOPMENT_USERS_PASSWORD",
+        default="",
+    )
     MAX_REQUEST_SIZE_MB: int = Field(
         alias="MAX_REQUEST_SIZE_MB", default=5 * 1024 * 1024
     )

@@ -1,6 +1,11 @@
 import asyncio
+import sys
+from pathlib import Path
 
-from src.core.seed.runner import run_seeders
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from src.core.seed.runner import run_seeders  # noqa: E402
 
 
 async def main() -> None:

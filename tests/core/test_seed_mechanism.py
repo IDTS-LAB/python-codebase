@@ -3,8 +3,11 @@ import pytest
 from src.core.authorization.permissions import (
     ADMIN_ROLE,
     DEFAULT_RESOURCES,
+    DEFAULT_ROLES,
     DEFAULT_POLICIES,
     DEFAULT_USER_ROLE,
+    MANAGER_ROLE,
+    VIEWER_ROLE,
 )
 from src.core.seed.authorization import seed_authorization
 from src.modules.authorization.domain.entities.permission import Permission
@@ -76,7 +79,12 @@ async def test_seed_authorization_creates_default_roles_permissions_and_policies
     assert {resource.key for resource in DEFAULT_RESOURCES}.issubset(
         repository.resources.keys()
     )
-    assert {ADMIN_ROLE, DEFAULT_USER_ROLE}.issubset(repository.roles.keys())
+    assert {
+        ADMIN_ROLE,
+        DEFAULT_USER_ROLE,
+        MANAGER_ROLE,
+        VIEWER_ROLE,
+    }.issubset(repository.roles.keys())
     assert {
         policy[2]
         for policy in DEFAULT_POLICIES
@@ -84,11 +92,17 @@ async def test_seed_authorization_creates_default_roles_permissions_and_policies
     }.issubset(repository.permissions.keys())
     assert ("p", ADMIN_ROLE, "*") in repository.policies
     assert ("p", DEFAULT_USER_ROLE, "todo:create") in repository.policies
+    assert ("p", MANAGER_ROLE, "todo:update") in repository.policies
+    assert ("p", VIEWER_ROLE, "todo:read") in repository.policies
     assert (DEFAULT_USER_ROLE, "todo:create") in repository.role_permissions
+    assert (MANAGER_ROLE, "todo:update") in repository.role_permissions
+    assert (VIEWER_ROLE, "todo:read") in repository.role_permissions
     assert result.resources_created == len(DEFAULT_RESOURCES)
-    assert result.roles_created == 2
+    assert result.roles_created == len(DEFAULT_ROLES)
     assert result.permissions_created == 5
-    assert result.role_permissions_created == 5
+    assert result.role_permissions_created == len(
+        [policy for policy in DEFAULT_POLICIES if policy[0] == "p" and policy[2] != "*"]
+    )
     assert result.policies_created == len(DEFAULT_POLICIES)
 
 
@@ -105,16 +119,9 @@ async def test_seed_authorization_is_idempotent():
     assert result.role_permissions_created == 0
     assert result.policies_created == 0
     assert len(repository.resources) == len(DEFAULT_RESOURCES)
-    assert len(repository.roles) == 2
+    assert len(repository.roles) == len(DEFAULT_ROLES)
     assert len(repository.permissions) == 5
-    assert len(repository.role_permissions) == 5
+    assert len(repository.role_permissions) == len(
+        [policy for policy in DEFAULT_POLICIES if policy[0] == "p" and policy[2] != "*"]
+    )
     assert len(repository.policies) == len(DEFAULT_POLICIES)
-    async def list_resources(self) -> list[AuthorizationResource]:
-        return list(self.resources.values())
-
-    async def create_resource(
-        self,
-        resource: AuthorizationResource,
-    ) -> AuthorizationResource:
-        self.resources[resource.key] = resource
-        return resource

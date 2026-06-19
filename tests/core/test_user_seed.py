@@ -2,7 +2,12 @@ from dataclasses import dataclass
 
 import pytest
 
-from src.core.authorization.permissions import ADMIN_ROLE
+from src.core.authorization.permissions import (
+    ADMIN_ROLE,
+    DEFAULT_USER_ROLE,
+    MANAGER_ROLE,
+    VIEWER_ROLE,
+)
 from src.core.security.password import PasswordSerrvice
 from src.core.seed.user import SeedUserConfig, seed_user
 from src.modules.user.domain.entities.user import User
@@ -30,10 +35,12 @@ class FakeAuthorizationService:
 
 @dataclass(frozen=True)
 class SeedSettings:
+    APP_ENV: str = "production"
     SEED_ADMIN_EMAIL: str = "admin@example.com"
     SEED_ADMIN_PASSWORD: str = "admin-password"
     SEED_ADMIN_USERNAME: str = "admin"
     SEED_ADMIN_FULLNAME: str = "System Administrator"
+    SEED_DEVELOPMENT_USERS_PASSWORD: str = "development-password"
 
 
 @pytest.mark.anyio
@@ -89,10 +96,68 @@ async def test_seed_user_skips_when_admin_credentials_are_missing():
         user_repository=user_repository,
         authorization_service=authorization_service,
         config=SeedUserConfig(
+            app_env="production",
             admin_email="",
             admin_password="",
             admin_username="admin",
             admin_fullname="System Administrator",
+            development_users_password="development-password",
+        ),
+    )
+
+    assert result.users_created == 0
+    assert result.roles_assigned == 0
+    assert user_repository.users == {}
+    assert authorization_service.assignments == []
+
+
+@pytest.mark.anyio
+async def test_seed_user_creates_development_users_with_different_roles():
+    user_repository = FakeUserRepository()
+    authorization_service = FakeAuthorizationService()
+
+    result = await seed_user(
+        user_repository=user_repository,
+        authorization_service=authorization_service,
+        config=SeedUserConfig(
+            app_env="development",
+            admin_email="",
+            admin_password="",
+            admin_username="admin",
+            admin_fullname="System Administrator",
+            development_users_password="development-password",
+        ),
+    )
+
+    assert result.users_created == 3
+    assert result.roles_assigned == 3
+    assert set(user_repository.users.keys()) == {
+        "user@example.com",
+        "manager@example.com",
+        "viewer@example.com",
+    }
+    assert {
+        role for _, role in authorization_service.assignments
+    } == {DEFAULT_USER_ROLE, MANAGER_ROLE, VIEWER_ROLE}
+    for user in user_repository.users.values():
+        assert PasswordSerrvice.verify("development-password", user.password)
+
+
+@pytest.mark.anyio
+async def test_seed_user_skips_development_users_outside_development():
+    user_repository = FakeUserRepository()
+    authorization_service = FakeAuthorizationService()
+
+    result = await seed_user(
+        user_repository=user_repository,
+        authorization_service=authorization_service,
+        config=SeedUserConfig(
+            app_env="production",
+            admin_email="",
+            admin_password="",
+            admin_username="admin",
+            admin_fullname="System Administrator",
+            development_users_password="development-password",
         ),
     )
 

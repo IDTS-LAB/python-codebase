@@ -2,8 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.core.config.setting import get_settings
-from src.core.middleware.auth import AuthenticationMiddleware
 from src.core.middleware.audit_logging import AuditLoggingMiddleware
+from src.core.middleware.auth import AuthenticationMiddleware
+from src.core.middleware.csp import CSPMiddleware
 from src.core.middleware.idempotency import IdempotencyMiddleware
 from src.core.middleware.request_id import RequestIDMiddleware
 from src.core.middleware.request_size import LimitRequestSizeMiddleware
@@ -19,6 +20,7 @@ def register_middleware(app: FastAPI):
         max_upload_size=settings.MAX_REQUEST_SIZE_MB,
     )
     app.add_middleware(SecurityHeadersMiddleware)
+    app.add_middleware(CSPMiddleware)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_allow_origins,

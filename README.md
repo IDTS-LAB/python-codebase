@@ -349,6 +349,20 @@ SEED_ADMIN_FULLNAME=System Administrator
 
 If `SEED_ADMIN_EMAIL` or `SEED_ADMIN_PASSWORD` is empty, user seeding is skipped. Existing users are not modified.
 
+When `APP_ENV=development`, the seeder can also create demo users with different roles. Set a shared development password before running `make seed`:
+
+```env
+SEED_DEVELOPMENT_USERS_PASSWORD=
+```
+
+Development demo accounts:
+
+- `user@example.com` with the `user` role
+- `manager@example.com` with the `manager` role
+- `viewer@example.com` with the `viewer` role
+
+These users are skipped outside development and are not updated if they already exist.
+
 ## Testing and Quality Checks
 
 Run tests:

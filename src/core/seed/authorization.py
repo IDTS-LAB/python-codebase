@@ -2,10 +2,9 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from src.core.authorization.permissions import (
-    ADMIN_ROLE,
     DEFAULT_RESOURCES,
+    DEFAULT_ROLES,
     DEFAULT_POLICIES,
-    DEFAULT_USER_ROLE,
 )
 from src.modules.authorization.domain.entities.permission import Permission
 from src.modules.authorization.domain.entities.resource import AuthorizationResource
@@ -142,8 +141,8 @@ async def seed_authorization(
 
 def _default_roles() -> dict[str, str]:
     return {
-        ADMIN_ROLE: "Administrator with full platform access",
-        DEFAULT_USER_ROLE: "Default authenticated user",
+        role.name: role.description
+        for role in DEFAULT_ROLES
     }
 
 
