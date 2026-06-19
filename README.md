@@ -323,11 +323,31 @@ With Make:
 
 ```bash
 make migrate
+make seed
 make revision name="add todo due date"
 make downgrade
 ```
 
 Important: migration autogeneration depends on importing all SQLAlchemy models in `alembic/env.py`, so new module models must be imported there or through a central model registry.
+
+Seed baseline authorization data after applying migrations:
+
+```bash
+make seed
+```
+
+The seeder is idempotent. It creates default authorization resources, the default `admin` and `user` roles, default permissions, role-permission links, and matching Casbin policies without duplicating existing records.
+
+To seed an initial admin user, set these environment variables before running `make seed`:
+
+```env
+SEED_ADMIN_EMAIL=admin@example.com
+SEED_ADMIN_PASSWORD=
+SEED_ADMIN_USERNAME=admin
+SEED_ADMIN_FULLNAME=System Administrator
+```
+
+If `SEED_ADMIN_EMAIL` or `SEED_ADMIN_PASSWORD` is empty, user seeding is skipped. Existing users are not modified.
 
 ## Testing and Quality Checks
 
@@ -352,7 +372,7 @@ make check
 Current check set:
 
 - `pytest -q`
-- `ruff check src tests`
+- `ruff check src tests scripts`
 - import check for `src.main`
 
 ## Makefile Commands
@@ -366,6 +386,7 @@ make lint
 make import-check
 make check
 make migrate
+make seed
 make downgrade
 make revision name="migration message"
 make db-up
@@ -527,7 +548,6 @@ Legend: `Implemented` means code exists in the repository. `Partial` means code 
 
 ## Known Notes
 
-- `alembic/env.py` currently prints metadata debug output during migrations.
 - `src/core/lifespan.py` still calls `Base.metadata.create_all`; with Alembic in place, production environments normally rely on migrations instead.
 - The project has a Pydantic v2 deprecation warning for class-based settings config.
 - The Dockerfile start script path needs alignment before relying on Docker builds.

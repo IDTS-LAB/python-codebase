@@ -50,6 +50,13 @@ class Settings(BaseSettings):
         alias="ACCOUNT_LOCKOUT_DURATION_MINUTES", default=15
     )
     LOG_FORMAT: str = Field(alias="LOG_FORMAT", default="json")
+    SEED_ADMIN_EMAIL: str = Field(alias="SEED_ADMIN_EMAIL", default="")
+    SEED_ADMIN_PASSWORD: str = Field(alias="SEED_ADMIN_PASSWORD", default="")
+    SEED_ADMIN_USERNAME: str = Field(alias="SEED_ADMIN_USERNAME", default="admin")
+    SEED_ADMIN_FULLNAME: str = Field(
+        alias="SEED_ADMIN_FULLNAME",
+        default="System Administrator",
+    )
     MAX_REQUEST_SIZE_MB: int = Field(
         alias="MAX_REQUEST_SIZE_MB", default=5 * 1024 * 1024
     )

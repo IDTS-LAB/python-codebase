@@ -10,7 +10,7 @@ COMPOSE_FILE := docker-compose.yml
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install run test lint import-check security-scan check migrate downgrade revision db-up db-down db-logs clean
+.PHONY: help install run test lint import-check security-scan check migrate seed downgrade revision db-up db-down db-logs clean
 
 help:
 	@echo "[make:help] Available commands:"
@@ -22,6 +22,7 @@ help:
 	@echo "  [make:security-scan] Run dependency vulnerability scan with pip-audit"
 	@echo "  [make:check]         Run tests, lint, and import check"
 	@echo "  [make:migrate]       Apply Alembic migrations"
+	@echo "  [make:seed]          Seed baseline database records"
 	@echo "  [make:downgrade]     Roll back one Alembic migration"
 	@echo "  [make:revision]      Create an Alembic migration: make revision name=\"describe change\""
 	@echo "  [make:db-up]         Start Docker Compose services"
@@ -43,7 +44,7 @@ test:
 
 lint:
 	@echo "[make:lint] Running Ruff checks"
-	@$(RUFF) check src tests
+	@$(RUFF) check src tests scripts
 
 import-check:
 	@echo "[make:import-check] Verifying src.main imports"
@@ -63,6 +64,10 @@ check: test lint import-check
 migrate:
 	@echo "[make:migrate] Applying Alembic migrations"
 	@$(ALEMBIC) upgrade head
+
+seed:
+	@echo "[make:seed] Running database seeders"
+	@$(PYTHON) scripts/seed.py
 
 downgrade:
 	@echo "[make:downgrade] Rolling back one Alembic migration"

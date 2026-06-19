@@ -13,6 +13,9 @@ from src.core.authorization.infrastructure.models.casbin_rule_model import (
 from src.core.authorization.infrastructure.models.permission_model import (
     PermissionModel,  # noqa: F401
 )
+from src.core.authorization.infrastructure.models.resource_model import (
+    AuthorizationResourceModel,  # noqa: F401
+)
 from src.core.authorization.infrastructure.models.role_model import (
     RoleModel,  # noqa: F401
 )
@@ -40,10 +43,6 @@ from src.modules.user.infrastructure.models.user_model import UserModel  # noqa:
 from src.shared.database.model import Base
 
 settings = get_settings()
-
-print(
-    "🔍 ALEMBIC DEBUG: Tables found in metadata ->", list(Base.metadata.tables.keys())
-)
 
 config = context.config
 

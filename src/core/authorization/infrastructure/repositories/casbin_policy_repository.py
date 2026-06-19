@@ -9,6 +9,9 @@ from src.core.authorization.infrastructure.models.casbin_rule_model import (
 from src.core.authorization.infrastructure.models.permission_model import (
     PermissionModel,
 )
+from src.core.authorization.infrastructure.models.resource_model import (
+    AuthorizationResourceModel,
+)
 from src.core.authorization.infrastructure.models.role_permission_model import (
     RolePermissionModel,
 )
@@ -17,6 +20,7 @@ from src.core.authorization.infrastructure.models.user_has_role_model import (
     UserHasRoleModel,
 )
 from src.modules.authorization.domain.entities.permission import Permission
+from src.modules.authorization.domain.entities.resource import AuthorizationResource
 from src.modules.authorization.domain.entities.role import Role
 
 
@@ -28,6 +32,10 @@ class SQLAlchemyCasbinPolicyRepository:
         result = await self._db.execute(select(CasbinRuleModel))
         rules = result.scalars().all()
         return [self._to_policy_line(rule) for rule in rules]
+
+    async def list_policies(self) -> list[tuple[str, ...]]:
+        result = await self._db.execute(select(CasbinRuleModel))
+        return [self._to_policy_tuple(rule) for rule in result.scalars().all()]
 
     async def add_policy(self, ptype: str, *values: str) -> None:
         existing = await self._db.execute(
@@ -98,11 +106,32 @@ class SQLAlchemyCasbinPolicyRepository:
         )
         return list(result.scalars().all())
 
+    async def create_resource(
+        self,
+        resource: AuthorizationResource,
+    ) -> AuthorizationResource:
+        model = AuthorizationResourceModel(
+            id=resource.id,
+            key=resource.key,
+            name=resource.name,
+            description=resource.description,
+        )
+        self._db.add(model)
+        await self._db.flush()
+        return self._resource_from_model(model)
+
+    async def list_resources(self) -> list[AuthorizationResource]:
+        result = await self._db.execute(select(AuthorizationResourceModel))
+        return [
+            self._resource_from_model(model)
+            for model in result.scalars().all()
+        ]
+
     async def create_role(self, role: Role) -> Role:
         model = RoleModel(
             id=role.id,
             name=role.name,
-            descpription=role.description,
+            description=role.description,
         )
         self._db.add(model)
         await self._db.flush()
@@ -127,7 +156,7 @@ class SQLAlchemyCasbinPolicyRepository:
 
         old_name = model.name
         model.name = role.name
-        model.descpription = role.description
+        model.description = role.description
         await self._db.flush()
 
         if old_name != role.name:
@@ -156,12 +185,14 @@ class SQLAlchemyCasbinPolicyRepository:
         await self._db.flush()
 
     async def create_permission(self, permission: Permission) -> Permission:
+        resource = await self._get_or_create_resource(permission.resource)
         model = PermissionModel(
             id=permission.id,
             key=permission.key,
+            resource_id=resource.id,
             resource=permission.resource,
             action=permission.action,
-            descpription=permission.description,
+            description=permission.description,
         )
         self._db.add(model)
         await self._db.flush()
@@ -192,10 +223,12 @@ class SQLAlchemyCasbinPolicyRepository:
             return None
 
         old_key = model.key
+        resource = await self._get_or_create_resource(permission.resource)
         model.key = permission.key
+        model.resource_id = resource.id
         model.resource = permission.resource
         model.action = permission.action
-        model.descpription = permission.description
+        model.description = permission.description
         await self._db.flush()
 
         if old_key != permission.key:
@@ -250,6 +283,14 @@ class SQLAlchemyCasbinPolicyRepository:
 
         await self.add_policy("p", role.name, permission.key)
 
+    async def list_role_permissions(self) -> list[tuple[str, str]]:
+        result = await self._db.execute(
+            select(RoleModel.name, PermissionModel.key)
+            .join(RolePermissionModel, RolePermissionModel.role_id == RoleModel.id)
+            .join(PermissionModel, PermissionModel.id == RolePermissionModel.permission_id)
+        )
+        return [(role_name, permission_key) for role_name, permission_key in result.all()]
+
     async def remove_permission_from_role(
         self,
         role_id: UUID,
@@ -272,6 +313,30 @@ class SQLAlchemyCasbinPolicyRepository:
         values = [rule.v0, rule.v1, rule.v2, rule.v3, rule.v4, rule.v5]
         populated = [value for value in values if value is not None]
         return ", ".join([rule.ptype, *populated])
+
+    def _to_policy_tuple(self, rule: CasbinRuleModel) -> tuple[str, ...]:
+        values = [rule.v0, rule.v1, rule.v2, rule.v3, rule.v4, rule.v5]
+        populated = [value for value in values if value is not None]
+        return (rule.ptype, *populated)
+
+    async def _get_or_create_resource(self, resource_key: str) -> AuthorizationResourceModel:
+        result = await self._db.execute(
+            select(AuthorizationResourceModel).where(
+                AuthorizationResourceModel.key == resource_key,
+            )
+        )
+        model = result.scalar_one_or_none()
+        if model is not None:
+            return model
+
+        model = AuthorizationResourceModel(
+            key=resource_key,
+            name=resource_key.replace("_", " ").title(),
+            description=f"{resource_key} resources",
+        )
+        self._db.add(model)
+        await self._db.flush()
+        return model
 
     def _value_at(self, values: tuple[str, ...], index: int) -> str | None:
         if index >= len(values):
@@ -318,7 +383,18 @@ class SQLAlchemyCasbinPolicyRepository:
         return Role(
             id=model.id,
             name=model.name,
-            description=model.descpription,
+            description=model.description,
+        )
+
+    def _resource_from_model(
+        self,
+        model: AuthorizationResourceModel,
+    ) -> AuthorizationResource:
+        return AuthorizationResource(
+            id=model.id,
+            key=model.key,
+            name=model.name,
+            description=model.description,
         )
 
     def _permission_from_model(self, model: PermissionModel) -> Permission:
@@ -327,5 +403,5 @@ class SQLAlchemyCasbinPolicyRepository:
             key=model.key,
             resource=model.resource,
             action=model.action,
-            description=model.descpription,
+            description=model.description,
         )
