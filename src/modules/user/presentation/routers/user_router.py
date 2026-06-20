@@ -66,25 +66,21 @@ async def register(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/login", response_model=SuccessResponse[TokenResponse])
+@router.post("/login", response_model=TokenResponse)
 async def login(
     form: OAuth2PasswordRequestForm = Depends(),
     handler: LoginUserCommandHandler = Depends(get_login_handler),
 ):
     command = LoginUserCommand(username=form.username, password=form.password)
     result = await handler.execute(command=command)
-    return SuccessResponse(
-        message="Login success",
-        success=True,
-        data=TokenResponse(
-            access_token=result.get("access_token"),
-            refresh_token=result.get("refresh_token"),
-            token_type="bearer",
-        ),
+    return TokenResponse(
+        access_token=result.get("access_token"),
+        refresh_token=result.get("refresh_token"),
+        token_type="bearer",
     )
 
 
-@router.post("/refresh", response_model=SuccessResponse[TokenResponse])
+@router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(
     request: RefreshTokenRequest,
     handler: RefreshTokenCommandHandler = Depends(get_refresh_token_handler),
@@ -95,14 +91,10 @@ async def refresh_token(
                 token=request.refresh_token,
             )
         )
-        return SuccessResponse(
-            message="Refresh token success",
-            success=True,
-            data=TokenResponse(
-                access_token=result.get("access_token"),
-                refresh_token=result.get("refresh_token"),
-                token_type="bearer",
-            ),
+        return TokenResponse(
+            access_token=result.get("access_token"),
+            refresh_token=result.get("refresh_token"),
+            token_type="bearer",
         )
     except InvalidRefreshTokenError as e:
         raise HTTPException(status_code=401, detail=str(e))
