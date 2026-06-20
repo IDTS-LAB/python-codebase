@@ -1,0 +1,50 @@
+[importlinter]
+root_package = src
+
+[importlinter:contract:todo-cross-module-boundary]
+name = Todo module only imports public contracts from other modules
+type = forbidden
+allow_indirect_imports = True
+source_modules =
+    src.modules.todo
+forbidden_modules =
+    src.modules.user.application
+    src.modules.user.domain
+    src.modules.user.infrastructure
+    src.modules.user.presentation
+    src.modules.authorization.application
+    src.modules.authorization.domain
+    src.modules.authorization.infrastructure
+    src.modules.authorization.presenter
+
+[importlinter:contract:user-cross-module-boundary]
+name = User module only imports public contracts from other modules
+type = forbidden
+allow_indirect_imports = True
+source_modules =
+    src.modules.user
+forbidden_modules =
+    src.modules.todo.application
+    src.modules.todo.domain
+    src.modules.todo.infrastructure
+    src.modules.todo.presentation
+    src.modules.authorization.application
+    src.modules.authorization.domain
+    src.modules.authorization.infrastructure
+    src.modules.authorization.presenter
+
+[importlinter:contract:authorization-cross-module-boundary]
+name = Authorization module only imports public contracts from other modules
+type = forbidden
+allow_indirect_imports = True
+source_modules =
+    src.modules.authorization
+forbidden_modules =
+    src.modules.todo.application
+    src.modules.todo.domain
+    src.modules.todo.infrastructure
+    src.modules.todo.presentation
+    src.modules.user.application
+    src.modules.user.domain
+    src.modules.user.infrastructure
+    src.modules.user.presentation

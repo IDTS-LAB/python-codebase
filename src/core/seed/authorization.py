@@ -6,9 +6,7 @@ from src.core.authorization.permissions import (
     DEFAULT_ROLES,
     DEFAULT_POLICIES,
 )
-from src.modules.authorization.domain.entities.permission import Permission
-from src.modules.authorization.domain.entities.resource import AuthorizationResource
-from src.modules.authorization.domain.entities.role import Role
+from src.modules.authorization import AuthorizationResource, Permission, Role
 
 
 class AuthorizationSeedRepository(Protocol):

@@ -3,13 +3,11 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from src.core.schemas.response import ErrorDetail, ErrorResponse
-from src.modules.todo.domain.exceptions.todo_exception import (
+from src.modules.todo import (
     TodoNotFoundError,
     UnauthorizedTodoAccessError,
 )
-
-# Import your custom domain exceptions here
-from src.modules.user.domain.exceptions.user_exception import UserAlreadyExistsError
+from src.modules.user import UserAlreadyExistsError
 from src.shared.exceptions.credential_exception import (
     InvalidCredentialsError,
     InvalidRefreshTokenError,

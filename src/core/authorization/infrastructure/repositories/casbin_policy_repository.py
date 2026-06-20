@@ -20,9 +20,7 @@ from src.core.authorization.infrastructure.models.role_permission_model import (
 from src.core.authorization.infrastructure.models.user_has_role_model import (
     UserHasRoleModel,
 )
-from src.modules.authorization.domain.entities.permission import Permission
-from src.modules.authorization.domain.entities.resource import AuthorizationResource
-from src.modules.authorization.domain.entities.role import Role
+from src.modules.authorization import AuthorizationResource, Permission, Role
 from src.shared.utils.cursor import CursorDirection
 
 

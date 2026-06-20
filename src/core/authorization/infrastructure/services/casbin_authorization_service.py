@@ -6,8 +6,7 @@ from src.core.authorization.infrastructure.repositories.casbin_policy_repository
     SQLAlchemyCasbinPolicyRepository,
 )
 from src.core.authorization.permissions import permission_key
-from src.modules.authorization.domain.entities.permission import Permission
-from src.modules.authorization.domain.entities.role import Role
+from src.modules.authorization import Permission, Role
 from src.shared.utils.cursor import CursorDirection
 
 CASBIN_MODEL_TEXT = """

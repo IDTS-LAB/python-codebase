@@ -19,6 +19,9 @@ from src.core.schemas.response import (
 from src.modules.todo.application.create_todo.command import CreateTodoCommand
 from src.modules.todo.application.create_todo.handler import CreateTodoHandler
 from src.modules.todo.application.delete_todo.handler import DeleteTodoHandler
+from src.modules.todo.application.detail_todo.handler import (
+    GetTodoDetailWithOwnerHandler,
+)
 from src.modules.todo.application.list_todo.handler import (
     GetTodosCursorQuery,
 )
@@ -32,10 +35,15 @@ from src.modules.todo.domain.exceptions.todo_exception import (
 from src.modules.todo.presentation.dependency import (
     get_create_todo_handler,
     get_delete_todo_handler,
+    get_todo_detail_with_owner_handler,
     get_todos_query_handler,
     get_update_todo_handler,
 )
-from src.modules.todo.presentation.schemas.response import TodoResponse
+from src.modules.todo.presentation.schemas.response import (
+    TodoResponse,
+    TodoWithOwnerResponse,
+)
+from src.modules.user import UserNotFoundError
 from src.shared.utils.cursor import CursorDirection, decode_cursor, encode_cursor
 
 router = APIRouter(prefix="/todos", tags=["Todos"])
@@ -90,9 +98,7 @@ async def get_todos(
         TodoResponse(
             id=str(t.id),
             title=t.title,
-            description=t.description,
             is_completed=t.is_completed,
-            created_at=t.created_at.isoformat(),
         )
         for t in todos
     ]
@@ -127,6 +133,29 @@ async def get_todos(
         ),
         data=response_todos,
     )
+
+
+@router.get("/{todo_id}", response_model=SuccessResponse[TodoWithOwnerResponse])
+async def get_todo_detail(
+    todo_id: UUID,
+    current_user: dict = Depends(require_permission(TODO_RESOURCE, READ_ACTION)),
+    handler: GetTodoDetailWithOwnerHandler = Depends(
+        get_todo_detail_with_owner_handler
+    ),
+):
+    try:
+        todo = await handler.execute(todo_id=todo_id, user_id=current_user.get("id"))
+        return SuccessResponse(
+            message="Todo retrieved successfully",
+            success=True,
+            data=todo,
+        )
+    except TodoNotFoundError:
+        raise HTTPException(status_code=404, detail="Todo not found")
+    except UnauthorizedTodoAccessError:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    except UserNotFoundError:
+        raise HTTPException(status_code=404, detail="Todo owner not found")
 
 
 @router.patch("/{todo_id}", response_model=SuccessResponse[TodoResponse])

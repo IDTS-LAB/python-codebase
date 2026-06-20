@@ -2,8 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from uuid import UUID
 
-from src.modules.authorization.domain.entities.permission import Permission
-from src.modules.authorization.domain.entities.role import Role
+from src.modules.authorization import Permission, Role
 from src.shared.utils.cursor import CursorDirection
 
 

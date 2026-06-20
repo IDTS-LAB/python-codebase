@@ -8,7 +8,7 @@ from src.core.authorization.permissions import (
     VIEWER_ROLE,
 )
 from src.core.security.password import PasswordSerrvice
-from src.modules.user.domain.entities.user import User
+from src.modules.user import User
 
 
 class SeedUserRepository(Protocol):
