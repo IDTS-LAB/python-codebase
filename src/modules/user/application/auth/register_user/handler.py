@@ -1,5 +1,6 @@
 import secrets
 
+from modules.user.domain.events.emails.event import UserRegisteredEvent
 from src.core.authorization.domain.service import AuthorizationService
 from src.core.authorization.permissions import DEFAULT_USER_ROLE
 from src.core.events.bus import get_event_bus
@@ -8,7 +9,6 @@ from src.modules.user.application.auth.register_user.command import RegisterUser
 from src.modules.user.application.auth.register_user.validation import (
     validate_register_user_command,
 )
-from src.modules.user.contracts.events.emails.event import UserRegisteredEvent
 from src.modules.user.domain.entities.user import User
 from src.modules.user.domain.exceptions.user_exception import UserAlreadyExistsError
 from src.modules.user.domain.repositories.user_repository import UserRepository

@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from modules.user.providers import UserModuleProvider
 from src.modules.todo import (
     TodoNotFoundError,
     TodoRepository,
@@ -7,7 +8,6 @@ from src.modules.todo import (
 )
 from src.modules.todo.presentation.schemas.response import TodoWithOwnerResponse
 from src.modules.user import UserNotFoundError
-from src.modules.user.contracts.providers import UserModuleProvider
 
 
 class GetTodoDetailWithOwnerHandler:

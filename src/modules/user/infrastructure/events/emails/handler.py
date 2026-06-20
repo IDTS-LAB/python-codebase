@@ -1,11 +1,11 @@
-from src.core.config import settings
-from src.core.email.service import EmailService
-from src.modules.user.contracts.events.emails.event import (
+from modules.user.domain.events.emails.event import (
     PasswordResetRequestedEvent,
     UserRegisteredEvent,
     WelcomeEmailEvent,
 )
-from src.modules.user.contracts.events.handler import EventHandler
+from shared.events.handler import EventHandler
+from src.core.config import settings
+from src.core.email.service import EmailService
 
 
 class SendVerificationEmailHandler(EventHandler):

@@ -1,6 +1,7 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from modules.user.providers import UserModuleProvider
 from src.core.database.postgres.session import get_db, get_unit_of_work
 from src.core.dependency.providers import get_user_module_provider
 from src.modules.todo.application.create_todo.handler import CreateTodoHandler
@@ -16,7 +17,6 @@ from src.modules.todo.domain.repositories.todo_repository import TodoRepository
 from src.modules.todo.infrastructure.repositories.todo_repository import (
     SQLAlchemyTodoRepository,
 )
-from src.modules.user.contracts.providers import UserModuleProvider
 from src.shared.unit_of_work import UnitOfWork
 
 
