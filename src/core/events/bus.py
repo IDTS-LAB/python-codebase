@@ -1,7 +1,7 @@
 from functools import lru_cache
 
-from modules.user.contracts.events.base import Event
-from modules.user.contracts.events.handler import EventHandler
+from src.modules.user.contracts.events.base import Event
+from src.modules.user.contracts.events.handler import EventHandler
 
 
 class EventBus:
