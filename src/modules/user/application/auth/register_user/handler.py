@@ -4,8 +4,8 @@ from src.core.authorization.domain.service import AuthorizationService
 from src.core.authorization.permissions import DEFAULT_USER_ROLE
 from src.core.events.bus import get_event_bus
 from src.core.security.password import PasswordSerrvice
-from src.modules.user.application.register_user.command import RegisterUserCommand
-from src.modules.user.application.register_user.validation import (
+from src.modules.user.application.auth.register_user.command import RegisterUserCommand
+from src.modules.user.application.auth.register_user.validation import (
     validate_register_user_command,
 )
 from src.modules.user.domain.entities.user import User

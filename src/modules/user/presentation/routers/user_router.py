@@ -8,20 +8,22 @@ from src.core.authorization.permissions import (
     USER_RESOURCE,
 )
 from src.core.schemas.response import SuccessResponse
-from src.modules.user.application.detail_user.handler import DetailUserQueryHandler
-from src.modules.user.application.detail_user.query import DetailUserQuery
-from src.modules.user.application.login_user.command import LoginUserCommand
-from src.modules.user.application.login_user.handler import LoginUserCommandHandler
-from src.modules.user.application.logout_user.command import LogoutUserCommand
-from src.modules.user.application.logout_user.handler import LogoutUserCommandHandler
-from src.modules.user.application.refresh_token.command import RefreshTokenCommand
-from src.modules.user.application.refresh_token.handler import (
+from src.modules.user.application.auth.login_user.command import LoginUserCommand
+from src.modules.user.application.auth.login_user.handler import LoginUserCommandHandler
+from src.modules.user.application.auth.logout_user.command import LogoutUserCommand
+from src.modules.user.application.auth.logout_user.handler import (
+    LogoutUserCommandHandler,
+)
+from src.modules.user.application.auth.refresh_token.command import RefreshTokenCommand
+from src.modules.user.application.auth.refresh_token.handler import (
     RefreshTokenCommandHandler,
 )
-from src.modules.user.application.register_user.command import RegisterUserCommand
-from src.modules.user.application.register_user.handler import (
+from src.modules.user.application.auth.register_user.command import RegisterUserCommand
+from src.modules.user.application.auth.register_user.handler import (
     RegisterUserCommandHandler,
 )
+from src.modules.user.application.detail_user.handler import DetailUserQueryHandler
+from src.modules.user.application.detail_user.query import DetailUserQuery
 from src.modules.user.domain.exceptions.user_exception import UserAlreadyExistsError
 from src.modules.user.presentation.dependency import (
     get_login_handler,

@@ -13,15 +13,17 @@ from src.core.security.infrastructure.repositories.login_attempt_repository impo
     SQLAlchemyLoginAttemptRepository,
 )
 from src.core.security.token_revocation import TokenRevocationService
-from src.modules.user.application.detail_user.handler import DetailUserQueryHandler
-from src.modules.user.application.login_user.handler import LoginUserCommandHandler
-from src.modules.user.application.logout_user.handler import LogoutUserCommandHandler
-from src.modules.user.application.refresh_token.handler import (
+from src.modules.user.application.auth.login_user.handler import LoginUserCommandHandler
+from src.modules.user.application.auth.logout_user.handler import (
+    LogoutUserCommandHandler,
+)
+from src.modules.user.application.auth.refresh_token.handler import (
     RefreshTokenCommandHandler,
 )
-from src.modules.user.application.register_user.handler import (
+from src.modules.user.application.auth.register_user.handler import (
     RegisterUserCommandHandler,
 )
+from src.modules.user.application.detail_user.handler import DetailUserQueryHandler
 from src.modules.user.domain.repositories.refresh_token_repository import (
     RefreshTokenRepository,
 )

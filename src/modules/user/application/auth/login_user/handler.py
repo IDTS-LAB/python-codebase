@@ -6,8 +6,10 @@ from src.core.security.account_lockout import AccountLockoutService
 from src.core.security.audit import AuditEvent, AuditService
 from src.core.security.jwt import JWTService
 from src.core.security.password import PasswordSerrvice
-from src.modules.user.application.login_user.command import LoginUserCommand
-from src.modules.user.application.login_user.validation import validate_login_user_command
+from src.modules.user.application.auth.login_user.command import LoginUserCommand
+from src.modules.user.application.auth.login_user.validation import (
+    validate_login_user_command,
+)
 from src.modules.user.domain.entities.refresh_token import RefreshToken
 from src.modules.user.domain.repositories.refresh_token_repository import (
     RefreshTokenRepository,

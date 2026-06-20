@@ -3,8 +3,8 @@ from datetime import datetime, timedelta, timezone
 
 from src.core.config.setting import get_settings
 from src.core.security.jwt import JWTService
-from src.modules.user.application.refresh_token.command import RefreshTokenCommand
-from src.modules.user.application.refresh_token.validation import (
+from src.modules.user.application.auth.refresh_token.command import RefreshTokenCommand
+from src.modules.user.application.auth.refresh_token.validation import (
     validate_refresh_token_command,
 )
 from src.modules.user.domain.entities.refresh_token import RefreshToken

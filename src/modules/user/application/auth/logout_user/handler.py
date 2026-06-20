@@ -1,11 +1,11 @@
-from src.modules.user.application.logout_user.command import LogoutUserCommand
-from src.modules.user.application.logout_user.validation import (
+from src.core.security.token_revocation import TokenRevocationService
+from src.modules.user.application.auth.logout_user.command import LogoutUserCommand
+from src.modules.user.application.auth.logout_user.validation import (
     validate_logout_user_command,
 )
 from src.modules.user.domain.repositories.refresh_token_repository import (
     RefreshTokenRepository,
 )
-from src.core.security.token_revocation import TokenRevocationService
 from src.shared.unit_of_work import UnitOfWork
 
 

@@ -1,4 +1,4 @@
-from src.modules.user.application.login_user.command import LoginUserCommand
+from src.modules.user.application.auth.login_user.command import LoginUserCommand
 
 
 def validate_login_user_command(command: LoginUserCommand) -> None:

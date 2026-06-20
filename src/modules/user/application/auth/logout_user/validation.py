@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from src.modules.user.application.logout_user.command import LogoutUserCommand
+from src.modules.user.application.auth.logout_user.command import LogoutUserCommand
 
 
 def validate_logout_user_command(command: LogoutUserCommand) -> None:

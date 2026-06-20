@@ -1,4 +1,4 @@
-from src.modules.user.application.register_user.command import RegisterUserCommand
+from src.modules.user.application.auth.register_user.command import RegisterUserCommand
 
 
 def validate_register_user_command(command: RegisterUserCommand) -> None:
