@@ -4,7 +4,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from src.core.config.setting import get_settings
-from src.shared.database.unit_of_work import SQLAlchemyUnitOfWork
+from src.core.database.unit_of_work import SQLAlchemyUnitOfWork
 from src.shared.unit_of_work import UnitOfWork
 
 settings = get_settings()

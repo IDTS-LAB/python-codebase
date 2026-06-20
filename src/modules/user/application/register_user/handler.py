@@ -1,3 +1,8 @@
+import secrets
+
+from src.core.authorization.domain.service import AuthorizationService
+from src.core.authorization.permissions import DEFAULT_USER_ROLE
+from src.core.events.bus import get_event_bus
 from src.core.security.password import PasswordSerrvice
 from src.modules.user.application.register_user.command import RegisterUserCommand
 from src.modules.user.application.register_user.validation import (
@@ -6,8 +11,7 @@ from src.modules.user.application.register_user.validation import (
 from src.modules.user.domain.entities.user import User
 from src.modules.user.domain.exceptions.user_exception import UserAlreadyExistsError
 from src.modules.user.domain.repositories.user_repository import UserRepository
-from src.core.authorization.domain.service import AuthorizationService
-from src.core.authorization.permissions import DEFAULT_USER_ROLE
+from src.shared.events.emails.event import UserRegisteredEvent
 from src.shared.unit_of_work import UnitOfWork
 
 
@@ -41,4 +45,15 @@ class RegisterUserCommandHandler:
                 role=DEFAULT_USER_ROLE,
             )
             await self._unit_of_work.commit()
+
+            verification_token = secrets.token_urlsafe(32)
+
+            await get_event_bus().publish(
+                UserRegisteredEvent(
+                    user_id=str(saved_user.id),
+                    email=saved_user.email,
+                    verification_token=verification_token,
+                ),
+            )
+
             return saved_user

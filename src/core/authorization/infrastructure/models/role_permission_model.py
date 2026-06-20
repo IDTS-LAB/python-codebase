@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.shared.database.model import Base
@@ -16,8 +16,5 @@ class RolePermissionModel(Base):
         ),
     )
 
-    role_id: Mapped[UUID] = mapped_column(ForeignKey("roles.id"), index=True)
-    permission_id: Mapped[UUID] = mapped_column(
-        ForeignKey("permissions.id"),
-        index=True,
-    )
+    role_id: Mapped[UUID] = mapped_column(index=True)
+    permission_id: Mapped[UUID] = mapped_column(index=True)

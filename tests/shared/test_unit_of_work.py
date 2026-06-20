@@ -1,6 +1,6 @@
 import asyncio
 
-from src.shared.database.unit_of_work import SQLAlchemyUnitOfWork
+from src.core.database.unit_of_work import SQLAlchemyUnitOfWork
 
 
 class FakeSession:

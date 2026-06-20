@@ -4,7 +4,6 @@ from uuid import UUID
 from sqlalchemy import and_, delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.utils.cursor import CursorDirection
 from src.core.authorization.infrastructure.models.casbin_rule_model import (
     CasbinRuleModel,
 )
@@ -24,6 +23,7 @@ from src.core.authorization.infrastructure.models.user_has_role_model import (
 from src.modules.authorization.domain.entities.permission import Permission
 from src.modules.authorization.domain.entities.resource import AuthorizationResource
 from src.modules.authorization.domain.entities.role import Role
+from src.shared.utils.cursor import CursorDirection
 
 
 class SQLAlchemyCasbinPolicyRepository:

@@ -16,7 +16,6 @@ from src.core.schemas.response import (
     CursorPaginatedResponse,
     SuccessResponse,
 )
-from src.core.utils.cursor import CursorDirection, decode_cursor, encode_cursor
 from src.modules.todo.application.create_todo.command import CreateTodoCommand
 from src.modules.todo.application.create_todo.handler import CreateTodoHandler
 from src.modules.todo.application.delete_todo.handler import DeleteTodoHandler
@@ -37,6 +36,7 @@ from src.modules.todo.presentation.dependency import (
     get_update_todo_handler,
 )
 from src.modules.todo.presentation.schemas.response import TodoResponse
+from src.shared.utils.cursor import CursorDirection, decode_cursor, encode_cursor
 
 router = APIRouter(prefix="/todos", tags=["Todos"])
 

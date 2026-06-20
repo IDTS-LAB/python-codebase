@@ -4,10 +4,10 @@ from uuid import UUID
 from sqlalchemy import and_, delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.utils.cursor import CursorDirection
 from src.modules.todo.domain.entities.todo import Todo
 from src.modules.todo.domain.repositories.todo_repository import TodoRepository
 from src.modules.todo.infrastructure.models.todo_model import TodoModel
+from src.shared.utils.cursor import CursorDirection
 
 
 class SQLAlchemyTodoRepository(TodoRepository):

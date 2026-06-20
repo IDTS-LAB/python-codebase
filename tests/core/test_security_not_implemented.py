@@ -4,8 +4,6 @@ import logging
 from datetime import datetime, timezone
 
 import pytest
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
@@ -15,7 +13,7 @@ from src.core.middleware.idempotency import IdempotencyMiddleware
 from src.core.middleware.request_id import RequestIDMiddleware
 from src.core.middleware.security_headers import SecurityHeadersMiddleware
 from src.core.middleware.structured_logging import StructuredLoggingMiddleware
-from src.core.routers.admin import register_router as register_admin_router
+from src.core.routers import admin as admin_router
 from src.core.security.account_lockout import AccountLockoutService
 from src.core.security.audit import AuditEvent, AuditService
 
@@ -171,15 +169,44 @@ def test_structured_logging_formats_record_as_json():
     assert payload["request_id"] == "request-1"
 
 
-def test_admin_router_exposes_liveness_and_readiness():
-    app = FastAPI()
-    register_admin_router(app)
-    client = TestClient(app)
+def test_admin_router_exposes_liveness_and_readiness(monkeypatch):
+    class FakeConnection:
+        async def exec_driver_sql(self, statement):
+            return None
 
-    assert client.get("/live").json() == {"status": "alive"}
-    ready_response = client.get("/ready")
-    assert ready_response.status_code in (200, 503)
-    assert "checks" in ready_response.json()
+    class FakeEngine:
+        def connect(self):
+            class ConnectionContext:
+                async def __aenter__(self):
+                    return FakeConnection()
+
+                async def __aexit__(self, exc_type, exc, traceback):
+                    return False
+
+            return ConnectionContext()
+
+    class FakeRedis:
+        async def ping(self):
+            return True
+
+    async def fake_get_redis_client():
+        return FakeRedis()
+
+    monkeypatch.setattr(admin_router, "engine", FakeEngine())
+    monkeypatch.setattr(admin_router, "get_redis_client", fake_get_redis_client)
+
+    async def run():
+        live_response = await admin_router.live()
+        ready_response = await admin_router.ready()
+
+        assert live_response == {"status": "alive"}
+        assert ready_response.status_code == 200
+        assert json.loads(ready_response.body.decode()) == {
+            "status": "ready",
+            "checks": {"database": "ok", "redis": "ok"},
+        }
+
+    asyncio.run(run())
 
 
 def test_authentication_middleware_returns_generic_invalid_token_error():

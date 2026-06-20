@@ -2,13 +2,13 @@ import asyncio
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
-from src.core.utils.cursor import CursorDirection, decode_cursor, encode_cursor
 from src.modules.authorization.domain.entities.permission import Permission
 from src.modules.authorization.domain.entities.role import Role
 from src.modules.authorization.presenter.routers.permission_router import (
     list_permissions,
 )
 from src.modules.authorization.presenter.routers.role_router import list_roles
+from src.shared.utils.cursor import CursorDirection, decode_cursor, encode_cursor
 
 
 class FakeAuthorizationService:

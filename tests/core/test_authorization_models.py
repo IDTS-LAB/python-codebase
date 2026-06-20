@@ -16,6 +16,9 @@ from src.core.authorization.infrastructure.models.role_permission_model import (
 from src.core.authorization.infrastructure.models.user_has_role_model import (
     UserHasRoleModel,
 )
+from src.modules.todo.infrastructure.models.todo_model import TodoModel
+from src.modules.user.infrastructure.models.refresh_token_model import RefreshTokenModel
+from src.shared.database.model import Base
 
 
 def test_authorization_tables_are_registered_in_metadata():
@@ -41,3 +44,18 @@ def test_authorization_models_have_expected_columns():
         RolePermissionModel.__table__.columns.keys()
     )
     assert {"user_id", "role_id"}.issubset(UserHasRoleModel.__table__.columns.keys())
+
+
+def test_database_models_do_not_declare_foreign_keys():
+    # Import models that live outside authorization so they are registered in metadata.
+    assert TodoModel.__tablename__ == "todos"
+    assert RefreshTokenModel.__tablename__ == "refresh_tokens"
+
+    foreign_keys = [
+        f"{table.name}.{column.name}->{foreign_key.target_fullname}"
+        for table in Base.metadata.tables.values()
+        for column in table.columns
+        for foreign_key in column.foreign_keys
+    ]
+
+    assert foreign_keys == []

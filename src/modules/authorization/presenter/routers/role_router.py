@@ -21,7 +21,6 @@ from src.core.schemas.response import (
     CursorPaginatedResponse,
     SuccessResponse,
 )
-from src.core.utils.cursor import CursorDirection, decode_cursor, encode_cursor
 from src.modules.authorization.domain.entities.role import Role
 from src.modules.authorization.presenter.dependency import (
     get_casbin_authorization_service,
@@ -32,6 +31,7 @@ from src.modules.authorization.presenter.schema.request import (
 )
 from src.modules.authorization.presenter.schema.response import RoleResponse
 from src.shared.unit_of_work import UnitOfWork
+from src.shared.utils.cursor import CursorDirection, decode_cursor, encode_cursor
 
 router = APIRouter(prefix="/roles", tags=["Role"])
 

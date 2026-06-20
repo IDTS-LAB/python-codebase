@@ -2,10 +2,12 @@ import pytest
 from fastapi import FastAPI, Request, Response
 
 from src.core.bootstrap.exception import register_exception
+from src.core.bootstrap.event import register_event_handlers
 from src.core.bootstrap.middleware import register_middleware
 from src.core.config.setting import Settings
 from src.core.dependency import rate_limit as rate_limit_module
 from src.core.dependency.rate_limit import apply_global_rate_limit, custom_identifier
+from src.core.events.bus import EventBus, get_event_bus
 from src.core.exceptions.handler import (
     DOMAIN_EXCEPTION_MAP,
     domain_exception_handler,
@@ -151,6 +153,43 @@ def test_register_exception_uses_specific_domain_handlers_and_single_fallback():
     for exception_type in DOMAIN_EXCEPTION_MAP:
         assert app.exception_handlers[exception_type] is domain_exception_handler
     assert app.exception_handlers[Exception] is global_exception_handler
+
+
+def test_register_event_handlers_subscribes_email_handlers(monkeypatch):
+    subscriptions = []
+    email_service = object()
+
+    class FakeEventBus:
+        def subscribe(self, event_type, handler):
+            subscriptions.append((event_type, handler))
+
+    monkeypatch.setattr(
+        "src.core.bootstrap.event.create_email_service",
+        lambda: email_service,
+    )
+
+    register_event_handlers(FakeEventBus())
+
+    assert [event_type for event_type, _ in subscriptions] == [
+        "UserRegisteredEvent",
+        "PasswordResetRequestedEvent",
+        "WelcomeEmailEvent",
+    ]
+    assert [handler.email_service for _, handler in subscriptions] == [
+        email_service,
+        email_service,
+        email_service,
+    ]
+
+
+def test_get_event_bus_returns_cached_event_bus():
+    get_event_bus.cache_clear()
+
+    first_bus = get_event_bus()
+    second_bus = get_event_bus()
+
+    assert isinstance(first_bus, EventBus)
+    assert first_bus is second_bus
 
 
 def test_create_app_disables_openapi_entrypoints_in_production():

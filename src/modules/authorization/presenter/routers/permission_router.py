@@ -22,7 +22,6 @@ from src.core.schemas.response import (
     CursorPaginatedResponse,
     SuccessResponse,
 )
-from src.core.utils.cursor import CursorDirection, decode_cursor, encode_cursor
 from src.modules.authorization.domain.entities.permission import Permission
 from src.modules.authorization.presenter.dependency import (
     get_casbin_authorization_service,
@@ -33,6 +32,7 @@ from src.modules.authorization.presenter.schema.request import (
 )
 from src.modules.authorization.presenter.schema.response import PermissionResponse
 from src.shared.unit_of_work import UnitOfWork
+from src.shared.utils.cursor import CursorDirection, decode_cursor, encode_cursor
 
 router = APIRouter(prefix="/permissions", tags=["Permission"])
 
@@ -112,10 +112,7 @@ async def list_permissions(
     return CursorPaginatedResponse(
         success=True,
         message="fetch permission success",
-        data=[
-            _permission_response(permission)
-            for permission in permissions
-        ],
+        data=[_permission_response(permission) for permission in permissions],
         meta=CursorMeta(
             next_cursor=next_cursor,
             prev_cursor=prev_cursor,
