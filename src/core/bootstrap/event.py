@@ -1,15 +1,15 @@
-from src.core.email.factory import create_email_service
-from src.core.events.bus import EventBus, get_event_bus
-from src.shared.events.emails.event import (
+from modules.user.contracts.events.emails.event import (
     PasswordResetRequestedEvent,
     UserRegisteredEvent,
     WelcomeEmailEvent,
 )
-from src.shared.events.emails.handler import (
+from modules.user.contracts.events.emails.handler import (
     SendPasswordResetEmailHandler,
     SendVerificationEmailHandler,
     SendWelcomeEmailHandler,
 )
+from src.core.email.factory import create_email_service
+from src.core.events.bus import EventBus, get_event_bus
 
 
 def register_event_handlers(bus: EventBus | None = None) -> None:

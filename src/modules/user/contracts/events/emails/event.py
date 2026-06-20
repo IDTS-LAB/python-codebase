@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from src.shared.events.base import Event
+from modules.user.contracts.events.base import Event
 
 
 @dataclass

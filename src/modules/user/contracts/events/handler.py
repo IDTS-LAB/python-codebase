@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from src.shared.events.base import Event
+from modules.user.contracts.events.base import Event
 
 
 class EventHandler(Protocol):
