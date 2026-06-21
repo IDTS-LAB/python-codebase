@@ -25,6 +25,7 @@ The API is currently versioned under `/api/v1`.
 - [Database and Migrations](#database-and-migrations)
 - [Testing and Quality Checks](#testing-and-quality-checks)
 - [Makefile Commands](#makefile-commands)
+- [Additional Documentation](#additional-documentation)
 - [Docker Notes](#docker-notes)
 - [Development Guide](#development-guide)
 - [Troubleshooting](#troubleshooting)
@@ -52,7 +53,7 @@ The API is currently versioned under `/api/v1`.
 - Async SQLAlchemy persistence.
 - Alembic database migrations.
 - Database seeders for authorization data and optional users.
-- Pytest regression tests.
+- Pytest application-validation tests.
 - Ruff linting.
 
 ## Tech Stack
@@ -83,7 +84,7 @@ The API is currently versioned under `/api/v1`.
 │   ├── main.py                      # FastAPI application entrypoint
 │   ├── core/
 │   │   ├── bootstrap/               # Application bootstrap helpers
-│   │   ├── authorization/           # RBAC permissions, Casbin services, auth models
+│   │   ├── authorization/           # Shared authorization persistence and services
 │   │   ├── config/                  # Runtime settings
 │   │   ├── database/                # PostgreSQL and Redis connection setup
 │   │   ├── dependency/              # Shared FastAPI dependencies
@@ -93,12 +94,13 @@ The API is currently versioned under `/api/v1`.
 │   │   ├── schemas/                 # Shared response schemas
 │   │   ├── security/                # JWT, password, revocation, audit helpers
 │   │   ├── seed/                    # Database seeding orchestration
-│   │   ├── utils/                   # Cursor pagination helpers
 │   │   └── lifespan.py              # FastAPI lifespan hook
 │   ├── modules/
 │   │   ├── authorization/
-│   │   │   ├── domain/              # Role and permission entities
-│   │   │   └── presenter/           # Role and permission routers/schemas
+│   │   │   ├── application/         # Role and permission use cases
+│   │   │   ├── domain/              # Role, resource, and permission entities
+│   │   │   ├── infrastructure/      # Casbin and SQLAlchemy adapters
+│   │   │   └── presentation/        # Role and permission routers/schemas
 │   │   ├── user/
 │   │   │   ├── application/         # User commands, queries, handlers
 │   │   │   ├── domain/              # User entity, exceptions, repository port
@@ -111,7 +113,11 @@ The API is currently versioned under `/api/v1`.
 │   │       └── presentation/        # FastAPI router and dependencies
 │   └── shared/
 │       ├── database/                # Shared SQLAlchemy base and mixins
-│       └── exceptions/              # Cross-cutting exceptions
+│       ├── email/                   # Shared email contracts
+│       ├── events/                  # Shared event contracts
+│       ├── exceptions/              # Cross-cutting exceptions
+│       └── utils/                   # Cursor pagination helpers
+├── templates/emails/                # Transactional email templates
 ├── tests/                           # Pytest tests
 ├── pyproject.toml                   # Project metadata and dependencies
 ├── poetry.lock                      # Poetry lock file
@@ -211,6 +217,7 @@ GET    /api/v1/auth/me
 POST   /api/v1/auth/logout
 POST   /api/v1/todos/
 GET    /api/v1/todos/?cursor=<cursor>&limit=10
+GET    /api/v1/todos/{todo_id}
 PATCH  /api/v1/todos/{todo_id}
 DELETE /api/v1/todos/{todo_id}
 POST   /api/v1/roles/
@@ -240,6 +247,7 @@ Public routes:
 - `/openapi.json`
 - `/api/v1/auth/login`
 - `/api/v1/auth/register`
+- `/api/v1/auth/refresh`
 
 Protected routes require:
 
@@ -254,6 +262,8 @@ Swagger UI, ReDoc, and OpenAPI JSON are disabled when `APP_ENV=production`.
 - Python `3.14` or compatible with the project constraint.
 - Poetry.
 - PostgreSQL, either local or via Docker.
+- Redis, either local or via Docker.
+- Docker with the Compose plugin, if using the containerized stack.
 - Make, if using the generated `Makefile`.
 
 ## Environment Variables
@@ -269,6 +279,7 @@ Expected values:
 ```env
 APP_NAME=Todo Modulith API
 APP_ENV=production
+FRONTEND_URL=http://localhost:3000
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=
 POSTGRES_DB=todo_db
@@ -296,6 +307,19 @@ ACCOUNT_LOCKOUT_MAX_ATTEMPTS=5
 ACCOUNT_LOCKOUT_WINDOW_MINUTES=15
 ACCOUNT_LOCKOUT_DURATION_MINUTES=15
 LOG_FORMAT=json
+EMAIL_PROVIDER=ses
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+SES_FROM_EMAIL=noreply@example.com
+SENDGRID_API_KEY=
+SENDGRID_FROM_EMAIL=noreply@example.com
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USERNAME=
+SMTP_PASSWORD=
+SMTP_FROM_EMAIL=noreply@example.com
+SMTP_USE_TLS=true
 SEED_ADMIN_EMAIL=
 SEED_ADMIN_PASSWORD=
 SEED_ADMIN_USERNAME=admin
@@ -303,27 +327,28 @@ SEED_ADMIN_FULLNAME=System Administrator
 SEED_DEVELOPMENT_USERS_PASSWORD=
 ```
 
-For local development without Docker, point `DATABASE_URL` at your local PostgreSQL host, for example:
+`MAX_REQUEST_SIZE_MB` is currently interpreted as a byte count despite its name. Keep it at `5242880` for a 5 MiB limit.
+
+For local development without Docker, use development mode and point the service URLs at local PostgreSQL and Redis instances, for example:
 
 ```env
+APP_ENV=development
 DATABASE_URL=postgresql+asyncpg://postgres@localhost:5432/todo_db
+REDIS_URL=redis://127.0.0.1:6379/0
 ```
+
+Production mode requires a non-default `SECRET_KEY`, non-empty database and Redis URLs, JWT issuer and audience values, positive token lifetimes, and explicit CORS origins.
 
 ## Local Setup
 
-Install dependencies:
+The Makefile expects Poetry to create `.venv` inside the repository. Configure that once, then install dependencies:
 
 ```bash
+poetry config virtualenvs.in-project true --local
 poetry install
 ```
 
-Activate the virtual environment if desired:
-
-```bash
-poetry shell
-```
-
-Or run commands through Poetry:
+Run commands through Poetry directly:
 
 ```bash
 poetry run pytest -q
@@ -350,6 +375,8 @@ Open:
 ```text
 http://localhost:8000/docs
 ```
+
+This documentation endpoint is available only when `APP_ENV` is not `production`.
 
 Health check:
 
@@ -458,7 +485,10 @@ Current check set:
 
 - `pytest -q`
 - `ruff check src tests scripts`
+- import boundary checks through `lint-imports`
 - import check for `src.main`
+
+The current pytest suite focuses on application-layer command and query validation. Broader middleware, API integration, and infrastructure regression coverage still needs to be added.
 
 Dependency scanning is available separately:
 
@@ -474,6 +504,7 @@ make install
 make run
 make test
 make lint
+make lint-imports
 make import-check
 make security-scan
 make check
@@ -487,6 +518,10 @@ make db-logs
 make clean
 ```
 
+## Additional Documentation
+
+- [Query Optimization Guide](docs/QUERY_OPTIMIZATION.md)
+
 ## Docker Notes
 
 Before starting Docker Compose, set non-empty `POSTGRES_PASSWORD`, `REDIS_PASSWORD`, and `SECRET_KEY` in `.env`. Compose intentionally fails fast when database or Redis passwords are missing.
@@ -496,6 +531,8 @@ Run API, PostgreSQL, and Redis services:
 ```bash
 make db-up
 ```
+
+The API container applies Alembic migrations before starting Uvicorn. Database seeding remains an explicit `make seed` step.
 
 Stop services:
 
@@ -635,11 +672,11 @@ Legend: `Implemented` means code exists in the repository. `Partial` means code 
 - [x] Add production config validation for secrets and unsafe defaults.
 - [x] Harden CORS through environment-driven allowed origins, methods, and headers.
 - [x] Review exception responses to avoid leaking token parsing details or internal exception messages.
-- [x] Add automated tests for request size limits, rate limiting, auth failures, authorization failures, CORS, security headers, and request IDs.
+- [ ] Add automated tests for request size limits, rate limiting, auth failures, authorization failures, CORS, security headers, and request IDs.
 - [x] Add dependency vulnerability scanning to local or CI checks, for example `pip-audit` or an equivalent Poetry-compatible scanner.
 
 ## Known Notes
 
-- `src/core/lifespan.py` still calls `Base.metadata.create_all`; with Alembic in place, production environments normally rely on migrations instead.
-- The project has a Pydantic v2 deprecation warning for class-based settings config.
-- The current architecture is clean enough for a learning modulith, but some flows can be made stricter by moving remaining business orchestration out of routers and into application handlers.
+- The automated test suite currently covers application validation only; middleware, router, database, Redis, and authorization integration paths are not covered.
+- Authorization persistence currently exists under both `src/core/authorization/infrastructure` and `src/modules/authorization/infrastructure`; new work should avoid increasing that duplication.
+- Some authorization routes call the domain service directly while other modules use dedicated application handlers, so CQRS boundaries are not yet applied consistently.
