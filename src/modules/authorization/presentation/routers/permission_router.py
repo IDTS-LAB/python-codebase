@@ -4,18 +4,6 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from src.core.authorization.dependencies import require_permission
-from src.core.authorization.infrastructure.services.casbin_authorization_service import (
-    CasbinAuthorizationService,
-)
-from src.core.authorization.permissions import (
-    CREATE_ACTION,
-    DELETE_ACTION,
-    PERMISSION_RESOURCE,
-    READ_ACTION,
-    UPDATE_ACTION,
-    permission_key,
-)
 from src.core.database.postgres.session import get_unit_of_work
 from src.core.schemas.response import (
     CursorMeta,
@@ -23,14 +11,26 @@ from src.core.schemas.response import (
     SuccessResponse,
 )
 from src.modules.authorization.domain.entities.permission import Permission
-from src.modules.authorization.presenter.dependency import (
-    get_casbin_authorization_service,
+from src.modules.authorization.domain.permissions import (
+    CREATE_ACTION,
+    DELETE_ACTION,
+    PERMISSION_RESOURCE,
+    READ_ACTION,
+    UPDATE_ACTION,
+    permission_key,
 )
-from src.modules.authorization.presenter.schema.request import (
+from src.modules.authorization.infrastructure.services.casbin_authorization_service import (
+    CasbinAuthorizationService,
+)
+from src.modules.authorization.presentation.dependency import (
+    get_casbin_authorization_service,
+    require_permission,
+)
+from src.modules.authorization.presentation.schema.request import (
     CreatePermissionRequest,
     UpdatePermissionRequest,
 )
-from src.modules.authorization.presenter.schema.response import PermissionResponse
+from src.modules.authorization.presentation.schema.response import PermissionResponse
 from src.shared.unit_of_work import UnitOfWork
 from src.shared.utils.cursor import CursorDirection, decode_cursor, encode_cursor
 

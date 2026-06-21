@@ -1,12 +1,15 @@
 from datetime import datetime
 from uuid import UUID
 
-from src.core.authorization.domain.service import AuthorizationService
-from src.core.authorization.infrastructure.repositories.casbin_policy_repository import (
+from src.modules.authorization.domain.permissions import permission_key
+from src.modules.authorization.domain.services.authorization_service import (
+    AuthorizationService,
+)
+from src.modules.authorization.infrastructure.repositories.casbin_policy_repository import (
     SQLAlchemyCasbinPolicyRepository,
 )
-from src.core.authorization.permissions import permission_key
-from src.modules.authorization import Permission, Role
+from src.modules.authorization.domain.entities.permission import Permission
+from src.modules.authorization.domain.entities.role import Role
 from src.shared.utils.cursor import CursorDirection
 
 CASBIN_MODEL_TEXT = """

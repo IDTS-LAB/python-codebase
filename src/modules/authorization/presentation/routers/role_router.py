@@ -4,32 +4,32 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from src.core.authorization.dependencies import require_permission
-from src.core.authorization.infrastructure.services.casbin_authorization_service import (
-    CasbinAuthorizationService,
-)
-from src.core.authorization.permissions import (
-    CREATE_ACTION,
-    DELETE_ACTION,
-    READ_ACTION,
-    ROLE_RESOURCE,
-    UPDATE_ACTION,
-)
 from src.core.database.postgres.session import get_unit_of_work
 from src.core.schemas.response import (
     CursorMeta,
     CursorPaginatedResponse,
     SuccessResponse,
 )
-from src.modules.authorization.domain.entities.role import Role
-from src.modules.authorization.presenter.dependency import (
-    get_casbin_authorization_service,
+from src.modules.authorization.domain.permissions import (
+    CREATE_ACTION,
+    DELETE_ACTION,
+    READ_ACTION,
+    ROLE_RESOURCE,
+    UPDATE_ACTION,
 )
-from src.modules.authorization.presenter.schema.request import (
+from src.modules.authorization.domain.entities.role import Role
+from src.modules.authorization.infrastructure.services.casbin_authorization_service import (
+    CasbinAuthorizationService,
+)
+from src.modules.authorization.presentation.dependency import (
+    get_casbin_authorization_service,
+    require_permission,
+)
+from src.modules.authorization.presentation.schema.request import (
     CreateRoleRequest,
     UpdateRoleRequest,
 )
-from src.modules.authorization.presenter.schema.response import RoleResponse
+from src.modules.authorization.presentation.schema.response import RoleResponse
 from src.shared.unit_of_work import UnitOfWork
 from src.shared.utils.cursor import CursorDirection, decode_cursor, encode_cursor
 
