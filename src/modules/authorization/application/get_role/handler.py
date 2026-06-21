@@ -1,8 +1,6 @@
-from uuid import UUID
-
 from src.modules.authorization.application.get_role.query import GetRoleQuery
 from src.modules.authorization.domain.entities.role import Role
-from src.modules.authorization.domain.repositories.casbin_policy_repository import (
+from src.modules.authorization.infrastructure.repositories.casbin_policy_repository import (
     CasbinPolicyRepository,
 )
 

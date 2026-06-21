@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from src.core.authorization.dependencies import require_permission
-from src.core.authorization.permissions import (
+from src.core.schemas.response import SuccessResponse
+from src.modules.authorization.domain.permissions import (
     ME_ACTION,
     UPDATE_ACTION,
     USER_RESOURCE,
 )
-from src.core.schemas.response import SuccessResponse
+from src.modules.authorization.presentation.dependency import require_permission
 from src.modules.user.application.auth.login_user.command import LoginUserCommand
 from src.modules.user.application.auth.login_user.handler import LoginUserCommandHandler
 from src.modules.user.application.auth.logout_user.command import LogoutUserCommand

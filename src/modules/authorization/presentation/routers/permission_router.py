@@ -23,7 +23,7 @@ from src.modules.authorization.infrastructure.services.casbin_authorization_serv
     CasbinAuthorizationService,
 )
 from src.modules.authorization.presentation.dependency import (
-    get_casbin_authorization_service,
+    get_authorization_service,
     require_permission,
 )
 from src.modules.authorization.presentation.schema.request import (
@@ -45,7 +45,7 @@ router = APIRouter(prefix="/permissions", tags=["Permission"])
 )
 async def create_permission(
     request: CreatePermissionRequest,
-    service: CasbinAuthorizationService = Depends(get_casbin_authorization_service),
+    service: CasbinAuthorizationService = Depends(get_authorization_service),
     unit_of_work: UnitOfWork = Depends(get_unit_of_work),
 ):
     permission = Permission.create(
@@ -75,7 +75,7 @@ async def list_permissions(
         None, description="Cursor for pagination (from previous response)"
     ),
     limit: int = Query(10, ge=1, le=100, description="Number of items per page"),
-    service: CasbinAuthorizationService = Depends(get_casbin_authorization_service),
+    service: CasbinAuthorizationService = Depends(get_authorization_service),
 ):
     cursor_created_at = None
     cursor_id = None
@@ -130,7 +130,7 @@ async def list_permissions(
 )
 async def get_permission(
     permission_id: UUID,
-    service: CasbinAuthorizationService = Depends(get_casbin_authorization_service),
+    service: CasbinAuthorizationService = Depends(get_authorization_service),
 ):
     permission = await service.get_permission(permission_id)
     if permission is None:
@@ -150,7 +150,7 @@ async def get_permission(
 async def update_permission(
     permission_id: UUID,
     request: UpdatePermissionRequest,
-    service: CasbinAuthorizationService = Depends(get_casbin_authorization_service),
+    service: CasbinAuthorizationService = Depends(get_authorization_service),
     unit_of_work: UnitOfWork = Depends(get_unit_of_work),
 ):
     existing = await service.get_permission(permission_id)
@@ -188,7 +188,7 @@ async def update_permission(
 )
 async def delete_permission(
     permission_id: UUID,
-    service: CasbinAuthorizationService = Depends(get_casbin_authorization_service),
+    service: CasbinAuthorizationService = Depends(get_authorization_service),
     unit_of_work: UnitOfWork = Depends(get_unit_of_work),
 ):
     async with unit_of_work:

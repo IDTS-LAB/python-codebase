@@ -3,19 +3,19 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from src.core.authorization.dependencies import require_permission
-from src.core.authorization.permissions import (
+from src.core.schemas.response import (
+    CursorMeta,
+    CursorPaginatedResponse,
+    SuccessResponse,
+)
+from src.modules.authorization.domain.permissions import (
     CREATE_ACTION,
     DELETE_ACTION,
     READ_ACTION,
     TODO_RESOURCE,
     UPDATE_ACTION,
 )
-from src.core.schemas.response import (
-    CursorMeta,
-    CursorPaginatedResponse,
-    SuccessResponse,
-)
+from src.modules.authorization.presentation.dependency import require_permission
 from src.modules.todo.application.create_todo.command import CreateTodoCommand
 from src.modules.todo.application.create_todo.handler import CreateTodoHandler
 from src.modules.todo.application.delete_todo.handler import DeleteTodoHandler

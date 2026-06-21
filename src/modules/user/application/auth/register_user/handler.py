@@ -1,9 +1,11 @@
 import secrets
 
-from src.core.authorization.domain.service import AuthorizationService
-from src.core.authorization.permissions import DEFAULT_USER_ROLE
 from src.core.events.bus import get_event_bus
 from src.core.security.password import PasswordSerrvice
+from src.modules.authorization.domain.permissions import DEFAULT_USER_ROLE
+from src.modules.authorization.domain.services.authorization_service import (
+    AuthorizationService,
+)
 from src.modules.user.application.auth.register_user.command import RegisterUserCommand
 from src.modules.user.application.auth.register_user.validation import (
     validate_register_user_command,

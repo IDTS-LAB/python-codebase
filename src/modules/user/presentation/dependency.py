@@ -1,8 +1,6 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.authorization.dependencies import get_authorization_service
-from src.core.authorization.domain.service import AuthorizationService
 from src.core.database.postgres.session import get_db, get_unit_of_work
 from src.core.security.account_lockout import AccountLockoutService
 from src.core.security.audit import AuditService
@@ -13,6 +11,10 @@ from src.core.security.infrastructure.repositories.login_attempt_repository impo
     SQLAlchemyLoginAttemptRepository,
 )
 from src.core.security.token_revocation import TokenRevocationService
+from src.modules.authorization.domain.services.authorization_service import (
+    AuthorizationService,
+)
+from src.modules.authorization.presentation.dependency import get_authorization_service
 from src.modules.user.application.auth.login_user.handler import LoginUserCommandHandler
 from src.modules.user.application.auth.logout_user.handler import (
     LogoutUserCommandHandler,

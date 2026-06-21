@@ -10,6 +10,7 @@ from src.core.schemas.response import (
     CursorPaginatedResponse,
     SuccessResponse,
 )
+from src.modules.authorization.domain.entities.role import Role
 from src.modules.authorization.domain.permissions import (
     CREATE_ACTION,
     DELETE_ACTION,
@@ -17,12 +18,11 @@ from src.modules.authorization.domain.permissions import (
     ROLE_RESOURCE,
     UPDATE_ACTION,
 )
-from src.modules.authorization.domain.entities.role import Role
 from src.modules.authorization.infrastructure.services.casbin_authorization_service import (
     CasbinAuthorizationService,
 )
 from src.modules.authorization.presentation.dependency import (
-    get_casbin_authorization_service,
+    get_authorization_service,
     require_permission,
 )
 from src.modules.authorization.presentation.schema.request import (
@@ -44,7 +44,7 @@ router = APIRouter(prefix="/roles", tags=["Role"])
 )
 async def create_role(
     request: CreateRoleRequest,
-    service: CasbinAuthorizationService = Depends(get_casbin_authorization_service),
+    service: CasbinAuthorizationService = Depends(get_authorization_service),
     unit_of_work: UnitOfWork = Depends(get_unit_of_work),
 ):
     role = Role.create(name=request.name, description=request.description)
@@ -66,7 +66,7 @@ async def list_roles(
         None, description="Cursor for pagination (from previous response)"
     ),
     limit: int = Query(10, ge=1, le=100, description="Number of items per page"),
-    service: CasbinAuthorizationService = Depends(get_casbin_authorization_service),
+    service: CasbinAuthorizationService = Depends(get_authorization_service),
 ):
     cursor_created_at = None
     cursor_id = None
@@ -121,7 +121,7 @@ async def list_roles(
 )
 async def get_role(
     role_id: UUID,
-    service: CasbinAuthorizationService = Depends(get_casbin_authorization_service),
+    service: CasbinAuthorizationService = Depends(get_authorization_service),
 ):
     role = await service.get_role(role_id)
     if role is None:
@@ -139,7 +139,7 @@ async def get_role(
 async def update_role(
     role_id: UUID,
     request: UpdateRoleRequest,
-    service: CasbinAuthorizationService = Depends(get_casbin_authorization_service),
+    service: CasbinAuthorizationService = Depends(get_authorization_service),
     unit_of_work: UnitOfWork = Depends(get_unit_of_work),
 ):
     existing = await service.get_role(role_id)
@@ -170,7 +170,7 @@ async def update_role(
 )
 async def delete_role(
     role_id: UUID,
-    service: CasbinAuthorizationService = Depends(get_casbin_authorization_service),
+    service: CasbinAuthorizationService = Depends(get_authorization_service),
     unit_of_work: UnitOfWork = Depends(get_unit_of_work),
 ):
     async with unit_of_work:
@@ -186,7 +186,7 @@ async def delete_role(
 async def assign_permission_to_role(
     role_id: UUID,
     permission_id: UUID,
-    service: CasbinAuthorizationService = Depends(get_casbin_authorization_service),
+    service: CasbinAuthorizationService = Depends(get_authorization_service),
     unit_of_work: UnitOfWork = Depends(get_unit_of_work),
 ):
     async with unit_of_work:
@@ -202,7 +202,7 @@ async def assign_permission_to_role(
 async def remove_permission_from_role(
     role_id: UUID,
     permission_id: UUID,
-    service: CasbinAuthorizationService = Depends(get_casbin_authorization_service),
+    service: CasbinAuthorizationService = Depends(get_authorization_service),
     unit_of_work: UnitOfWork = Depends(get_unit_of_work),
 ):
     async with unit_of_work:
