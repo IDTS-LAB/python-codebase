@@ -1,7 +1,7 @@
 from functools import lru_cache
 
-from shared.events.base import Event
-from shared.events.handler import EventHandler
+from src.shared.events.base import Event
+from src.shared.events.handler import EventHandler
 
 
 class EventBus:
