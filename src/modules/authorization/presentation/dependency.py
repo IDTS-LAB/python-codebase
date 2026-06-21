@@ -3,15 +3,17 @@ from collections.abc import Callable
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.authorization.domain.service import AuthorizationService
-from src.core.authorization.infrastructure.repositories.casbin_policy_repository import (
-    SQLAlchemyCasbinPolicyRepository,
-)
-from src.core.authorization.infrastructure.services.casbin_authorization_service import (
-    CasbinAuthorizationService,
-)
 from src.core.database.postgres.session import get_db
 from src.core.dependency.auth import get_current_user
+from src.modules.authorization.domain.services.authorization_service import (
+    AuthorizationService,
+)
+from src.modules.authorization.infrastructure.repositories.casbin_policy_repository import (
+    SQLAlchemyCasbinPolicyRepository,
+)
+from src.modules.authorization.infrastructure.services.casbin_authorization_service import (
+    CasbinAuthorizationService,
+)
 
 
 def get_authorization_service(
