@@ -5,7 +5,7 @@ from src.modules.authorization.domain.permissions import permission_key
 from src.modules.authorization.domain.services.authorization_service import (
     AuthorizationService,
 )
-from src.modules.authorization.infrastructure.repositories.casbin_policy_repository import (
+from src.core.authorization.infrastructure.repositories.casbin_policy_repository import (
     SQLAlchemyCasbinPolicyRepository,
 )
 from src.modules.authorization.domain.entities.permission import Permission
