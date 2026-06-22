@@ -428,13 +428,13 @@ make downgrade
 
 Important: migration autogeneration depends on importing all SQLAlchemy models in `alembic/env.py`, so new module models must be imported there or through a central model registry.
 
-Seed baseline authorization data after applying migrations:
+Seed baseline records after applying migrations:
 
 ```bash
 make seed
 ```
 
-The seeder is idempotent. It creates default authorization resources, the default `admin` and `user` roles, default permissions, role-permission links, and matching Casbin policies without duplicating existing records.
+The seeder runs all changes in one transaction and is idempotent. It creates the default authorization resources, roles (`admin`, `user`, `manager`, and `viewer`), permissions, role-permission links, and matching Casbin policies without duplicating existing records. If any seed operation fails, the transaction is rolled back.
 
 To seed an initial admin user, set these environment variables before running `make seed`:
 
@@ -445,7 +445,17 @@ SEED_ADMIN_USERNAME=admin
 SEED_ADMIN_FULLNAME=System Administrator
 ```
 
-If `SEED_ADMIN_EMAIL` or `SEED_ADMIN_PASSWORD` is empty, user seeding is skipped. Existing users are not modified.
+For each new seeded user, the repository creates records that follow the normalized user schema:
+
+- `users` stores email, username, password hash, authentication provider, and status.
+- `user_profiles` stores `SEED_ADMIN_FULLNAME` (or the demo account name) as `display_name`.
+- `user_settings` stores the default language, timezone, theme, and notification preferences.
+- `user_security` stores the default login-attempt, lockout, password, and two-factor state.
+- `user_has_roles` associates the user with its seeded role, with a matching Casbin grouping policy.
+
+`SEED_ADMIN_FULLNAME` is retained for configuration compatibility; it does not refer to a `users.fullname` column. The normalized schema stores this value in `user_profiles.display_name`.
+
+If `SEED_ADMIN_EMAIL` or `SEED_ADMIN_PASSWORD` is empty, admin-user seeding is skipped. If a seeded email already exists, the seeder does not change that user's identity, password, profile, settings, security state, or roles.
 
 When `APP_ENV=development`, the seeder can also create demo users with different roles. Set a shared development password before running `make seed`:
 
@@ -455,11 +465,11 @@ SEED_DEVELOPMENT_USERS_PASSWORD=
 
 Development demo accounts:
 
-- `user@example.com` with the `user` role
-- `manager@example.com` with the `manager` role
-- `viewer@example.com` with the `viewer` role
+- `user@example.com` with display name `Default User` and the `user` role
+- `manager@example.com` with display name `Todo Manager` and the `manager` role
+- `viewer@example.com` with display name `Todo Viewer` and the `viewer` role
 
-These users are skipped outside development and are not updated if they already exist.
+Demo users are skipped outside development and are not modified when their email already exists.
 
 ## Testing and Quality Checks
 
