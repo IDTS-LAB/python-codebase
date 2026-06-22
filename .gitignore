@@ -58,9 +58,6 @@ coverage.xml
 *.sqlite
 *.db
 
-# Alembic
-alembic/versions/*.py
-
 # OS
 .DS_Store
 Thumbs.db
