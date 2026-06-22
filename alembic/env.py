@@ -7,24 +7,6 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
-from src.core.authorization.infrastructure.models.casbin_rule_model import (
-    CasbinRuleModel,  # noqa: F401
-)
-from src.core.authorization.infrastructure.models.permission_model import (
-    PermissionModel,  # noqa: F401
-)
-from src.core.authorization.infrastructure.models.resource_model import (
-    AuthorizationResourceModel,  # noqa: F401
-)
-from src.core.authorization.infrastructure.models.role_model import (
-    RoleModel,  # noqa: F401
-)
-from src.core.authorization.infrastructure.models.role_permission_model import (
-    RolePermissionModel,  # noqa: F401
-)
-from src.core.authorization.infrastructure.models.user_has_role_model import (
-    UserHasRoleModel,  # noqa: F401
-)
 from src.core.config.setting import get_settings
 from src.core.security.infrastructure.models.audit_log_model import (
     AuditLogModel,  # noqa: F401
@@ -34,6 +16,24 @@ from src.core.security.infrastructure.models.error_trace_model import (
 )
 from src.core.security.infrastructure.models.login_attempt_model import (
     LoginAttemptModel,  # noqa: F401
+)
+from src.modules.authorization.infrastructure.models.casbin_rule_model import (
+    CasbinRuleModel,  # noqa: F401
+)
+from src.modules.authorization.infrastructure.models.permission_model import (
+    PermissionModel,  # noqa: F401
+)
+from src.modules.authorization.infrastructure.models.resource_model import (
+    AuthorizationResourceModel,  # noqa: F401
+)
+from src.modules.authorization.infrastructure.models.role_model import (
+    RoleModel,  # noqa: F401
+)
+from src.modules.authorization.infrastructure.models.role_permission_model import (
+    RolePermissionModel,  # noqa: F401
+)
+from src.modules.authorization.infrastructure.models.user_has_role_model import (
+    UserHasRoleModel,  # noqa: F401
 )
 from src.modules.todo.infrastructure.models.todo_model import TodoModel  # noqa: F401
 from src.modules.user.infrastructure.models.refresh_token_model import (

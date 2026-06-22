@@ -4,23 +4,23 @@ from uuid import UUID
 from sqlalchemy import and_, delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.authorization.infrastructure.models.casbin_rule_model import (
+from src.modules.authorization import AuthorizationResource, Permission, Role
+from src.modules.authorization.infrastructure.models.casbin_rule_model import (
     CasbinRuleModel,
 )
-from src.core.authorization.infrastructure.models.permission_model import (
+from src.modules.authorization.infrastructure.models.permission_model import (
     PermissionModel,
 )
-from src.core.authorization.infrastructure.models.resource_model import (
+from src.modules.authorization.infrastructure.models.resource_model import (
     AuthorizationResourceModel,
 )
-from src.core.authorization.infrastructure.models.role_model import RoleModel
-from src.core.authorization.infrastructure.models.role_permission_model import (
+from src.modules.authorization.infrastructure.models.role_model import RoleModel
+from src.modules.authorization.infrastructure.models.role_permission_model import (
     RolePermissionModel,
 )
-from src.core.authorization.infrastructure.models.user_has_role_model import (
+from src.modules.authorization.infrastructure.models.user_has_role_model import (
     UserHasRoleModel,
 )
-from src.modules.authorization import AuthorizationResource, Permission, Role
 from src.shared.utils.cursor import CursorDirection
 
 

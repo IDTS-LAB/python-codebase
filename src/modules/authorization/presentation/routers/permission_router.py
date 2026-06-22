@@ -19,7 +19,7 @@ from src.modules.authorization.domain.permissions import (
     UPDATE_ACTION,
     permission_key,
 )
-from src.core.authorization.infrastructure.services.casbin_authorization_service import (
+from src.modules.authorization.infrastructure.services.casbin_authorization_service import (
     CasbinAuthorizationService,
 )
 from src.modules.authorization.presentation.dependency import (

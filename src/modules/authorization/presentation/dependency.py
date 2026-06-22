@@ -8,10 +8,10 @@ from src.core.dependency.auth import get_current_user
 from src.modules.authorization.domain.services.authorization_service import (
     AuthorizationService,
 )
-from src.core.authorization.infrastructure.repositories.casbin_policy_repository import (
+from src.modules.authorization.infrastructure.repositories.casbin_policy_repository import (
     SQLAlchemyCasbinPolicyRepository,
 )
-from src.core.authorization.infrastructure.services.casbin_authorization_service import (
+from src.modules.authorization.infrastructure.services.casbin_authorization_service import (
     CasbinAuthorizationService,
 )
 
