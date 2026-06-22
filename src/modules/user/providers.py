@@ -11,8 +11,6 @@ class UserProfile(BaseModel):
     id: str
     email: str
     username: str | None = None
-    fullname: str | None = None
-    birthday: date | None = None
 
 
 class UserModuleProvider:
@@ -32,6 +30,4 @@ class UserModuleProvider:
             id=str(user.id),
             email=user.email,
             username=user.username,
-            fullname=user.fullname,
-            birthday=user.birthday,
         )
