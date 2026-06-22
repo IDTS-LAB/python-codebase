@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import Index, UniqueConstraint
+from sqlalchemy import ForeignKey, Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.shared.database.model import Base
@@ -23,8 +23,11 @@ class RolePermissionModel(Base):
         Index("ix_role_permissions_permission_id", "permission_id"),
     )
 
-    role_id: Mapped[UUID] = mapped_column(nullable=False)
-    permission_id: Mapped[UUID] = mapped_column(nullable=False)
+    role_id: Mapped[UUID] = mapped_column(ForeignKey("roles.id"), nullable=False)
+    permission_id: Mapped[UUID] = mapped_column(
+        ForeignKey("permissions.id"),
+        nullable=False,
+    )
 
     # Relationships
     role: Mapped["RoleModel"] = relationship(  # type: ignore[name-defined]

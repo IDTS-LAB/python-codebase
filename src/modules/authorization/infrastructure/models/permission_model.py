@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import Index, String, UniqueConstraint
+from sqlalchemy import ForeignKey, Index, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
@@ -24,7 +24,10 @@ class PermissionModel(Base, TimeStampMixin, SoftDeleteMixin):
     )
 
     key: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
-    resource_id: Mapped[UUID] = mapped_column(nullable=False)
+    resource_id: Mapped[UUID] = mapped_column(
+        ForeignKey("authorization_resources.id"),
+        nullable=False,
+    )
     resource: Mapped[str] = mapped_column(String(100), nullable=False)
     action: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str | None] = mapped_column(String(255), nullable=True)

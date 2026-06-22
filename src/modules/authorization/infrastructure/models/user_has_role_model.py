@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import Index, UniqueConstraint
+from sqlalchemy import ForeignKey, Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.modules.user.infrastructure.models.user_model import UserModel
@@ -23,8 +23,8 @@ class UserHasRoleModel(Base):
         Index("ix_user_has_roles_role_id", "role_id"),
     )
 
-    user_id: Mapped[UUID] = mapped_column(nullable=False)
-    role_id: Mapped[UUID] = mapped_column(nullable=False)
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    role_id: Mapped[UUID] = mapped_column(ForeignKey("roles.id"), nullable=False)
 
     # Relationships
     user: Mapped["UserModel"] = relationship(  # type: ignore[name-defined]

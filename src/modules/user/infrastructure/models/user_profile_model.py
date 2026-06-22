@@ -1,4 +1,6 @@
-from sqlalchemy import Date, Index, String, Text
+from uuid import UUID
+
+from sqlalchemy import Date, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.modules.user.infrastructure.models.user_model import UserModel
@@ -16,8 +18,8 @@ class UserProfileModel(Base, TimeStampMixin, SoftDeleteMixin):
     __tablename__ = "user_profiles"
     __table_args__ = (Index("ix_user_profiles_user_id", "user_id", unique=True),)
 
-    user_id: Mapped[str] = mapped_column(
-        String(36),  # UUID as string for FK
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id"),
         unique=True,
         nullable=False,
     )

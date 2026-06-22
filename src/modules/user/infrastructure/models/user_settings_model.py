@@ -1,4 +1,6 @@
-from sqlalchemy import Index, String
+from uuid import UUID
+
+from sqlalchemy import ForeignKey, Index
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -37,8 +39,8 @@ class UserSettingsModel(Base, TimeStampMixin, SoftDeleteMixin):
         Index("ix_user_settings_preferences", "preferences", postgresql_using="gin"),
     )
 
-    user_id: Mapped[str] = mapped_column(
-        String(36),  # UUID as string for FK
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id"),
         unique=True,
         nullable=False,
     )
