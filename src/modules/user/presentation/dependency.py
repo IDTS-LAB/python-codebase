@@ -2,7 +2,8 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.database.postgres.session import get_db, get_unit_of_work
-from src.core.email.factory import get_email_service
+from src.core.email.factory import create_email_service
+from src.core.email.service import EmailService
 from src.core.security.account_lockout import AccountLockoutService
 from src.core.security.audit import AuditService
 from src.core.security.infrastructure.repositories.audit_log_repository import (
@@ -51,6 +52,10 @@ from src.shared.unit_of_work import UnitOfWork
 
 def get_user_repository(db: AsyncSession = Depends(get_db)) -> UserRepository:
     return SQLAlchemyUserRepository(db)
+
+
+def get_email_service() -> EmailService:
+    return create_email_service()
 
 
 def get_refresh_token_repository(
@@ -128,6 +133,7 @@ def get_logout_handler(
 
 # Two-Factor Authentication Handlers
 
+
 def get_setup_totp_handler(
     user_repo: UserRepository = Depends(get_user_repository),
     unit_of_work: UnitOfWork = Depends(get_unit_of_work),
@@ -152,7 +158,7 @@ def get_disable_totp_handler(
 def get_send_email_2fa_code_handler(
     user_repo: UserRepository = Depends(get_user_repository),
     unit_of_work: UnitOfWork = Depends(get_unit_of_work),
-    email_service = Depends(get_email_service),
+    email_service=Depends(get_email_service),
 ) -> SendEmail2FACodeHandler:
     return SendEmail2FACodeHandler(user_repo, unit_of_work, email_service)
 

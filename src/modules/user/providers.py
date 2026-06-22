@@ -1,5 +1,3 @@
-from datetime import date
-
 from pydantic import BaseModel
 
 from src.modules.user.application.detail_user.handler import DetailUserQueryHandler

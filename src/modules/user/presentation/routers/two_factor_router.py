@@ -1,6 +1,6 @@
 """Router for two-factor authentication endpoints."""
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 
 from src.core.schemas.response import SuccessResponse
 from src.modules.user.application.auth.two_factor.command import (
@@ -13,6 +13,7 @@ from src.modules.user.application.auth.two_factor.command import (
     VerifyTOTPSetupCommand,
 )
 from src.modules.user.presentation.dependency import (
+    get_current_user_id,
     get_disable_totp_handler,
     get_regenerate_backup_codes_handler,
     get_send_email_2fa_code_handler,
@@ -23,7 +24,6 @@ from src.modules.user.presentation.dependency import (
 )
 from src.modules.user.presentation.schemas.two_factor import (
     DisableTOTPRequest,
-    LoginWith2FAResponse,
     RegenerateBackupCodesRequest,
     SendEmail2FACodeRequest,
     SetupTOTPRequest,
@@ -34,7 +34,6 @@ from src.modules.user.presentation.schemas.two_factor import (
     VerifyEmail2FACodeRequest,
     VerifyTOTPSetupRequest,
 )
-from src.modules.user.presentation.dependency import get_current_user_id
 
 router = APIRouter(prefix="/2fa", tags=["Two-Factor Authentication"])
 
@@ -51,10 +50,10 @@ async def setup_totp(
     handler: SetupTOTPHandler = Depends(get_setup_totp_handler),
 ):
     """Set up TOTP-based 2FA.
-    
+
     This endpoint generates a TOTP secret and returns a URI that can be used
     to create a QR code for scanning with authenticator apps.
-    
+
     Compatible with:
     - Google Authenticator
     - Authy
@@ -62,10 +61,10 @@ async def setup_totp(
     - Any TOTP-compatible authenticator app
     """
     from uuid import UUID
-    
+
     command = SetupTOTPCommand(user_id=UUID(current_user_id))
     result = await handler.execute(command)
-    
+
     return SuccessResponse(
         success=True,
         message="TOTP setup initiated. Scan the QR code with your authenticator app.",
@@ -85,18 +84,18 @@ async def verify_totp_setup(
     handler: VerifyTOTPSetupHandler = Depends(get_verify_totp_setup_handler),
 ):
     """Verify TOTP setup and enable 2FA.
-    
+
     After scanning the QR code, submit the 6-digit code from your authenticator app
     to complete the setup. This will return backup codes - store them safely!
     """
     from uuid import UUID
-    
+
     command = VerifyTOTPSetupCommand(
         user_id=UUID(current_user_id),
         code=request.code,
     )
     result = await handler.execute(command)
-    
+
     return SuccessResponse(
         success=True,
         message="2FA enabled successfully. Store your backup codes safely!",
@@ -116,24 +115,24 @@ async def disable_totp(
     handler: DisableTOTPHandler = Depends(get_disable_totp_handler),
 ):
     """Disable 2FA.
-    
+
     Requires either a current TOTP code or a backup code to verify identity.
     """
     from uuid import UUID
-    
+
     command = DisableTOTPCommand(
         user_id=UUID(current_user_id),
         code=request.code,
     )
     result = await handler.execute(command)
-    
+
     if result:
         return SuccessResponse(
             success=True,
             message="2FA disabled successfully",
             data=TwoFactorVerifyResponse(success=True),
         )
-    
+
     raise HTTPException(status_code=400, detail="Failed to disable 2FA")
 
 
@@ -149,22 +148,22 @@ async def send_email_2fa_code(
     handler: SendEmail2FACodeHandler = Depends(get_send_email_2fa_code_handler),
 ):
     """Send a 2FA verification code via email.
-    
+
     Alternative to TOTP for users who prefer email-based verification.
     The code will expire in 10 minutes.
     """
     from uuid import UUID
-    
+
     command = SendEmail2FACodeCommand(user_id=UUID(current_user_id))
     result = await handler.execute(command)
-    
+
     if result:
         return SuccessResponse(
             success=True,
             message="Verification code sent to your email",
             data=TwoFactorVerifyResponse(success=True),
         )
-    
+
     raise HTTPException(status_code=500, detail="Failed to send email")
 
 
@@ -181,20 +180,20 @@ async def verify_email_2fa_code(
 ):
     """Verify an email-based 2FA code."""
     from uuid import UUID
-    
+
     command = VerifyEmail2FACodeCommand(
         user_id=UUID(current_user_id),
         code=request.code,
     )
     result = await handler.execute(command)
-    
+
     if result:
         return SuccessResponse(
             success=True,
             message="Email verification successful",
             data=TwoFactorVerifyResponse(success=True),
         )
-    
+
     raise HTTPException(status_code=400, detail="Invalid or expired code")
 
 
@@ -207,21 +206,23 @@ async def verify_email_2fa_code(
 async def regenerate_backup_codes(
     request: RegenerateBackupCodesRequest,
     current_user_id: str = Depends(get_current_user_id),
-    handler: RegenerateBackupCodesHandler = Depends(get_regenerate_backup_codes_handler),
+    handler: RegenerateBackupCodesHandler = Depends(
+        get_regenerate_backup_codes_handler
+    ),
 ):
     """Regenerate backup codes.
-    
+
     This will invalidate all previous backup codes and generate new ones.
     Requires a current TOTP code for verification.
     """
     from uuid import UUID
-    
+
     command = RegenerateBackupCodesCommand(
         user_id=UUID(current_user_id),
         verify_code=request.verify_code,
     )
     result = await handler.execute(command)
-    
+
     return SuccessResponse(
         success=True,
         message="New backup codes generated. Store them safely!",
@@ -241,24 +242,24 @@ async def verify_2fa(
     handler: Verify2FAHandler = Depends(get_verify_2fa_handler),
 ):
     """Verify a 2FA code.
-    
+
     Used in the login flow when 2FA is required.
     Supports TOTP, email, and backup code methods.
     """
     from uuid import UUID
-    
+
     command = Verify2FACommand(
         user_id=UUID(current_user_id),
         code=request.code,
         method=request.method,
     )
     result = await handler.execute(command)
-    
+
     if result:
         return SuccessResponse(
             success=True,
             message="2FA verification successful",
             data=TwoFactorVerifyResponse(success=True),
         )
-    
+
     raise HTTPException(status_code=400, detail="Invalid 2FA code")
