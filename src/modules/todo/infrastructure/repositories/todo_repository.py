@@ -4,10 +4,10 @@ from uuid import UUID
 from sqlalchemy import and_, delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.utils.cursor import CursorDirection
 from src.modules.todo.domain.entities.todo import Todo
 from src.modules.todo.domain.repositories.todo_repository import TodoRepository
 from src.modules.todo.infrastructure.models.todo_model import TodoModel
+from src.shared.utils.cursor import CursorDirection
 
 
 class SQLAlchemyTodoRepository(TodoRepository):
@@ -129,3 +129,12 @@ class SQLAlchemyTodoRepository(TodoRepository):
     async def delete(self, todo_id: UUID) -> None:
         await self.db.execute(delete(TodoModel).where(TodoModel.id == todo_id))
         await self.db.flush()
+
+    def _to_entity(self, model: TodoModel) -> Todo:
+        return Todo(
+            id=str(model.id),
+            description=model.description,
+            is_completed=model.is_completed,
+            title=model.title,
+            user_id=model.user_id,
+        )

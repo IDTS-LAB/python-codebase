@@ -1,27 +1,29 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from src.core.authorization.dependencies import require_permission
-from src.core.authorization.permissions import (
+from src.core.schemas.response import SuccessResponse
+from src.modules.authorization.domain.permissions import (
     ME_ACTION,
     UPDATE_ACTION,
     USER_RESOURCE,
 )
-from src.core.schemas.response import SuccessResponse
-from src.modules.user.application.detail_user.handler import DetailUserQueryHandler
-from src.modules.user.application.detail_user.query import DetailUserQuery
-from src.modules.user.application.login_user.command import LoginUserCommand
-from src.modules.user.application.login_user.handler import LoginUserCommandHandler
-from src.modules.user.application.logout_user.command import LogoutUserCommand
-from src.modules.user.application.logout_user.handler import LogoutUserCommandHandler
-from src.modules.user.application.refresh_token.command import RefreshTokenCommand
-from src.modules.user.application.refresh_token.handler import (
+from src.modules.authorization.presentation.dependency import require_permission
+from src.modules.user.application.auth.login_user.command import LoginUserCommand
+from src.modules.user.application.auth.login_user.handler import LoginUserCommandHandler
+from src.modules.user.application.auth.logout_user.command import LogoutUserCommand
+from src.modules.user.application.auth.logout_user.handler import (
+    LogoutUserCommandHandler,
+)
+from src.modules.user.application.auth.refresh_token.command import RefreshTokenCommand
+from src.modules.user.application.auth.refresh_token.handler import (
     RefreshTokenCommandHandler,
 )
-from src.modules.user.application.register_user.command import RegisterUserCommand
-from src.modules.user.application.register_user.handler import (
+from src.modules.user.application.auth.register_user.command import RegisterUserCommand
+from src.modules.user.application.auth.register_user.handler import (
     RegisterUserCommandHandler,
 )
+from src.modules.user.application.detail_user.handler import DetailUserQueryHandler
+from src.modules.user.application.detail_user.query import DetailUserQuery
 from src.modules.user.domain.exceptions.user_exception import UserAlreadyExistsError
 from src.modules.user.presentation.dependency import (
     get_login_handler,
@@ -66,25 +68,21 @@ async def register(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/login", response_model=SuccessResponse[TokenResponse])
+@router.post("/login", response_model=TokenResponse)
 async def login(
     form: OAuth2PasswordRequestForm = Depends(),
     handler: LoginUserCommandHandler = Depends(get_login_handler),
 ):
     command = LoginUserCommand(username=form.username, password=form.password)
     result = await handler.execute(command=command)
-    return SuccessResponse(
-        message="Login success",
-        success=True,
-        data=TokenResponse(
-            access_token=result.get("access_token"),
-            refresh_token=result.get("refresh_token"),
-            token_type="bearer",
-        ),
+    return TokenResponse(
+        access_token=result.get("access_token"),
+        refresh_token=result.get("refresh_token"),
+        token_type="bearer",
     )
 
 
-@router.post("/refresh", response_model=SuccessResponse[TokenResponse])
+@router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(
     request: RefreshTokenRequest,
     handler: RefreshTokenCommandHandler = Depends(get_refresh_token_handler),
@@ -95,14 +93,10 @@ async def refresh_token(
                 token=request.refresh_token,
             )
         )
-        return SuccessResponse(
-            message="Refresh token success",
-            success=True,
-            data=TokenResponse(
-                access_token=result.get("access_token"),
-                refresh_token=result.get("refresh_token"),
-                token_type="bearer",
-            ),
+        return TokenResponse(
+            access_token=result.get("access_token"),
+            refresh_token=result.get("refresh_token"),
+            token_type="bearer",
         )
     except InvalidRefreshTokenError as e:
         raise HTTPException(status_code=401, detail=str(e))
@@ -124,6 +118,15 @@ async def get_me(
         data=UserResponse(
             id=str(user.id),
             email=user.email,
+            username=user.username,
+            auth_provider=user.auth_provider,
+            external_id=user.external_id,
+            status=user.status,
+            profile=user.profile,
+            settings=user.settings,
+            security=user.security,
+            created_at=user.created_at,
+            updated_at=user.updated_at,
         ),
     )
 

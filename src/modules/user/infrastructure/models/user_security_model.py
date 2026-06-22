@@ -1,0 +1,72 @@
+from datetime import datetime
+from uuid import UUID
+
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from src.modules.user.infrastructure.models.user_model import UserModel
+from src.shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
+from src.shared.database.model import Base
+
+
+class UserSecurityModel(Base, TimeStampMixin, SoftDeleteMixin):
+    """User security configuration and state.
+
+    One-to-one relationship with users table.
+    Contains sensitive security-related fields separated from core identity.
+    """
+
+    __tablename__ = "user_security"
+    __table_args__ = (
+        Index("ix_user_security_user_id", "user_id", unique=True),
+        Index("ix_user_security_locked_until", "locked_until"),
+        Index("ix_user_security_two_factor_enabled", "two_factor_enabled"),
+    )
+
+    user_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        unique=True,
+        nullable=False,
+    )
+
+    # Login Attempt Tracking
+    failed_login_attempts: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        nullable=False,
+    )
+
+    # Account Lockout
+    locked_until: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    # Password Management
+    password_changed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    # Two-Factor Authentication
+    two_factor_enabled: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+    two_factor_secret: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+    two_factor_backup_codes: Mapped[str | None] = mapped_column(
+        String(1000),
+        nullable=True,
+    )
+
+    # Relationship
+    user: Mapped["UserModel"] = relationship(
+        back_populates="security",
+        foreign_keys=[user_id],
+    )

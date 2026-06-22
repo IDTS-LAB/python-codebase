@@ -1,11 +1,11 @@
 from datetime import datetime
 from uuid import UUID
 
-from src.core.utils.cursor import CursorDirection
 from src.modules.todo.application.list_todo.query import GetTodosQuery
 from src.modules.todo.application.list_todo.validation import validate_get_todos_query
 from src.modules.todo.domain.entities.todo import Todo
 from src.modules.todo.domain.repositories.todo_repository import TodoRepository
+from src.shared.utils.cursor import CursorDirection
 
 
 class GetTodosQueryHandler:

@@ -3,6 +3,7 @@ SHELL := /bin/bash
 PYTHON := .venv/bin/python
 PYTEST := .venv/bin/pytest
 RUFF := .venv/bin/ruff
+IMPORT_LINTER := .venv/bin/lint-imports
 UVICORN := .venv/bin/uvicorn
 ALEMBIC := .venv/bin/alembic
 POETRY := poetry
@@ -10,7 +11,7 @@ COMPOSE_FILE := docker-compose.yml
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install run test lint import-check security-scan check migrate seed downgrade revision db-up db-down db-logs clean
+.PHONY: help install run test lint lint-imports import-check security-scan check migrate seed downgrade revision db-up db-down db-logs clean
 
 help:
 	@echo "[make:help] Available commands:"
@@ -18,6 +19,7 @@ help:
 	@echo "  [make:run]           Run the FastAPI development server"
 	@echo "  [make:test]          Run pytest"
 	@echo "  [make:lint]          Run Ruff checks"
+	@echo "  [make:lint-imports]  Enforce import boundary contracts"
 	@echo "  [make:import-check]  Verify src.main imports"
 	@echo "  [make:security-scan] Run dependency vulnerability scan with pip-audit"
 	@echo "  [make:check]         Run tests, lint, and import check"
@@ -46,6 +48,10 @@ lint:
 	@echo "[make:lint] Running Ruff checks"
 	@$(RUFF) check src tests scripts
 
+lint-imports:
+	@echo "[make:lint-imports] Enforcing import boundary contracts"
+	@$(IMPORT_LINTER)
+
 import-check:
 	@echo "[make:import-check] Verifying src.main imports"
 	@PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -c "import src.main; print('import ok')"
@@ -54,7 +60,7 @@ security-scan:
 	@echo "[make:security-scan] Running dependency vulnerability scan"
 	@PIP_CACHE_DIR=.cache/pip $(POETRY) run pip-audit --cache-dir .cache/pip-audit
 
-check: test lint import-check
+check: test lint lint-imports import-check
 	@echo "[make:check] All checks completed"
 
 migrate:

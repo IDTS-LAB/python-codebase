@@ -6,7 +6,9 @@ from src.modules.user.domain.entities.refresh_token import RefreshToken
 from src.modules.user.domain.repositories.refresh_token_repository import (
     RefreshTokenRepository,
 )
-from src.modules.user.infrastructure.models.refresh_token_model import RefreshTokenModel
+from src.modules.user.infrastructure.models.refresh_token_model import (
+    UserSessionModel as RefreshTokenModel,
+)
 
 
 class SQLAlchemyRefreshTokenRepository(RefreshTokenRepository):
@@ -15,7 +17,9 @@ class SQLAlchemyRefreshTokenRepository(RefreshTokenRepository):
 
     async def get_by_token_hash(self, token_hash: str) -> RefreshToken | None:
         result = await self.db.execute(
-            select(RefreshTokenModel).where(RefreshTokenModel.token_hash == token_hash)
+            select(RefreshTokenModel).where(
+                RefreshTokenModel.refresh_token_hash == token_hash
+            )
         )
         model = result.scalar_one_or_none()
         if not model:
@@ -23,7 +27,7 @@ class SQLAlchemyRefreshTokenRepository(RefreshTokenRepository):
         return RefreshToken(
             id=model.id,
             user_id=model.user_id,
-            token_hash=model.token_hash,
+            token_hash=model.refresh_token_hash,
             expires_at=model.expires_at,
             is_revoked=model.is_revoked,
         )
@@ -32,7 +36,7 @@ class SQLAlchemyRefreshTokenRepository(RefreshTokenRepository):
         model = RefreshTokenModel(
             id=refresh_token.id,
             user_id=refresh_token.user_id,
-            token_hash=refresh_token.token_hash,
+            refresh_token_hash=refresh_token.token_hash,
             expires_at=refresh_token.expires_at,
             is_revoked=refresh_token.is_revoked,
         )
@@ -42,7 +46,7 @@ class SQLAlchemyRefreshTokenRepository(RefreshTokenRepository):
         return RefreshToken(
             id=model.id,
             user_id=model.user_id,
-            token_hash=model.token_hash,
+            token_hash=model.refresh_token_hash,
             expires_at=model.expires_at,
             is_revoked=model.is_revoked,
         )

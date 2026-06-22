@@ -2,16 +2,16 @@ from dataclasses import dataclass
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.authorization.infrastructure.repositories.casbin_policy_repository import (
-    SQLAlchemyCasbinPolicyRepository,
-)
-from src.core.authorization.infrastructure.services.casbin_authorization_service import (
-    CasbinAuthorizationService,
-)
 from src.core.config.setting import get_settings
 from src.core.database.postgres.session import AsyncSessionLocal
 from src.core.seed.authorization import AuthorizationSeedResult, seed_authorization
 from src.core.seed.user import SeedUserConfig, UserSeedResult, seed_user
+from src.modules.authorization.infrastructure.repositories.casbin_policy_repository import (
+    SQLAlchemyCasbinPolicyRepository,
+)
+from src.modules.authorization.infrastructure.services.casbin_authorization_service import (
+    CasbinAuthorizationService,
+)
 from src.modules.user.infrastructure.repositories.user_repository import (
     SQLAlchemyUserRepository,
 )

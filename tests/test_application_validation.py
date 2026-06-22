@@ -12,25 +12,25 @@ from src.modules.todo.application.update_todo.command import UpdateTodoCommand
 from src.modules.todo.application.update_todo.validation import (
     validate_update_todo_command,
 )
+from src.modules.user.application.auth.login_user.command import LoginUserCommand
+from src.modules.user.application.auth.login_user.validation import (
+    validate_login_user_command,
+)
+from src.modules.user.application.auth.logout_user.command import LogoutUserCommand
+from src.modules.user.application.auth.logout_user.validation import (
+    validate_logout_user_command,
+)
+from src.modules.user.application.auth.refresh_token.command import RefreshTokenCommand
+from src.modules.user.application.auth.refresh_token.validation import (
+    validate_refresh_token_command,
+)
+from src.modules.user.application.auth.register_user.command import RegisterUserCommand
+from src.modules.user.application.auth.register_user.validation import (
+    validate_register_user_command,
+)
 from src.modules.user.application.detail_user.query import DetailUserQuery
 from src.modules.user.application.detail_user.validation import (
     validate_detail_user_query,
-)
-from src.modules.user.application.login_user.command import LoginUserCommand
-from src.modules.user.application.login_user.validation import (
-    validate_login_user_command,
-)
-from src.modules.user.application.logout_user.command import LogoutUserCommand
-from src.modules.user.application.logout_user.validation import (
-    validate_logout_user_command,
-)
-from src.modules.user.application.refresh_token.command import RefreshTokenCommand
-from src.modules.user.application.refresh_token.validation import (
-    validate_refresh_token_command,
-)
-from src.modules.user.application.register_user.command import RegisterUserCommand
-from src.modules.user.application.register_user.validation import (
-    validate_register_user_command,
 )
 
 

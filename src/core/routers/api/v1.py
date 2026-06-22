@@ -1,9 +1,9 @@
 from fastapi import APIRouter, FastAPI
 
-from src.modules.authorization.presenter.routers.permission_router import (
+from src.modules.authorization.presentation.routers.permission_router import (
     router as permission_router,
 )
-from src.modules.authorization.presenter.routers.role_router import (
+from src.modules.authorization.presentation.routers.role_router import (
     router as role_router,
 )
 from src.modules.todo.presentation.routers.todo_router import router as todo_router

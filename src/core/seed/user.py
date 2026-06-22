@@ -1,14 +1,14 @@
 from dataclasses import dataclass
 from typing import Protocol
 
-from src.core.authorization.permissions import (
+from src.core.security.password import PasswordSerrvice
+from src.modules.authorization.domain.permissions import (
     ADMIN_ROLE,
     DEFAULT_USER_ROLE,
     MANAGER_ROLE,
     VIEWER_ROLE,
 )
-from src.core.security.password import PasswordSerrvice
-from src.modules.user.domain.entities.user import User
+from src.modules.user.domain.entities.user import User, UserProfile
 
 
 class SeedUserRepository(Protocol):
@@ -16,6 +16,9 @@ class SeedUserRepository(Protocol):
         raise NotImplementedError
 
     async def save(self, user: User) -> User:
+        raise NotImplementedError
+
+    async def save_profile(self, profile: UserProfile) -> UserProfile:
         raise NotImplementedError
 
 
@@ -50,9 +53,8 @@ class SeedUserConfig:
 
     @property
     def should_seed_development_users(self) -> bool:
-        return (
-            self.app_env.lower() == "development"
-            and bool(self.development_users_password.strip())
+        return self.app_env.lower() == "development" and bool(
+            self.development_users_password.strip()
         )
 
 
@@ -152,11 +154,16 @@ async def _seed_one_user(
 
     user = User.create(
         email=email,
-        password=PasswordSerrvice.hash(password),
+        password_hash=PasswordSerrvice.hash(password),
         username=username,
-        fullname=fullname,
     )
     saved_user = await user_repository.save(user)
+    await user_repository.save_profile(
+        UserProfile(
+            user_id=saved_user.id,
+            display_name=fullname,
+        )
+    )
     await authorization_service.assign_role(str(saved_user.id), role)
 
     return UserSeedResult(users_created=1, roles_assigned=1)

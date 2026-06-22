@@ -12,15 +12,8 @@ class DetailUserQueryHandler:
     async def execute(self, query: DetailUserQuery) -> User:
         validate_detail_user_query(query)
 
-        user = await self._user_repository.get_by_id(query.user_id)
+        user = await self._user_repository.get_by_id_with_relations(query.user_id)
         if user is None:
             raise UserNotFoundError("User not found.")
 
-        return User(
-            id=user.id,
-            username=user.username,
-            fullname=user.fullname,
-            email=user.email,
-            password=user.password,
-            birthday=user.birthday,
-        )
+        return user

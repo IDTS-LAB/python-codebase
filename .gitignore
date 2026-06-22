@@ -1,21 +1,23 @@
-# Poetry specific files
-.venv/
-/dist/
-/poetry.toml
-
-# Python bytecode and caches
-__pycache__/
+```
 *.pyc
-*.pyo
-*.pyd
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.cache/
-
-# Environment variables (secret keys)
+__pycache__/
+*.log
+*.tmp
+*.swp
 .env
-
-# IDE settings
+.env.local
+.env.*
 .vscode/
 .idea/
+dist/
+build/
+target/
+.venv/
+venv/
+node_modules/
+.mypy_cache/
+.pytest_cache/
+.coverage
+coverage/
+htmlcov/
+```

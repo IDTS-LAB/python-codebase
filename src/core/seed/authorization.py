@@ -1,14 +1,12 @@
 from dataclasses import dataclass
 from typing import Protocol
 
-from src.core.authorization.permissions import (
+from src.modules.authorization import AuthorizationResource, Permission, Role
+from src.modules.authorization.domain.permissions import (
+    DEFAULT_POLICIES,
     DEFAULT_RESOURCES,
     DEFAULT_ROLES,
-    DEFAULT_POLICIES,
 )
-from src.modules.authorization.domain.entities.permission import Permission
-from src.modules.authorization.domain.entities.resource import AuthorizationResource
-from src.modules.authorization.domain.entities.role import Role
 
 
 class AuthorizationSeedRepository(Protocol):
@@ -86,7 +84,9 @@ async def seed_authorization(
         if name in existing_roles:
             continue
 
-        role = await repository.create_role(Role.create(name=name, description=description))
+        role = await repository.create_role(
+            Role.create(name=name, description=description)
+        )
         existing_roles[role.name] = role
         roles_created += 1
 
@@ -140,24 +140,16 @@ async def seed_authorization(
 
 
 def _default_roles() -> dict[str, str]:
-    return {
-        role.name: role.description
-        for role in DEFAULT_ROLES
-    }
+    return {role.name: role.description for role in DEFAULT_ROLES}
 
 
 def _default_permission_keys() -> list[str]:
-    return [
-        permission_key
-        for _, _, permission_key in _permission_policies()
-    ]
+    return [permission_key for _, _, permission_key in _permission_policies()]
 
 
 def _permission_policies() -> list[tuple[str, str, str]]:
     return [
-        policy
-        for policy in DEFAULT_POLICIES
-        if policy[0] == "p" and policy[2] != "*"
+        policy for policy in DEFAULT_POLICIES if policy[0] == "p" and policy[2] != "*"
     ]
 
 

@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from uuid import UUID
 
-from src.core.utils.cursor import CursorDirection
 from src.modules.todo.domain.entities.todo import Todo
+from src.shared.utils.cursor import CursorDirection
 
 
 class TodoRepository(ABC):
