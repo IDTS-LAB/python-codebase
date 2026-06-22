@@ -3,12 +3,6 @@ from uuid import UUID
 from sqlalchemy import Index, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.modules.authorization.infrastructure.models.resource_model import (
-    AuthorizationResourceModel,
-)
-from src.modules.authorization.infrastructure.models.role_permission_model import (
-    RolePermissionModel,
-)
 from src.shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
 from src.shared.database.model import Base
 

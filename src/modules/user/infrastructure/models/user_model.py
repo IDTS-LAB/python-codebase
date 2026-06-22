@@ -3,18 +3,6 @@ from enum import Enum
 from sqlalchemy import Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.modules.authorization.infrastructure.models.user_has_role_model import (
-    UserHasRoleModel,
-)
-from src.modules.user.infrastructure.models.refresh_token_model import UserSessionModel
-from src.modules.user.infrastructure.models.user_address_model import UserAddressModel
-from src.modules.user.infrastructure.models.user_contact_model import UserContactModel
-from src.modules.user.infrastructure.models.user_profile_model import UserProfileModel
-from src.modules.user.infrastructure.models.user_security_model import UserSecurityModel
-from src.modules.user.infrastructure.models.user_settings_model import UserSettingsModel
-from src.modules.user.infrastructure.models.user_verification_model import (
-    UserVerificationModel,
-)
 from src.shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
 from src.shared.database.model import Base
 

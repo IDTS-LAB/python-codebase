@@ -3,7 +3,6 @@ from uuid import UUID
 from sqlalchemy import Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.modules.authorization.infrastructure.models.role_model import RoleModel
 from src.modules.user.infrastructure.models.user_model import UserModel
 from src.shared.database.model import Base
 
