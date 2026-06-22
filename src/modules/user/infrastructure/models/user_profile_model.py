@@ -1,0 +1,41 @@
+from sqlalchemy import String, Date, Text, Index
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from src.shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
+from src.shared.database.model import Base
+
+
+class UserProfileModel(Base, TimeStampMixin, SoftDeleteMixin):
+    """User profile containing personal information.
+    
+    One-to-one relationship with users table.
+    Contains fields that are not required for authentication.
+    """
+    __tablename__ = "user_profiles"
+    __table_args__ = (
+        Index("ix_user_profiles_user_id", "user_id", unique=True),
+    )
+
+    user_id: Mapped[str] = mapped_column(
+        String(36),  # UUID as string for FK
+        unique=True,
+        nullable=False,
+    )
+    
+    # Personal Information
+    first_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    last_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    display_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    
+    # Avatar and Bio
+    avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    bio: Mapped[str | None] = mapped_column(Text, nullable=True)
+    
+    # Birth Date
+    birth_date: Mapped[Date | None] = mapped_column(Date, nullable=True)
+    
+    # Relationship
+    user: Mapped["UserModel"] = relationship(
+        back_populates="profile",
+        foreign_keys=[user_id],
+    )
