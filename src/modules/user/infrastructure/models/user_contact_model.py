@@ -1,6 +1,7 @@
 from enum import Enum
+from uuid import UUID
 
-from sqlalchemy import Boolean, Index, String
+from sqlalchemy import Boolean, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.modules.user.infrastructure.models.user_model import UserModel
@@ -31,10 +32,7 @@ class UserContactModel(Base, TimeStampMixin, SoftDeleteMixin):
         Index("ix_user_contacts_is_primary", "is_primary"),
     )
 
-    user_id: Mapped[str] = mapped_column(
-        String(36),  # UUID as string for FK
-        nullable=False,
-    )
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
 
     # Contact Information
     contact_type: Mapped[str] = mapped_column(String(50), nullable=False)

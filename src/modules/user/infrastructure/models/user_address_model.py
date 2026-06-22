@@ -1,4 +1,6 @@
-from sqlalchemy import Boolean, Index, String
+from uuid import UUID
+
+from sqlalchemy import Boolean, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.modules.user.infrastructure.models.user_model import UserModel
@@ -21,10 +23,7 @@ class UserAddressModel(Base, TimeStampMixin, SoftDeleteMixin):
         Index("ix_user_addresses_country", "country"),
     )
 
-    user_id: Mapped[str] = mapped_column(
-        String(36),  # UUID as string for FK
-        nullable=False,
-    )
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
 
     # Address Label (home, billing, shipping, work, etc.)
     label: Mapped[str] = mapped_column(String(100), nullable=False)
