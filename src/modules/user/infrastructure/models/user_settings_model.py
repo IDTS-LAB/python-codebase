@@ -1,17 +1,18 @@
-from sqlalchemy import String, Index
+from sqlalchemy import Index, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from src.modules.user.infrastructure.models.user_model import UserModel
 from src.shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
 from src.shared.database.model import Base
 
 
 class UserSettingsModel(Base, TimeStampMixin, SoftDeleteMixin):
     """User preferences and settings stored as JSONB.
-    
+
     One-to-one relationship with users table.
     Flexible schema allows adding new preferences without migrations.
-    
+
     Example preferences structure:
     {
         "language": "en",
@@ -29,6 +30,7 @@ class UserSettingsModel(Base, TimeStampMixin, SoftDeleteMixin):
         }
     }
     """
+
     __tablename__ = "user_settings"
     __table_args__ = (
         Index("ix_user_settings_user_id", "user_id", unique=True),
@@ -40,14 +42,14 @@ class UserSettingsModel(Base, TimeStampMixin, SoftDeleteMixin):
         unique=True,
         nullable=False,
     )
-    
+
     # Preferences stored as JSONB for flexibility
     preferences: Mapped[dict] = mapped_column(
         JSONB,
         default=dict,
         nullable=False,
     )
-    
+
     # Relationship
     user: Mapped["UserModel"] = relationship(
         back_populates="settings",

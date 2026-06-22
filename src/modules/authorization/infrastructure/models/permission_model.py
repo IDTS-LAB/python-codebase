@@ -1,18 +1,25 @@
 from uuid import UUID
 
-from sqlalchemy import String, UniqueConstraint, Index
+from sqlalchemy import Index, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from src.modules.authorization.infrastructure.models.resource_model import (
+    AuthorizationResourceModel,
+)
+from src.modules.authorization.infrastructure.models.role_permission_model import (
+    RolePermissionModel,
+)
 from src.shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
 from src.shared.database.model import Base
 
 
 class PermissionModel(Base, TimeStampMixin, SoftDeleteMixin):
     """Permission definition for RBAC system.
-    
+
     Permissions represent specific actions on resources.
     Linked to authorization_resources for resource management.
     """
+
     __tablename__ = "permissions"
     __table_args__ = (
         UniqueConstraint("resource", "action", name="uq_permissions_resource_action"),
@@ -27,7 +34,7 @@ class PermissionModel(Base, TimeStampMixin, SoftDeleteMixin):
     resource: Mapped[str] = mapped_column(String(100), nullable=False)
     action: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    
+
     # Relationships
     roles: Mapped[list["RolePermissionModel"]] = relationship(
         back_populates="permission",

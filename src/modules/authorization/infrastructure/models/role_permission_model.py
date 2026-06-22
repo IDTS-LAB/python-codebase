@@ -1,17 +1,21 @@
 from uuid import UUID
 
-from sqlalchemy import String, UniqueConstraint, Index
+from sqlalchemy import Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
+from src.modules.authorization.infrastructure.models.permission_model import (
+    PermissionModel,
+)
+from src.modules.authorization.infrastructure.models.role_model import RoleModel
 from src.shared.database.model import Base
 
 
 class RolePermissionModel(Base):
     """Junction table for role-to-permission assignments.
-    
+
     Many-to-many relationship between roles and permissions.
     """
+
     __tablename__ = "role_permissions"
     __table_args__ = (
         UniqueConstraint(
@@ -25,7 +29,7 @@ class RolePermissionModel(Base):
 
     role_id: Mapped[UUID] = mapped_column(nullable=False)
     permission_id: Mapped[UUID] = mapped_column(nullable=False)
-    
+
     # Relationships
     role: Mapped["RoleModel"] = relationship(
         back_populates="permissions",
