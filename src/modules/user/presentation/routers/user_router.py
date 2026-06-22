@@ -118,6 +118,15 @@ async def get_me(
         data=UserResponse(
             id=str(user.id),
             email=user.email,
+            username=user.username,
+            auth_provider=user.auth_provider,
+            external_id=user.external_id,
+            status=user.status,
+            profile=user.profile,
+            settings=user.settings,
+            security=user.security,
+            created_at=user.created_at,
+            updated_at=user.updated_at,
         ),
     )
 

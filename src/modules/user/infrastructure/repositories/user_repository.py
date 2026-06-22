@@ -215,6 +215,8 @@ class SQLAlchemyUserRepository(UserRepository):
             auth_provider=user_model.auth_provider,
             status=user_model.status,
             external_id=user_model.external_id,
+            created_at=user_model.created_at.isoformat(),
+            updated_at=user_model.updated_at.isoformat(),
         )
 
     def _map_to_entity_with_relations(self, user_model: UserModel) -> User:
@@ -240,6 +242,8 @@ class SQLAlchemyUserRepository(UserRepository):
             avatar_url=profile_model.avatar_url,
             bio=profile_model.bio,
             birth_date=profile_model.birth_date,
+            created_at=profile_model.created_at.isoformat(),
+            updated_at=profile_model.updated_at.isoformat(),
         )
 
     def _map_settings_to_entity(
@@ -248,6 +252,8 @@ class SQLAlchemyUserRepository(UserRepository):
         return UserSettings(
             user_id=settings_model.user_id,
             preferences=settings_model.preferences or {},
+            created_at=settings_model.created_at.isoformat(),
+            updated_at=settings_model.updated_at.isoformat(),
         )
 
     def _map_security_to_entity(
@@ -261,4 +267,6 @@ class SQLAlchemyUserRepository(UserRepository):
             two_factor_enabled=security_model.two_factor_enabled,
             two_factor_secret=security_model.two_factor_secret,
             two_factor_backup_codes=security_model.two_factor_backup_codes,
+            created_at=security_model.created_at.isoformat(),
+            updated_at=security_model.updated_at.isoformat(),
         )
