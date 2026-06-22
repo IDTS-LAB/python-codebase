@@ -1,10 +1,16 @@
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
 from src.shared.database.model import Base
+
+if TYPE_CHECKING:
+    from src.modules.authorization.infrastructure.models.user_has_role_model import (
+        UserHasRoleModel,
+    )
 
 
 class UserStatus(str, Enum):
