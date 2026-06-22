@@ -1,5 +1,6 @@
 import hashlib
 from datetime import datetime, timedelta, timezone
+from typing import Literal
 
 from src.core.config.setting import get_settings
 from src.core.security.account_lockout import AccountLockoutService
@@ -36,7 +37,12 @@ class LoginUserCommandHandler:
         self._account_lockout_service = account_lockout_service
         self._audit_service = audit_service
 
-    async def execute(self, command: LoginUserCommand) -> dict[str, str]:
+    async def execute(
+        self,
+        command: LoginUserCommand,
+        two_factor_code: str | None = None,
+        two_factor_method: Literal["totp", "email", "backup"] | None = None,
+    ) -> dict[str, str]:
         validate_login_user_command(command)
 
         if self._account_lockout_service is not None:
@@ -60,6 +66,38 @@ class LoginUserCommandHandler:
         ):
             await self._record_failed_login(command.username)
             raise InvalidCredentialsError("Incorrect email or password")
+
+        # Check if 2FA is enabled and requires verification
+        if user.security and user.security.two_factor_enabled:
+            if not two_factor_code:
+                # Return a temporary token indicating 2FA is required
+                temp_token = JWTService.create_access_token(
+                    data={"sub": str(user.id), "2fa_required": True},
+                    expires_delta=timedelta(minutes=5),
+                )
+                return {
+                    "access_token": temp_token,
+                    "refresh_token": "",
+                    "2fa_required": True,
+                }
+
+            # Verify 2FA code
+            from src.core.security.two_factor_auth import TwoFactorAuthService
+
+            two_factor_service = TwoFactorAuthService(
+                user_repository=self._user_repository,
+                unit_of_work=self._unit_of_work,
+            )
+
+            verified = await two_factor_service.verify_2fa_code(
+                user=user,
+                code=two_factor_code,
+                method=two_factor_method or "totp",
+            )
+
+            if not verified:
+                await self._record_failed_login(command.username)
+                raise InvalidCredentialsError("Invalid 2FA code")
 
         access_token = JWTService.create_access_token(data={"sub": str(user.id)})
 
