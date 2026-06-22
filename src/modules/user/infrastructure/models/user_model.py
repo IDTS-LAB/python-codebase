@@ -1,22 +1,16 @@
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.modules.authorization.infrastructure.models.user_has_role_model import (
-    UserHasRoleModel,
-)
-from src.modules.user.infrastructure.models.refresh_token_model import UserSessionModel
-from src.modules.user.infrastructure.models.user_address_model import UserAddressModel
-from src.modules.user.infrastructure.models.user_contact_model import UserContactModel
-from src.modules.user.infrastructure.models.user_profile_model import UserProfileModel
-from src.modules.user.infrastructure.models.user_security_model import UserSecurityModel
-from src.modules.user.infrastructure.models.user_settings_model import UserSettingsModel
-from src.modules.user.infrastructure.models.user_verification_model import (
-    UserVerificationModel,
-)
 from src.shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
 from src.shared.database.model import Base
+
+if TYPE_CHECKING:
+    from src.modules.authorization.infrastructure.models.user_has_role_model import (
+        UserHasRoleModel,
+    )
 
 
 class UserStatus(str, Enum):
@@ -72,40 +66,40 @@ class UserModel(
     )
 
     # Relationships (one-to-one)
-    profile: Mapped["UserProfileModel"] = relationship(
+    profile: Mapped["UserProfileModel"] = relationship(  # type: ignore[name-defined]
         back_populates="user",
         uselist=False,
         cascade="all, delete-orphan",
     )
-    security: Mapped["UserSecurityModel"] = relationship(
+    security: Mapped["UserSecurityModel"] = relationship(  # type: ignore[name-defined]
         back_populates="user",
         uselist=False,
         cascade="all, delete-orphan",
     )
-    settings: Mapped["UserSettingsModel"] = relationship(
+    settings: Mapped["UserSettingsModel"] = relationship(  # type: ignore[name-defined]
         back_populates="user",
         uselist=False,
         cascade="all, delete-orphan",
     )
 
     # Relationships (one-to-many)
-    contacts: Mapped[list["UserContactModel"]] = relationship(
+    contacts: Mapped[list["UserContactModel"]] = relationship(  # type: ignore[name-defined]
         back_populates="user",
         cascade="all, delete-orphan",
     )
-    addresses: Mapped[list["UserAddressModel"]] = relationship(
+    addresses: Mapped[list["UserAddressModel"]] = relationship(  # type: ignore[name-defined]
         back_populates="user",
         cascade="all, delete-orphan",
     )
-    verifications: Mapped[list["UserVerificationModel"]] = relationship(
+    verifications: Mapped[list["UserVerificationModel"]] = relationship(  # type: ignore[name-defined]
         back_populates="user",
         cascade="all, delete-orphan",
     )
-    sessions: Mapped[list["UserSessionModel"]] = relationship(
+    sessions: Mapped[list["UserSessionModel"]] = relationship(  # type: ignore[name-defined]
         back_populates="user",
         cascade="all, delete-orphan",
     )
-    role_assignments: Mapped[list["UserHasRoleModel"]] = relationship(
+    role_assignments: Mapped[list["UserHasRoleModel"]] = relationship(  # type: ignore[name-defined]
         back_populates="user",
         cascade="all, delete-orphan",
     )

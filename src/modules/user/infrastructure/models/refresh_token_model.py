@@ -3,7 +3,6 @@ from datetime import datetime
 from sqlalchemy import Boolean, DateTime, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.modules.user.infrastructure.models.user_model import UserModel
 from src.shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
 from src.shared.database.model import Base
 
@@ -53,7 +52,7 @@ class UserSessionModel(Base, TimeStampMixin, SoftDeleteMixin):
     revoked_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # Relationship
-    user: Mapped["UserModel"] = relationship(
+    user: Mapped["UserModel"] = relationship(  # type: ignore[name-defined]
         back_populates="sessions",
         foreign_keys=[user_id],
     )

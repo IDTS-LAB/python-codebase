@@ -3,12 +3,6 @@ from uuid import UUID
 from sqlalchemy import Index, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.modules.authorization.infrastructure.models.resource_model import (
-    AuthorizationResourceModel,
-)
-from src.modules.authorization.infrastructure.models.role_permission_model import (
-    RolePermissionModel,
-)
 from src.shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
 from src.shared.database.model import Base
 
@@ -36,11 +30,11 @@ class PermissionModel(Base, TimeStampMixin, SoftDeleteMixin):
     description: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # Relationships
-    roles: Mapped[list["RolePermissionModel"]] = relationship(
+    roles: Mapped[list["RolePermissionModel"]] = relationship(  # type: ignore[name-defined]
         back_populates="permission",
         cascade="all, delete-orphan",
     )
-    authorization_resource: Mapped["AuthorizationResourceModel"] = relationship(
+    authorization_resource: Mapped["AuthorizationResourceModel"] = relationship(  # type: ignore[name-defined]
         back_populates="permissions",
         foreign_keys=[resource_id],
     )

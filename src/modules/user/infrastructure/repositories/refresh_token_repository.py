@@ -6,7 +6,9 @@ from src.modules.user.domain.entities.refresh_token import RefreshToken
 from src.modules.user.domain.repositories.refresh_token_repository import (
     RefreshTokenRepository,
 )
-from src.modules.user.infrastructure.models.refresh_token_model import RefreshTokenModel
+from src.modules.user.infrastructure.models.refresh_token_model import (
+    UserSessionModel as RefreshTokenModel,
+)
 
 
 class SQLAlchemyRefreshTokenRepository(RefreshTokenRepository):

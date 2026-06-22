@@ -3,10 +3,6 @@ from uuid import UUID
 from sqlalchemy import Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.modules.authorization.infrastructure.models.permission_model import (
-    PermissionModel,
-)
-from src.modules.authorization.infrastructure.models.role_model import RoleModel
 from src.shared.database.model import Base
 
 
@@ -31,11 +27,11 @@ class RolePermissionModel(Base):
     permission_id: Mapped[UUID] = mapped_column(nullable=False)
 
     # Relationships
-    role: Mapped["RoleModel"] = relationship(
+    role: Mapped["RoleModel"] = relationship(  # type: ignore[name-defined]
         back_populates="permissions",
         foreign_keys=[role_id],
     )
-    permission: Mapped["PermissionModel"] = relationship(
+    permission: Mapped["PermissionModel"] = relationship(  # type: ignore[name-defined]
         back_populates="roles",
         foreign_keys=[permission_id],
     )

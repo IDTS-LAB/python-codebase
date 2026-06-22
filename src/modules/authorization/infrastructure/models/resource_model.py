@@ -1,9 +1,6 @@
 from sqlalchemy import Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.modules.authorization.infrastructure.models.permission_model import (
-    PermissionModel,
-)
 from src.shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
 from src.shared.database.model import Base
 
@@ -23,7 +20,7 @@ class AuthorizationResourceModel(Base, TimeStampMixin, SoftDeleteMixin):
     description: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # Relationships
-    permissions: Mapped[list["PermissionModel"]] = relationship(
+    permissions: Mapped[list["PermissionModel"]] = relationship(  # type: ignore[name-defined]
         back_populates="authorization_resource",
         cascade="all, delete-orphan",
     )
