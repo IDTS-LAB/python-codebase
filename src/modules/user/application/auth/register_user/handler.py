@@ -37,11 +37,14 @@ class RegisterUserCommandHandler:
 
         hashed_password = PasswordSerrvice.hash(command.password)
         user = User.create(
-            command.email,
-            password=hashed_password,
+            email=command.email,
+            password_hash=hashed_password,
         )
         async with self._unit_of_work:
+            # Save user (this also creates default profile, settings, security)
             saved_user = await self._user_repository.save(user=user)
+            
+            # Assign default role
             await self._authorization_service.assign_role(
                 subject=str(saved_user.id),
                 role=DEFAULT_USER_ROLE,

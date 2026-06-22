@@ -56,7 +56,7 @@ class LoginUserCommandHandler:
             raise InvalidCredentialsError("Incorrect email or password")
 
         if not user or not PasswordSerrvice.verify_password(
-            command.password, user.password
+            command.password, user.password_hash
         ):
             await self._record_failed_login(command.username)
             raise InvalidCredentialsError("Incorrect email or password")
