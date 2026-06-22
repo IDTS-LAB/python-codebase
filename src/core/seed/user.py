@@ -1,14 +1,14 @@
 from dataclasses import dataclass
 from typing import Protocol
 
-from src.core.authorization.permissions import (
+from src.core.security.password import PasswordSerrvice
+from src.modules.authorization.domain.permissions import (
     ADMIN_ROLE,
     DEFAULT_USER_ROLE,
     MANAGER_ROLE,
     VIEWER_ROLE,
 )
-from src.core.security.password import PasswordSerrvice
-from src.modules.user import User
+from src.modules.user.domain.entities.user import User
 
 
 class SeedUserRepository(Protocol):
@@ -50,9 +50,8 @@ class SeedUserConfig:
 
     @property
     def should_seed_development_users(self) -> bool:
-        return (
-            self.app_env.lower() == "development"
-            and bool(self.development_users_password.strip())
+        return self.app_env.lower() == "development" and bool(
+            self.development_users_password.strip()
         )
 
 
