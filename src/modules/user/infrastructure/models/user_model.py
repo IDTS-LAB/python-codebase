@@ -60,40 +60,40 @@ class UserModel(
     )
 
     # Relationships (one-to-one)
-    profile: Mapped["UserProfileModel"] = relationship(
+    profile: Mapped["UserProfileModel"] = relationship(  # type: ignore[name-defined]
         back_populates="user",
         uselist=False,
         cascade="all, delete-orphan",
     )
-    security: Mapped["UserSecurityModel"] = relationship(
+    security: Mapped["UserSecurityModel"] = relationship(  # type: ignore[name-defined]
         back_populates="user",
         uselist=False,
         cascade="all, delete-orphan",
     )
-    settings: Mapped["UserSettingsModel"] = relationship(
+    settings: Mapped["UserSettingsModel"] = relationship(  # type: ignore[name-defined]
         back_populates="user",
         uselist=False,
         cascade="all, delete-orphan",
     )
 
     # Relationships (one-to-many)
-    contacts: Mapped[list["UserContactModel"]] = relationship(
+    contacts: Mapped[list["UserContactModel"]] = relationship(  # type: ignore[name-defined]
         back_populates="user",
         cascade="all, delete-orphan",
     )
-    addresses: Mapped[list["UserAddressModel"]] = relationship(
+    addresses: Mapped[list["UserAddressModel"]] = relationship(  # type: ignore[name-defined]
         back_populates="user",
         cascade="all, delete-orphan",
     )
-    verifications: Mapped[list["UserVerificationModel"]] = relationship(
+    verifications: Mapped[list["UserVerificationModel"]] = relationship(  # type: ignore[name-defined]
         back_populates="user",
         cascade="all, delete-orphan",
     )
-    sessions: Mapped[list["UserSessionModel"]] = relationship(
+    sessions: Mapped[list["UserSessionModel"]] = relationship(  # type: ignore[name-defined]
         back_populates="user",
         cascade="all, delete-orphan",
     )
-    role_assignments: Mapped[list["UserHasRoleModel"]] = relationship(
+    role_assignments: Mapped[list["UserHasRoleModel"]] = relationship(  # type: ignore[name-defined]
         back_populates="user",
         cascade="all, delete-orphan",
     )

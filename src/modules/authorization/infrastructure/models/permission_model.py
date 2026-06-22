@@ -30,11 +30,11 @@ class PermissionModel(Base, TimeStampMixin, SoftDeleteMixin):
     description: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # Relationships
-    roles: Mapped[list["RolePermissionModel"]] = relationship(
+    roles: Mapped[list["RolePermissionModel"]] = relationship(  # type: ignore[name-defined]
         back_populates="permission",
         cascade="all, delete-orphan",
     )
-    authorization_resource: Mapped["AuthorizationResourceModel"] = relationship(
+    authorization_resource: Mapped["AuthorizationResourceModel"] = relationship(  # type: ignore[name-defined]
         back_populates="permissions",
         foreign_keys=[resource_id],
     )

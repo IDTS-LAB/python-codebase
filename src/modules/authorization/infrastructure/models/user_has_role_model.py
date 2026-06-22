@@ -27,11 +27,11 @@ class UserHasRoleModel(Base):
     role_id: Mapped[UUID] = mapped_column(nullable=False)
 
     # Relationships
-    user: Mapped["UserModel"] = relationship(
+    user: Mapped["UserModel"] = relationship(  # type: ignore[name-defined]
         back_populates="role_assignments",
         foreign_keys=[user_id],
     )
-    role: Mapped["RoleModel"] = relationship(
+    role: Mapped["RoleModel"] = relationship(  # type: ignore[name-defined]
         back_populates="user_assignments",
         foreign_keys=[role_id],
     )

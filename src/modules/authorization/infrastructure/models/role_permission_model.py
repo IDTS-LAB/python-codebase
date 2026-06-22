@@ -27,11 +27,11 @@ class RolePermissionModel(Base):
     permission_id: Mapped[UUID] = mapped_column(nullable=False)
 
     # Relationships
-    role: Mapped["RoleModel"] = relationship(
+    role: Mapped["RoleModel"] = relationship(  # type: ignore[name-defined]
         back_populates="permissions",
         foreign_keys=[role_id],
     )
-    permission: Mapped["PermissionModel"] = relationship(
+    permission: Mapped["PermissionModel"] = relationship(  # type: ignore[name-defined]
         back_populates="roles",
         foreign_keys=[permission_id],
     )

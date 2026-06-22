@@ -52,7 +52,7 @@ class UserSessionModel(Base, TimeStampMixin, SoftDeleteMixin):
     revoked_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # Relationship
-    user: Mapped["UserModel"] = relationship(
+    user: Mapped["UserModel"] = relationship(  # type: ignore[name-defined]
         back_populates="sessions",
         foreign_keys=[user_id],
     )

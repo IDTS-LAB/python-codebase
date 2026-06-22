@@ -20,7 +20,7 @@ class AuthorizationResourceModel(Base, TimeStampMixin, SoftDeleteMixin):
     description: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # Relationships
-    permissions: Mapped[list["PermissionModel"]] = relationship(
+    permissions: Mapped[list["PermissionModel"]] = relationship(  # type: ignore[name-defined]
         back_populates="authorization_resource",
         cascade="all, delete-orphan",
     )
