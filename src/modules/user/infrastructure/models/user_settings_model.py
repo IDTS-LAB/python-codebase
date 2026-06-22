@@ -2,6 +2,7 @@ from uuid import UUID
 
 from sqlalchemy import ForeignKey, Index
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.modules.user.infrastructure.models.user_model import UserModel
@@ -40,6 +41,7 @@ class UserSettingsModel(Base, TimeStampMixin, SoftDeleteMixin):
     )
 
     user_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
         ForeignKey("users.id"),
         unique=True,
         nullable=False,

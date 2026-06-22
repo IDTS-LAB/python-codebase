@@ -2,6 +2,7 @@ from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.modules.user.infrastructure.models.user_model import UserModel
@@ -24,7 +25,11 @@ class UserVerificationModel(Base, TimeStampMixin, SoftDeleteMixin):
         Index("ix_user_verifications_token", "verification_token"),
     )
 
-    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    user_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=False,
+    )
 
     # Verification Channel (email, phone, etc.)
     channel: Mapped[str] = mapped_column(String(50), nullable=False)

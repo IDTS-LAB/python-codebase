@@ -2,6 +2,7 @@ from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
@@ -24,7 +25,11 @@ class UserSessionModel(Base, TimeStampMixin, SoftDeleteMixin):
         Index("ix_user_sessions_device_info", "device_info"),
     )
 
-    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    user_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=False,
+    )
 
     # Session Token (hashed for security)
     refresh_token_hash: Mapped[str] = mapped_column(String(255), nullable=False)

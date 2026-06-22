@@ -2,15 +2,20 @@ from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from src.modules.user.domain.entities.user import User, UserProfile, UserSettings, UserSecurity
+from src.modules.user.domain.entities.user import (
+    User,
+    UserProfile,
+    UserSecurity,
+    UserSettings,
+)
 from src.modules.user.domain.repositories.user_repository import UserRepository
 from src.modules.user.infrastructure.models.user_model import UserModel
 from src.modules.user.infrastructure.models.user_profile_model import UserProfileModel
-from src.modules.user.infrastructure.models.user_settings_model import UserSettingsModel
 from src.modules.user.infrastructure.models.user_security_model import UserSecurityModel
+from src.modules.user.infrastructure.models.user_settings_model import UserSettingsModel
 
 
 class SQLAlchemyUserRepository(UserRepository):
@@ -28,7 +33,9 @@ class SQLAlchemyUserRepository(UserRepository):
         return self._map_to_entity(user_model)
 
     async def get_by_id(self, user_id: UUID) -> Optional[User]:
-        result = await self._db.execute(select(UserModel).where(UserModel.id == user_id))
+        result = await self._db.execute(
+            select(UserModel).where(UserModel.id == user_id)
+        )
         user_model = result.scalar_one_or_none()
         if not user_model:
             return None
@@ -53,7 +60,7 @@ class SQLAlchemyUserRepository(UserRepository):
     async def save(self, user: User) -> User:
         # Check if user exists
         existing = await self.get_by_id(user.id)
-        
+
         if existing:
             # Update existing user
             user_model = await self._get_user_model(user.id)
@@ -75,10 +82,10 @@ class SQLAlchemyUserRepository(UserRepository):
                 external_id=user.external_id,
             )
             self._db.add(user_model)
-            
+
             # Create default related records
             await self._create_default_related_records(user_model.id)
-        
+
         await self._db.flush()
         await self._db.refresh(user_model)
         return self._map_to_entity(user_model)
@@ -88,7 +95,7 @@ class SQLAlchemyUserRepository(UserRepository):
             select(UserProfileModel).where(UserProfileModel.user_id == profile.user_id)
         )
         profile_model = existing.scalar_one_or_none()
-        
+
         if profile_model:
             profile_model.first_name = profile.first_name
             profile_model.last_name = profile.last_name
@@ -107,17 +114,19 @@ class SQLAlchemyUserRepository(UserRepository):
                 birth_date=profile.birth_date,
             )
             self._db.add(profile_model)
-        
+
         await self._db.flush()
         await self._db.refresh(profile_model)
         return self._map_profile_to_entity(profile_model)
 
     async def save_settings(self, settings: UserSettings) -> UserSettings:
         existing = await self._db.execute(
-            select(UserSettingsModel).where(UserSettingsModel.user_id == settings.user_id)
+            select(UserSettingsModel).where(
+                UserSettingsModel.user_id == settings.user_id
+            )
         )
         settings_model = existing.scalar_one_or_none()
-        
+
         if settings_model:
             settings_model.preferences = settings.preferences
         else:
@@ -126,17 +135,19 @@ class SQLAlchemyUserRepository(UserRepository):
                 preferences=settings.preferences,
             )
             self._db.add(settings_model)
-        
+
         await self._db.flush()
         await self._db.refresh(settings_model)
         return self._map_settings_to_entity(settings_model)
 
     async def save_security(self, security: UserSecurity) -> UserSecurity:
         existing = await self._db.execute(
-            select(UserSecurityModel).where(UserSecurityModel.user_id == security.user_id)
+            select(UserSecurityModel).where(
+                UserSecurityModel.user_id == security.user_id
+            )
         )
         security_model = existing.scalar_one_or_none()
-        
+
         if security_model:
             security_model.failed_login_attempts = security.failed_login_attempts
             security_model.locked_until = security.locked_until
@@ -155,13 +166,15 @@ class SQLAlchemyUserRepository(UserRepository):
                 two_factor_backup_codes=security.two_factor_backup_codes,
             )
             self._db.add(security_model)
-        
+
         await self._db.flush()
         await self._db.refresh(security_model)
         return self._map_security_to_entity(security_model)
 
     async def _get_user_model(self, user_id: UUID) -> UserModel:
-        result = await self._db.execute(select(UserModel).where(UserModel.id == user_id))
+        result = await self._db.execute(
+            select(UserModel).where(UserModel.id == user_id)
+        )
         return result.scalar_one()
 
     async def _create_default_related_records(self, user_id: UUID) -> None:
@@ -169,7 +182,7 @@ class SQLAlchemyUserRepository(UserRepository):
         # Default profile
         profile_model = UserProfileModel(user_id=user_id)
         self._db.add(profile_model)
-        
+
         # Default settings
         settings_model = UserSettingsModel(
             user_id=user_id,
@@ -180,11 +193,11 @@ class SQLAlchemyUserRepository(UserRepository):
                 "notifications": {
                     "email": True,
                     "push": False,
-                }
-            }
+                },
+            },
         )
         self._db.add(settings_model)
-        
+
         # Default security
         security_model = UserSecurityModel(
             user_id=user_id,
@@ -206,16 +219,16 @@ class SQLAlchemyUserRepository(UserRepository):
 
     def _map_to_entity_with_relations(self, user_model: UserModel) -> User:
         user = self._map_to_entity(user_model)
-        
+
         if user_model.profile:
             user.profile = self._map_profile_to_entity(user_model.profile)
-        
+
         if user_model.settings:
             user.settings = self._map_settings_to_entity(user_model.settings)
-        
+
         if user_model.security:
             user.security = self._map_security_to_entity(user_model.security)
-        
+
         return user
 
     def _map_profile_to_entity(self, profile_model: UserProfileModel) -> UserProfile:
@@ -229,13 +242,17 @@ class SQLAlchemyUserRepository(UserRepository):
             birth_date=profile_model.birth_date,
         )
 
-    def _map_settings_to_entity(self, settings_model: UserSettingsModel) -> UserSettings:
+    def _map_settings_to_entity(
+        self, settings_model: UserSettingsModel
+    ) -> UserSettings:
         return UserSettings(
             user_id=settings_model.user_id,
             preferences=settings_model.preferences or {},
         )
 
-    def _map_security_to_entity(self, security_model: UserSecurityModel) -> UserSecurity:
+    def _map_security_to_entity(
+        self, security_model: UserSecurityModel
+    ) -> UserSecurity:
         return UserSecurity(
             user_id=security_model.user_id,
             failed_login_attempts=security_model.failed_login_attempts,
