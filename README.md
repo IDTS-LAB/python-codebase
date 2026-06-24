@@ -133,6 +133,10 @@ The API is currently versioned under `/api/v1`.
 ├── pyproject.toml                   # Project metadata and dependencies
 ├── poetry.lock                      # Poetry lock file
 ├── alembic.ini                      # Alembic configuration
+├── .devcontainer/                    # Dev container configuration
+│   ├── Dockerfile                    # Development image
+│   ├── devcontainer.json             # VS Code Dev Containers config
+│   └── docker-compose.yml            # Dev stack (app, PostgreSQL, Redis)
 ├── Dockerfile                       # Docker image definition
 ├── docker-compose.yml               # Local API, PostgreSQL, Redis, Prometheus, and OTEL collector services
 └── docker/
@@ -382,6 +386,37 @@ poetry run pytest -q
 ```
 
 This repository also has a local `.venv`, so the Makefile uses `.venv/bin/...` where practical.
+
+## Development Container
+
+The repository includes a [Dev Container](https://containers.dev/) configuration for VS Code that provides a complete development environment with PostgreSQL and Redis without installing anything locally besides Docker.
+
+Open the project in VS Code with the Dev Containers extension installed and click **Reopen in Container**. The container:
+
+- Installs all dependencies (including dev) with Poetry.
+- Mounts the source tree for live editing with hot-reload.
+- Starts PostgreSQL and Redis as companion services.
+- Forwards port 8000 for the API.
+
+No `.env` file is required — the dev container uses safe defaults (`devpass`) for database and Redis passwords. To customize, create `.env` in the project root before opening.
+
+### Running the dev server inside the container
+
+```bash
+make run
+```
+
+Or directly:
+
+```bash
+poetry run uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### Database migrations inside the container
+
+```bash
+make migrate && make seed
+```
 
 ## Running the Application
 
