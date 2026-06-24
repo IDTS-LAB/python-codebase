@@ -9,6 +9,9 @@ services:
       APP_ENV: development
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-devpass}@db:5432/${POSTGRES_DB:-todo_db}
       REDIS_URL: redis://:${REDIS_PASSWORD:-devpass}@redis:6379/0
+      OTEL_ENABLED: "true"
+      OTEL_SERVICE_NAME: "fastapi-modulith"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4318/v1/traces"
     env_file:
       - ../.env
     volumes:
@@ -21,6 +24,27 @@ services:
       redis:
         condition: service_healthy
     command: sleep infinity
+
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    restart: unless-stopped
+    ports:
+      - "${OTEL_COLLECTOR_PORT:-4318}:4318"
+    volumes:
+      - ../docker/otel-collector/config.yaml:/etc/otelcol-contrib/config.yaml:ro
 
   db:
     image: postgres:17-alpine
@@ -66,3 +90,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  prometheus_data:

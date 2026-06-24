@@ -3,11 +3,19 @@
   "dockerComposeFile": "docker-compose.yml",
   "service": "dev",
   "workspaceFolder": "/app",
-  "forwardPorts": [8000],
+  "forwardPorts": [8000, 9090, 4318],
   "portsAttributes": {
     "8000": {
       "label": "API",
       "onAutoForward": "notify"
+    },
+    "9090": {
+      "label": "Prometheus",
+      "onAutoForward": "notify"
+    },
+    "4318": {
+      "label": "OTLP HTTP",
+      "onAutoForward": "silent"
     }
   },
   "customizations": {

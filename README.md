@@ -136,7 +136,8 @@ The API is currently versioned under `/api/v1`.
 ├── .devcontainer/                    # Dev container configuration
 │   ├── Dockerfile                    # Development image
 │   ├── devcontainer.json             # VS Code Dev Containers config
-│   └── docker-compose.yml            # Dev stack (app, PostgreSQL, Redis)
+│   ├── docker-compose.yml            # Dev stack (app, PostgreSQL, Redis)
+│   └── prometheus.yml                # Dev Prometheus scrape config (targets dev:8000)
 ├── Dockerfile                       # Docker image definition
 ├── docker-compose.yml               # Local API, PostgreSQL, Redis, Prometheus, and OTEL collector services
 └── docker/
@@ -617,6 +618,18 @@ The API container applies Alembic migrations before starting Uvicorn. Database s
 | Service | Image | Port | Purpose |
 | --- | --- | --- | --- |
 | `api` | `fastapi-modulith:local` | 8000 | FastAPI application |
+| `db` | `postgres:17-alpine` | — | PostgreSQL database |
+| `redis` | `redis:8-alpine` | — | Redis for rate limiting and token revocation |
+| `prometheus` | `prom/prometheus:latest` | 9090 | Metrics scraping and storage |
+| `otel-collector` | `otel/opentelemetry-collector-contrib:latest` | 4318 | OTLP trace ingestion and export |
+
+### Dev Container Services
+
+The dev container (`docker compose -f .devcontainer/docker-compose.yml`) runs the same services with development defaults:
+
+| Service | Image | Port | Purpose |
+| --- | --- | --- | --- |
+| `dev` | `fastapi-modulith:dev` | 8000 | FastAPI with hot-reload |
 | `db` | `postgres:17-alpine` | — | PostgreSQL database |
 | `redis` | `redis:8-alpine` | — | Redis for rate limiting and token revocation |
 | `prometheus` | `prom/prometheus:latest` | 9090 | Metrics scraping and storage |
