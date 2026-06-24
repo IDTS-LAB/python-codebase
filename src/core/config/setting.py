@@ -72,6 +72,18 @@ class Settings(BaseSettings):
     # Logging output format for application logs.
     LOG_FORMAT: str = Field(alias="LOG_FORMAT", default="json")
 
+    # OpenTelemetry distributed tracing configuration.
+    OTEL_ENABLED: bool = Field(alias="OTEL_ENABLED", default=False)
+    OTEL_SERVICE_NAME: str = Field(
+        alias="OTEL_SERVICE_NAME", default="fastapi-modulith"
+    )
+    OTEL_EXPORTER_OTLP_ENDPOINT: str = Field(
+        alias="OTEL_EXPORTER_OTLP_ENDPOINT", default=""
+    )
+    OTEL_EXPORTER_OTLP_HEADERS: str = Field(
+        alias="OTEL_EXPORTER_OTLP_HEADERS", default=""
+    )
+
     # Email provider selection and provider-specific credentials.
     EMAIL_PROVIDER: str = Field(alias="EMAIL_PROVIDER", default="ses")
 

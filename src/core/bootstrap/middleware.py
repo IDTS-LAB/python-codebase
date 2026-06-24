@@ -6,6 +6,7 @@ from src.core.middleware.audit_logging import AuditLoggingMiddleware
 from src.core.middleware.auth import AuthenticationMiddleware
 from src.core.middleware.csp import CSPMiddleware
 from src.core.middleware.idempotency import IdempotencyMiddleware
+from src.core.middleware.metrics import MetricsMiddleware
 from src.core.middleware.request_id import RequestIDMiddleware
 from src.core.middleware.request_size import LimitRequestSizeMiddleware
 from src.core.middleware.security_headers import SecurityHeadersMiddleware
@@ -29,6 +30,7 @@ def register_middleware(app: FastAPI):
         allow_headers=settings.cors_allow_headers,
     )
     app.add_middleware(IdempotencyMiddleware)
+    app.add_middleware(MetricsMiddleware)
     app.add_middleware(StructuredLoggingMiddleware)
     app.add_middleware(AuditLoggingMiddleware)
     app.add_middleware(AuthenticationMiddleware)

@@ -48,7 +48,9 @@ The API is currently versioned under `/api/v1`.
 - Redis-backed rate limiting.
 - Request ID, structured logging, audit logging, and security headers.
 - Request size limiting and idempotency support.
-- Health, liveness, and readiness endpoints.
+- Health, liveness, and readiness endpoints with structured RFC-style responses.
+- Prometheus metrics at `/metrics`.
+- OpenTelemetry distributed tracing (FastAPI, SQLAlchemy, Redis instrumentations).
 - API route grouping under `/api/v1`.
 - Async SQLAlchemy persistence.
 - Alembic database migrations.
@@ -70,6 +72,8 @@ The API is currently versioned under `/api/v1`.
 - Passlib for password hashing
 - Casbin for authorization policies
 - Redis and fastapi-limiter for rate limiting and token revocation
+- Prometheus for metrics collection
+- OpenTelemetry for distributed tracing
 - Pytest
 - Ruff
 - Poetry
@@ -94,6 +98,7 @@ The API is currently versioned under `/api/v1`.
 │   │   ├── schemas/                 # Shared response schemas
 │   │   ├── security/                # JWT, password, revocation, audit helpers
 │   │   ├── seed/                    # Database seeding orchestration
+│   │   ├── telemetry/               # Prometheus metrics and OpenTelemetry tracing setup
 │   │   └── lifespan.py              # FastAPI lifespan hook
 │   ├── modules/
 │   │   ├── authorization/
@@ -123,7 +128,10 @@ The API is currently versioned under `/api/v1`.
 ├── poetry.lock                      # Poetry lock file
 ├── alembic.ini                      # Alembic configuration
 ├── Dockerfile                       # Docker image definition
-└── docker-compose.yml               # Local API, PostgreSQL, and Redis services
+├── docker-compose.yml               # Local API, PostgreSQL, Redis, Prometheus, and OTEL collector services
+└── docker/
+    ├── prometheus/prometheus.yml     # Prometheus scrape configuration
+    └── otel-collector/config.yaml    # OpenTelemetry collector configuration
 ```
 
 ## Architecture
@@ -235,6 +243,7 @@ DELETE /api/v1/permissions/{permission_id}
 GET    /health
 GET    /live
 GET    /ready
+GET    /metrics
 ```
 
 Public routes:
@@ -242,6 +251,7 @@ Public routes:
 - `/health`
 - `/live`
 - `/ready`
+- `/metrics`
 - `/docs`
 - `/redoc`
 - `/openapi.json`
@@ -307,6 +317,10 @@ ACCOUNT_LOCKOUT_MAX_ATTEMPTS=5
 ACCOUNT_LOCKOUT_WINDOW_MINUTES=15
 ACCOUNT_LOCKOUT_DURATION_MINUTES=15
 LOG_FORMAT=json
+OTEL_ENABLED=false
+OTEL_SERVICE_NAME=fastapi-modulith
+OTEL_EXPORTER_OTLP_ENDPOINT=
+OTEL_EXPORTER_OTLP_HEADERS=
 EMAIL_PROVIDER=ses
 AWS_REGION=us-east-1
 AWS_ACCESS_KEY_ID=
@@ -338,6 +352,10 @@ REDIS_URL=redis://127.0.0.1:6379/0
 ```
 
 Production mode requires a non-default `SECRET_KEY`, non-empty database and Redis URLs, JWT issuer and audience values, positive token lifetimes, and explicit CORS origins.
+
+OpenTelemetry tracing is off by default. To enable it, set `OTEL_ENABLED=true` and point `OTEL_EXPORTER_OTLP_ENDPOINT` at an OTLP HTTP collector endpoint.
+
+Metrics from Prometheus are always available at `/metrics` and require no additional setup.
 
 ## Local Setup
 
@@ -389,6 +407,12 @@ Operational checks:
 ```text
 http://localhost:8000/live
 http://localhost:8000/ready
+
+Metrics:
+
+```text
+http://localhost:8000/metrics
+```
 ```
 
 ## Database and Migrations
@@ -536,13 +560,25 @@ make clean
 
 Before starting Docker Compose, set non-empty `POSTGRES_PASSWORD`, `REDIS_PASSWORD`, and `SECRET_KEY` in `.env`. Compose intentionally fails fast when database or Redis passwords are missing.
 
-Run API, PostgreSQL, and Redis services:
+Run all services (API, PostgreSQL, Redis, Prometheus, and OpenTelemetry Collector):
 
 ```bash
 make db-up
 ```
 
 The API container applies Alembic migrations before starting Uvicorn. Database seeding remains an explicit `make seed` step.
+
+### Docker Services
+
+| Service | Image | Port | Purpose |
+| --- | --- | --- | --- |
+| `api` | `fastapi-modulith:local` | 8000 | FastAPI application |
+| `db` | `postgres:17-alpine` | — | PostgreSQL database |
+| `redis` | `redis:8-alpine` | — | Redis for rate limiting and token revocation |
+| `prometheus` | `prom/prometheus:latest` | 9090 | Metrics scraping and storage |
+| `otel-collector` | `otel/opentelemetry-collector-contrib:latest` | 4318 | OTLP trace ingestion and export |
+
+Tracing is automatically enabled in Docker Compose — the API sends spans to the `otel-collector` service via OTLP HTTP. Prometheus scrapes `/metrics` from the API every 15 seconds.
 
 Stop services:
 
@@ -663,6 +699,8 @@ Legend: `Implemented` means code exists in the repository. `Partial` means code 
 | OpenAPI Authentication | Required | Implemented | Swagger OAuth2 auth is configured, and docs/OpenAPI endpoints are disabled when `APP_ENV=production`. |
 | Health Check Endpoint | Required | Implemented | `/health` endpoint returns service health. |
 | Readiness/Liveness Endpoints | Required | Implemented | Adds `/live` and `/ready` operational endpoints. |
+| Prometheus Metrics | Recommended | Implemented | Request count, latency histogram, active requests at `/metrics`. |
+| Distributed Tracing (OpenTelemetry) | Recommended | Implemented | FastAPI, SQLAlchemy, and Redis instrumentations with OTLP HTTP export. Configurable via `OTEL_ENABLED`. |
 | Request Size Limiting | Required | Implemented | `LimitRequestSizeMiddleware` rejects oversized write requests. |
 | Idempotency Support (for applicable POST endpoints) | Optional but valuable | Implemented | Supports `Idempotency-Key` replay caching for POST responses. |
 | Database Migrations | Required | Implemented | Alembic is configured with migration commands in the README and Makefile. |

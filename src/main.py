@@ -6,8 +6,10 @@ from src.core import lifespan
 from src.core.bootstrap.exception import register_exception
 from src.core.bootstrap.middleware import register_middleware
 from src.core.config.setting import get_settings
+from src.core.database.postgres.session import engine
 from src.core.dependency.rate_limit import apply_global_rate_limit
 from src.core.middleware.structured_logging import configure_logging
+from src.core.telemetry.tracing import instrument_app, setup_tracing
 
 settings = get_settings()
 
@@ -37,9 +39,8 @@ def create_app(app_settings=settings) -> FastAPI:
     v1_router.register_router(app=app)
     admin_router.register_router(app=app)
 
-    @app.get("/health", tags=["Health Check"])
-    def health_check():
-        return {"status": "healthy"}
+    setup_tracing(app_settings)
+    instrument_app(app=app, db_engine=engine, settings=app_settings)
 
     return app
 
