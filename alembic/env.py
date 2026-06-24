@@ -35,6 +35,7 @@ from src.modules.authorization.infrastructure.models.role_permission_model impor
 from src.modules.authorization.infrastructure.models.user_has_role_model import (
     UserHasRoleModel,  # noqa: F401
 )
+from src.modules.api_key.infrastructure.models import ApiKeyModel  # noqa: F401
 from src.modules.todo.infrastructure.models.todo_model import TodoModel  # noqa: F401
 from src.modules.user.infrastructure import models as user_models  # noqa: F401
 from src.shared.database.model import Base

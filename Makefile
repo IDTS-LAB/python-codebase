@@ -11,7 +11,7 @@ COMPOSE_FILE := docker-compose.yml
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install run test lint lint-imports import-check security-scan check migrate seed downgrade revision db-up db-down db-logs clean
+.PHONY: help install run test lint lint-imports import-check security-scan sbom check migrate seed downgrade revision db-up db-down db-logs clean
 
 help:
 	@echo "[make:help] Available commands:"
@@ -22,6 +22,7 @@ help:
 	@echo "  [make:lint-imports]  Enforce import boundary contracts"
 	@echo "  [make:import-check]  Verify src.main imports"
 	@echo "  [make:security-scan] Run dependency vulnerability scan with pip-audit"
+	@echo "  [make:sbom]          Generate CycloneDX SBOM for the project"
 	@echo "  [make:check]         Run tests, lint, and import check"
 	@echo "  [make:migrate]       Apply Alembic migrations"
 	@echo "  [make:seed]          Seed baseline database records"
@@ -59,6 +60,10 @@ import-check:
 security-scan:
 	@echo "[make:security-scan] Running dependency vulnerability scan"
 	@PIP_CACHE_DIR=.cache/pip $(POETRY) run pip-audit --cache-dir .cache/pip-audit
+
+sbom:
+	@echo "[make:sbom] Generating CycloneDX SBOM"
+	@$(POETRY) run cyclonedx-py
 
 check: test lint lint-imports import-check
 	@echo "[make:check] All checks completed"

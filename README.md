@@ -51,6 +51,12 @@ The API is currently versioned under `/api/v1`.
 - Health, liveness, and readiness endpoints with structured RFC-style responses.
 - Prometheus metrics at `/metrics`.
 - OpenTelemetry distributed tracing (FastAPI, SQLAlchemy, Redis instrumentations).
+- API key management for machine-to-machine authentication.
+- CSRF protection middleware (double-submit cookie pattern).
+- Extensible `AuthenticationProvider` abstraction (JWT + API key).
+- Secret scanning with Gitleaks in CI.
+- CycloneDX SBOM generation.
+- Container image signing with Cosign in CI.
 - API route grouping under `/api/v1`.
 - Async SQLAlchemy persistence.
 - Alembic database migrations.
@@ -240,6 +246,9 @@ GET    /api/v1/permissions/?cursor=<cursor>&limit=10
 GET    /api/v1/permissions/{permission_id}
 PATCH  /api/v1/permissions/{permission_id}
 DELETE /api/v1/permissions/{permission_id}
+POST   /api/v1/admin/api-keys/
+GET    /api/v1/admin/api-keys/?skip=0&limit=100
+DELETE /api/v1/admin/api-keys/{api_key_id}
 GET    /health
 GET    /live
 GET    /ready
@@ -301,7 +310,7 @@ DATABASE_POOL_TIMEOUT=30
 DATABASE_POOL_RECYCLE=3600
 REDIS_URL=
 SECRET_KEY=
-MAX_REQUEST_SIZE_MB=5242880
+MAX_REQUEST_SIZE_BYTES=5242880
 ALGORITHM=HS256
 JWT_ISSUER=todo-modulith-api
 JWT_AUDIENCE=todo-modulith-client
@@ -341,7 +350,7 @@ SEED_ADMIN_FULLNAME=System Administrator
 SEED_DEVELOPMENT_USERS_PASSWORD=
 ```
 
-`MAX_REQUEST_SIZE_MB` is currently interpreted as a byte count despite its name. Keep it at `5242880` for a 5 MiB limit.
+`MAX_REQUEST_SIZE_BYTES` controls the maximum request body size. Default is `5242880` (5 MiB).
 
 For local development without Docker, use development mode and point the service URLs at local PostgreSQL and Redis instances, for example:
 
@@ -706,8 +715,11 @@ Legend: `Implemented` means code exists in the repository. `Partial` means code 
 | Database Migrations | Required | Implemented | Alembic is configured with migration commands in the README and Makefile. |
 | Dependency Injection | Required | Implemented | FastAPI dependencies wire repositories, handlers, auth, authorization, and database sessions. |
 | Configuration via Environment Variables | Required | Implemented | Pydantic settings read `.env` and reject the default secret key in production. |
-
-### Next Implementation Checklist
+| CSRF Protection | Recommended | Implemented | Double-submit cookie pattern with `DoubleSubmitCSRFService`. Configurable via `CSRF_PROTECTION_ENABLED`. |
+| API Key Management (M2M) | Recommended | Implemented | Service account keys with SHA256 hashing. `ApiKeyRepository` ABC, `ApiKeyService` with generate/validate. Admin CRUD at `/api/v1/admin/api-keys/`. |
+| Secret Scanning in CI | Recommended | Implemented | Gitleaks action runs on every PR and push in the `verify` job. |
+| SBOM Generation | Recommended | Implemented | CycloneDX SBOM generated after Docker build using Trivy, uploaded as CI artifact. |
+| Container Image Signing | Recommended | Implemented | Cosign keyless signing of Docker images on push to GHCR. |
 
 - [x] Fix and verify rate limit configuration wiring.
 - [x] Add security headers middleware.
@@ -722,6 +734,11 @@ Legend: `Implemented` means code exists in the repository. `Partial` means code 
 - [x] Review exception responses to avoid leaking token parsing details or internal exception messages.
 - [ ] Add automated tests for request size limits, rate limiting, auth failures, authorization failures, CORS, security headers, and request IDs.
 - [x] Add dependency vulnerability scanning to local or CI checks, for example `pip-audit` or an equivalent Poetry-compatible scanner.
+- [x] Add CSRF protection middleware.
+- [x] Add API key management for machine-to-machine auth.
+- [x] Add secret scanning (Gitleaks) to CI.
+- [x] Add SBOM generation (CycloneDX) to CI.
+- [x] Add container image signing (Cosign) to CI.
 
 ## Known Notes
 

@@ -54,8 +54,8 @@ class Settings(BaseSettings):
         default="default-src 'self'; frame-ancestors 'none'",
     )
     IDEMPOTENCY_TTL_SECONDS: int = Field(alias="IDEMPOTENCY_TTL_SECONDS", default=86400)
-    MAX_REQUEST_SIZE_MB: int = Field(
-        alias="MAX_REQUEST_SIZE_MB", default=5 * 1024 * 1024
+    MAX_REQUEST_SIZE_BYTES: int = Field(
+        alias="MAX_REQUEST_SIZE_BYTES", default=5 * 1024 * 1024
     )
 
     # Account lockout thresholds used to slow repeated failed login attempts.
@@ -67,6 +67,11 @@ class Settings(BaseSettings):
     )
     ACCOUNT_LOCKOUT_DURATION_MINUTES: int = Field(
         alias="ACCOUNT_LOCKOUT_DURATION_MINUTES", default=15
+    )
+
+    # CSRF protection settings.
+    CSRF_PROTECTION_ENABLED: bool = Field(
+        alias="CSRF_PROTECTION_ENABLED", default=True
     )
 
     # Logging output format for application logs.
