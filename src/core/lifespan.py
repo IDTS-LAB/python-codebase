@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from src.core.bootstrap.event import register_event_handlers
 from src.core.config.setting import get_settings
 from src.core.database.postgres.session import engine
+from src.core.seed.tenant import seed_default_tenant
 from src.core.dependency.rate_limit import close_rate_limiter, init_rate_limiter
 from src.core.telemetry.metrics import APP_INFO
 from src.core.telemetry.tracing import shutdown_tracing
@@ -33,6 +34,7 @@ async def lifespan(app: FastAPI):
 
     await init_rate_limiter()
     register_event_handlers()
+    await seed_default_tenant()
 
     yield
 
