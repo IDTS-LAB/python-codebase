@@ -1,0 +1,13 @@
+from uuid import UUID
+
+from src.modules.tenants.domain.entities.tenant import Tenant
+
+
+class TenantRepository:
+    async def get_by_slug(self, slug: str) -> Tenant | None: ...
+
+    async def get_by_domain(self, domain: str) -> Tenant | None: ...
+
+    async def get_by_id(self, tenant_id: UUID) -> Tenant | None: ...
+
+    async def save(self, tenant: Tenant) -> Tenant: ...
