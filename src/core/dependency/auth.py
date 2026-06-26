@@ -5,6 +5,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.database.postgres.session import get_db
+from src.core.dependency.tenant import get_optional_tenant_id
 from src.modules.user.infrastructure.repositories.user_repository import (
     SQLAlchemyUserRepository,
 )
@@ -20,6 +21,7 @@ async def get_current_user(
     request: Request,
     token: str = Depends(oauth2_scheme),
     db: AsyncSession = Depends(get_db),
+    tenant_id: UUID | None = Depends(get_optional_tenant_id),
 ) -> dict:
     """
     1. 'token' is extracted by oauth2_scheme (for Swagger docs).
@@ -34,7 +36,7 @@ async def get_current_user(
             detail="Not authenticated. Token invalid or missing.",
         )
 
-    repo = SQLAlchemyUserRepository(db)
+    repo = SQLAlchemyUserRepository(db, tenant_id)
     user = await repo.get_by_id(UUID(user_id))
 
     if not user:

@@ -20,7 +20,7 @@ settings = get_settings()
 
 async def _get_api_key_service() -> ApiKeyService:
     async with AsyncSessionLocal() as session:
-        repo = SQLAlchemyApiKeyRepository(session)
+        repo = SQLAlchemyApiKeyRepository(session, None)
         return ApiKeyService(repo)
 
 

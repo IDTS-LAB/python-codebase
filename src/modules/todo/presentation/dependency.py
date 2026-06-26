@@ -1,7 +1,10 @@
+from uuid import UUID
+
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.database.postgres.session import get_db, get_unit_of_work
+from src.core.dependency.tenant import get_current_tenant_id
 from src.core.dependency.providers import get_user_module_provider
 from src.modules.todo.application.create_todo.handler import CreateTodoHandler
 from src.modules.todo.application.delete_todo.handler import DeleteTodoHandler
@@ -20,8 +23,11 @@ from src.modules.user.providers import UserModuleProvider
 from src.shared.unit_of_work import UnitOfWork
 
 
-def get_todo_repository(db: AsyncSession = Depends(get_db)) -> TodoRepository:
-    return SQLAlchemyTodoRepository(db)
+def get_todo_repository(
+    db: AsyncSession = Depends(get_db),
+    tenant_id: UUID = Depends(get_current_tenant_id),
+) -> TodoRepository:
+    return SQLAlchemyTodoRepository(db, tenant_id)
 
 
 def get_create_todo_handler(

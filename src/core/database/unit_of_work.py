@@ -1,5 +1,6 @@
 from types import TracebackType
 from typing import TYPE_CHECKING, Self
+from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,8 +12,9 @@ if TYPE_CHECKING:
 
 
 class SQLAlchemyUnitOfWork(UnitOfWork):
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession, tenant_id: UUID | None = None):
         self._session = session
+        self._tenant_id = tenant_id
         self._committed = False
 
     async def __aenter__(self) -> Self:
@@ -42,7 +44,7 @@ class SQLAlchemyUnitOfWork(UnitOfWork):
             SQLAlchemyUserRepository,
         )
 
-        return SQLAlchemyUserRepository(self._session)
+        return SQLAlchemyUserRepository(self._session, self._tenant_id)
 
     @property
     def todos(self) -> "TodoRepository":
@@ -50,4 +52,4 @@ class SQLAlchemyUnitOfWork(UnitOfWork):
             SQLAlchemyTodoRepository,
         )
 
-        return SQLAlchemyTodoRepository(self._session)
+        return SQLAlchemyTodoRepository(self._session, self._tenant_id)
