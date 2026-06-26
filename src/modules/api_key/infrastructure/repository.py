@@ -5,14 +5,17 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from uuid import UUID
+
 from src.modules.api_key.domain.entities import ApiKey
 from src.modules.api_key.domain.repository import ApiKeyRepository
 from src.modules.api_key.infrastructure.models import ApiKeyModel
 
 
 class SQLAlchemyApiKeyRepository(ApiKeyRepository):
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession, tenant_id: UUID | None = None):
         self._session = session
+        self._tenant_id = tenant_id
 
     async def create(self, api_key: ApiKey) -> ApiKey:
         model = ApiKeyModel(
@@ -23,38 +26,40 @@ class SQLAlchemyApiKeyRepository(ApiKeyRepository):
             permissions=json.dumps(api_key.permissions),
             expires_at=api_key.expires_at,
             is_active=api_key.is_active,
+            tenant_id=self._tenant_id,
         )
         self._session.add(model)
         await self._session.flush()
         return api_key
 
     async def get_by_id(self, id: UUID) -> ApiKey | None:
-        result = await self._session.execute(
-            select(ApiKeyModel).where(ApiKeyModel.id == str(id))
-        )
+        stmt = select(ApiKeyModel).where(ApiKeyModel.id == str(id))
+        if self._tenant_id:
+            stmt = stmt.where(ApiKeyModel.tenant_id == self._tenant_id)
+        result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
 
     async def get_by_key_hash(self, key_hash: str) -> ApiKey | None:
-        result = await self._session.execute(
-            select(ApiKeyModel).where(ApiKeyModel.key_hash == key_hash)
-        )
+        stmt = select(ApiKeyModel).where(ApiKeyModel.key_hash == key_hash)
+        if self._tenant_id:
+            stmt = stmt.where(ApiKeyModel.tenant_id == self._tenant_id)
+        result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
 
     async def list(self, skip: int = 0, limit: int = 100) -> list[ApiKey]:
-        result = await self._session.execute(
-            select(ApiKeyModel)
-            .order_by(ApiKeyModel.created_at.desc())
-            .offset(skip)
-            .limit(limit)
-        )
+        stmt = select(ApiKeyModel).order_by(ApiKeyModel.created_at.desc()).offset(skip).limit(limit)
+        if self._tenant_id:
+            stmt = stmt.where(ApiKeyModel.tenant_id == self._tenant_id)
+        result = await self._session.execute(stmt)
         return [self._to_entity(row) for row in result.scalars()]
 
     async def count(self) -> int:
-        result = await self._session.execute(
-            select(func.count(ApiKeyModel.id))
-        )
+        stmt = select(func.count(ApiKeyModel.id))
+        if self._tenant_id:
+            stmt = stmt.where(ApiKeyModel.tenant_id == self._tenant_id)
+        result = await self._session.execute(stmt)
         return result.scalar() or 0
 
     async def revoke(self, id: UUID) -> None:

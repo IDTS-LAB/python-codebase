@@ -11,11 +11,15 @@ from src.shared.utils.cursor import CursorDirection
 
 
 class SQLAlchemyTodoRepository(TodoRepository):
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession, tenant_id: UUID | None = None):
         self.db = db
+        self._tenant_id = tenant_id
 
     async def get_by_id(self, todo_id: UUID) -> Todo | None:
-        result = await self.db.execute(select(TodoModel).where(TodoModel.id == todo_id))
+        stmt = select(TodoModel).where(TodoModel.id == todo_id)
+        if self._tenant_id:
+            stmt = stmt.where(TodoModel.tenant_id == self._tenant_id)
+        result = await self.db.execute(stmt)
         model = result.scalar_one_or_none()
         if not model:
             return None
@@ -44,6 +48,8 @@ class SQLAlchemyTodoRepository(TodoRepository):
             TodoModel.user_id == user_id,
             TodoModel.deleted_at.is_(None),
         )
+        if self._tenant_id:
+            query = query.where(TodoModel.tenant_id == self._tenant_id)
 
         # Apply cursor filter if provided
         if cursor_created_at and cursor_id:
@@ -92,9 +98,10 @@ class SQLAlchemyTodoRepository(TodoRepository):
         return [self._to_entity(m) for m in models], has_more
 
     async def get_all_by_user(self, user_id: UUID) -> list[Todo]:
-        result = await self.db.execute(
-            select(TodoModel).where(TodoModel.user_id == user_id)
-        )
+        stmt = select(TodoModel).where(TodoModel.user_id == user_id)
+        if self._tenant_id:
+            stmt = stmt.where(TodoModel.tenant_id == self._tenant_id)
+        result = await self.db.execute(stmt)
         models = result.scalars().all()
         return [
             Todo(
@@ -114,6 +121,7 @@ class SQLAlchemyTodoRepository(TodoRepository):
             description=todo.description,
             is_completed=todo.is_completed,
             user_id=todo.user_id,
+            tenant_id=self._tenant_id,
         )
         model = await self.db.merge(model)
         await self.db.flush()
@@ -127,7 +135,10 @@ class SQLAlchemyTodoRepository(TodoRepository):
         )
 
     async def delete(self, todo_id: UUID) -> None:
-        await self.db.execute(delete(TodoModel).where(TodoModel.id == todo_id))
+        stmt = delete(TodoModel).where(TodoModel.id == todo_id)
+        if self._tenant_id:
+            stmt = stmt.where(TodoModel.tenant_id == self._tenant_id)
+        await self.db.execute(stmt)
         await self.db.flush()
 
     def _to_entity(self, model: TodoModel) -> Todo:
