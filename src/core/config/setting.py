@@ -77,6 +77,9 @@ class Settings(BaseSettings):
     # Logging output format for application logs.
     LOG_FORMAT: str = Field(alias="LOG_FORMAT", default="json")
 
+    # Multitenancy toggle. When disabled all data uses a single "Default" tenant.
+    MULTITENANT_ENABLED: bool = Field(alias="MULTITENANT_ENABLED", default=False)
+
     # OpenTelemetry distributed tracing configuration.
     OTEL_ENABLED: bool = Field(alias="OTEL_ENABLED", default=False)
     OTEL_SERVICE_NAME: str = Field(
