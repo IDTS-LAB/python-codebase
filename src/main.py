@@ -2,7 +2,7 @@ from fastapi import Depends, FastAPI
 
 import src.core.routers.admin as admin_router
 import src.core.routers.api.v1 as v1_router
-from src.modules.api_key.presentation import routers as api_key_router
+import src.core.routers.telemetry as web_router
 from src.core import lifespan
 from src.core.bootstrap.exception import register_exception
 from src.core.bootstrap.middleware import register_middleware
@@ -39,7 +39,7 @@ def create_app(app_settings=settings) -> FastAPI:
     register_middleware(app=app)
     v1_router.register_router(app=app)
     admin_router.register_router(app=app)
-    app.include_router(api_key_router.router, prefix="/api/v1/admin")
+    web_router.register_router(app=app)
 
     setup_tracing(app_settings)
     instrument_app(app=app, db_engine=engine, settings=app_settings)
