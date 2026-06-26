@@ -12,6 +12,7 @@ from src.core.middleware.request_id import RequestIDMiddleware
 from src.core.middleware.request_size import LimitRequestSizeMiddleware
 from src.core.middleware.security_headers import SecurityHeadersMiddleware
 from src.core.middleware.structured_logging import StructuredLoggingMiddleware
+from src.core.middleware.tenant import TenantMiddleware
 from src.core.security.providers import JWTAuthProvider
 
 settings = get_settings()
@@ -42,6 +43,7 @@ def register_middleware(app: FastAPI):
     app.add_middleware(MetricsMiddleware)
     app.add_middleware(StructuredLoggingMiddleware)
     app.add_middleware(AuditLoggingMiddleware)
+    app.add_middleware(TenantMiddleware)
     app.add_middleware(
         AuthenticationMiddleware,
         providers=[JWTAuthProvider()],
