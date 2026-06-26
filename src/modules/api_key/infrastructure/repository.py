@@ -5,8 +5,6 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from uuid import UUID
-
 from src.modules.api_key.domain.entities import ApiKey
 from src.modules.api_key.domain.repository import ApiKeyRepository
 from src.modules.api_key.infrastructure.models import ApiKeyModel
