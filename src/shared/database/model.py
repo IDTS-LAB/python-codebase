@@ -3,6 +3,8 @@ from uuid import UUID, uuid4
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
+from src.shared.database.mixin.tenant import TenantMixin  # noqa: F401
+
 
 class Base(DeclarativeBase):
     id: Mapped[UUID] = mapped_column(
