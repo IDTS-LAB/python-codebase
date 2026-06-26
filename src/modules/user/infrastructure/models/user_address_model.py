@@ -5,11 +5,12 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.modules.user.infrastructure.models.user_model import UserModel
+from src.shared.database.mixin.tenant import TenantMixin
 from src.shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
 from src.shared.database.model import Base
 
 
-class UserAddressModel(Base, TimeStampMixin, SoftDeleteMixin):
+class UserAddressModel(Base, TimeStampMixin, SoftDeleteMixin, TenantMixin):
     """User addresses supporting multiple locations.
 
     One-to-many relationship with users table.

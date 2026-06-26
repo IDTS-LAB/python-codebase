@@ -3,10 +3,11 @@ from datetime import datetime
 from sqlalchemy import Boolean, DateTime, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
+from src.shared.database.mixin.tenant import TenantMixin
 from src.shared.database.model import Base
 
 
-class ApiKeyModel(Base):
+class ApiKeyModel(Base, TenantMixin):
     __tablename__ = "api_keys"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)

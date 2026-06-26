@@ -5,10 +5,11 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.modules.user.infrastructure.models.user_model import UserModel
+from src.shared.database.mixin.tenant import TenantMixin
 from src.shared.database.model import Base
 
 
-class UserHasRoleModel(Base):
+class UserHasRoleModel(Base, TenantMixin):
     """Junction table for user-to-role assignments.
 
     Many-to-many relationship between users and roles.

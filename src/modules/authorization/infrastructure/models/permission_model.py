@@ -3,11 +3,12 @@ from uuid import UUID
 from sqlalchemy import ForeignKey, Index, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from src.shared.database.mixin.tenant import TenantMixin
 from src.shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
 from src.shared.database.model import Base
 
 
-class PermissionModel(Base, TimeStampMixin, SoftDeleteMixin):
+class PermissionModel(Base, TimeStampMixin, SoftDeleteMixin, TenantMixin):
     """Permission definition for RBAC system.
 
     Permissions represent specific actions on resources.

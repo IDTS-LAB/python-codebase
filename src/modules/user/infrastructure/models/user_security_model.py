@@ -6,11 +6,12 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.modules.user.infrastructure.models.user_model import UserModel
+from src.shared.database.mixin.tenant import TenantMixin
 from src.shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
 from src.shared.database.model import Base
 
 
-class UserSecurityModel(Base, TimeStampMixin, SoftDeleteMixin):
+class UserSecurityModel(Base, TimeStampMixin, SoftDeleteMixin, TenantMixin):
     """User security configuration and state.
 
     One-to-one relationship with users table.
