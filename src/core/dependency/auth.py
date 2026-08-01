@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,7 +19,7 @@ async def get_current_user(
     request: Request,
     token: str = Depends(oauth2_scheme),
     db: AsyncSession = Depends(get_db),
-    tenant_id: UUID | None = Depends(get_optional_tenant_id),
+    tenant_id: int | None = Depends(get_optional_tenant_id),
 ) -> dict:
     """
     1. 'token' is extracted by oauth2_scheme (for Swagger docs).
@@ -37,7 +35,7 @@ async def get_current_user(
         )
 
     repo = SQLAlchemyUserRepository(db, tenant_id)
-    user = await repo.get_by_id(UUID(user_id))
+    user = await repo.get_by_id(int(user_id))
 
     if not user:
         raise HTTPException(

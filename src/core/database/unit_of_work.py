@@ -1,6 +1,5 @@
 from types import TracebackType
 from typing import TYPE_CHECKING, Self
-from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class SQLAlchemyUnitOfWork(UnitOfWork):
-    def __init__(self, session: AsyncSession, tenant_id: UUID | None = None):
+    def __init__(self, session: AsyncSession, tenant_id: int | None = None):
         self._session = session
         self._tenant_id = tenant_id
         self._committed = False

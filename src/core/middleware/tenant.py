@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
@@ -7,10 +5,10 @@ from starlette.responses import JSONResponse, Response
 from src.core.config.setting import get_settings
 
 settings = get_settings()
-_default_tenant_id: UUID | None = None
+_default_tenant_id: int | None = None
 
 
-def set_default_tenant_id(tenant_id: UUID) -> None:
+def set_default_tenant_id(tenant_id: int) -> None:
     global _default_tenant_id
     _default_tenant_id = tenant_id
 
@@ -71,7 +69,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
                 )
                 tid = payload.get("tenant_id")
                 if tid:
-                    request.state.tenant_id = UUID(tid) if isinstance(tid, str) else tid
+                    request.state.tenant_id = int(tid) if isinstance(tid, str) else tid
                     return await call_next(request)
             except Exception:
                 pass

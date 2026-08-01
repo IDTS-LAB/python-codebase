@@ -1,5 +1,4 @@
 from collections.abc import AsyncGenerator
-from uuid import UUID
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -33,6 +32,6 @@ async def get_db() -> AsyncGenerator[AsyncSession]:
 
 def get_unit_of_work(
     db: AsyncSession = Depends(get_db),
-    tenant_id: UUID | None = Depends(get_optional_tenant_id),
+    tenant_id: int | None = Depends(get_optional_tenant_id),
 ) -> UnitOfWork:
     return SQLAlchemyUnitOfWork(db, tenant_id)

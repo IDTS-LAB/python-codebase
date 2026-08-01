@@ -2,15 +2,13 @@ from datetime import datetime
 
 from sqlalchemy import delete, func, select
 
-from uuid import UUID
-
 from src.core.security.infrastructure.models.login_attempt_model import (
     LoginAttemptModel,
 )
 
 
 class SQLAlchemyLoginAttemptRepository:
-    def __init__(self, db, tenant_id: UUID | None = None):
+    def __init__(self, db, tenant_id: int | None = None):
         self._db = db
         self._tenant_id = tenant_id
 
