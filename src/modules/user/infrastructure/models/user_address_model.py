@@ -1,7 +1,4 @@
-from uuid import UUID
-
 from sqlalchemy import Boolean, ForeignKey, Index, String
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.modules.user.infrastructure.models.user_model import UserModel
@@ -25,8 +22,7 @@ class UserAddressModel(Base, TimeStampMixin, SoftDeleteMixin, TenantMixin):
         Index("ix_user_addresses_country", "country"),
     )
 
-    user_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
+    user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id"),
         nullable=False,
     )
