@@ -1,5 +1,5 @@
 import pytest
-from sqlalchemy import Uuid
+from sqlalchemy import Integer
 from sqlalchemy.orm import configure_mappers
 
 import src.modules.authorization.infrastructure.models.permission_model  # noqa: F401
@@ -51,5 +51,5 @@ def test_relationship_column_declares_expected_foreign_key(table, column, target
 
 
 @pytest.mark.parametrize("table", NORMALIZED_USER_TABLES)
-def test_normalized_user_identifier_uses_uuid(table):
-    assert isinstance(Base.metadata.tables[table].c.user_id.type, Uuid)
+def test_normalized_user_identifier_uses_int(table):
+    assert isinstance(Base.metadata.tables[table].c.user_id.type, Integer)

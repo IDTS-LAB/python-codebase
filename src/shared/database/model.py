@@ -1,15 +1,13 @@
-from uuid import UUID, uuid4
-
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy import Integer
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from src.shared.database.mixin.tenant import TenantMixin  # noqa: F401
 
 
 class Base(DeclarativeBase):
-    id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
+    id: Mapped[int] = mapped_column(
+        Integer,
         primary_key=True,
-        default=uuid4,
+        autoincrement=True,
         sort_order=-100,
     )
