@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import secrets
 from typing import Literal
-from uuid import UUID
 
 import pyotp
 
@@ -34,7 +33,7 @@ class TwoFactorAuthService:
         self._email_service = email_service
         self._settings = get_settings()
 
-    async def setup_totp(self, user_id: UUID) -> dict[str, str]:
+    async def setup_totp(self, user_id: int) -> dict[str, str]:
         """Set up TOTP for a user.
 
         Returns:
@@ -66,7 +65,7 @@ class TwoFactorAuthService:
                 "qr_code_data": f"otpauth://totp/{issuer}:{user.email}?secret={secret}&issuer={issuer}",
             }
 
-    async def verify_totp_setup(self, user_id: UUID, code: str) -> dict[str, list[str]]:
+    async def verify_totp_setup(self, user_id: int, code: str) -> dict[str, list[str]]:
         """Verify TOTP setup and enable 2FA.
 
         Args:
@@ -100,7 +99,7 @@ class TwoFactorAuthService:
 
             return {"backup_codes": backup_codes}
 
-    async def disable_totp(self, user_id: UUID, code: str) -> bool:
+    async def disable_totp(self, user_id: int, code: str) -> bool:
         """Disable TOTP 2FA for a user.
 
         Args:
@@ -147,7 +146,7 @@ class TwoFactorAuthService:
 
             return True
 
-    async def send_email_2fa_code(self, user_id: UUID) -> bool:
+    async def send_email_2fa_code(self, user_id: int) -> bool:
         """Send a 2FA code via email.
 
         Args:
@@ -199,7 +198,7 @@ class TwoFactorAuthService:
 
             return True
 
-    async def verify_email_2fa_code(self, user_id: UUID, code: str) -> bool:
+    async def verify_email_2fa_code(self, user_id: int, code: str) -> bool:
         """Verify an email-based 2FA code.
 
         Args:
@@ -290,7 +289,7 @@ class TwoFactorAuthService:
         return False
 
     async def regenerate_backup_codes(
-        self, user_id: UUID, verify_code: str
+        self, user_id: int, verify_code: str
     ) -> dict[str, list[str]]:
         """Regenerate backup codes for a user.
 

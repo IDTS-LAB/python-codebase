@@ -1,8 +1,6 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from uuid import UUID
-
 from src.core.database.postgres.session import get_db, get_unit_of_work
 from src.core.dependency.tenant import get_current_tenant_id
 from src.core.email.factory import create_email_service
@@ -55,7 +53,7 @@ from src.shared.unit_of_work import UnitOfWork
 
 def get_user_repository(
     db: AsyncSession = Depends(get_db),
-    tenant_id: UUID = Depends(get_current_tenant_id),
+    tenant_id: int = Depends(get_current_tenant_id),
 ) -> UserRepository:
     return SQLAlchemyUserRepository(db, tenant_id)
 
@@ -66,7 +64,7 @@ def get_email_service() -> EmailService:
 
 def get_refresh_token_repository(
     db: AsyncSession = Depends(get_db),
-    tenant_id: UUID = Depends(get_current_tenant_id),
+    tenant_id: int = Depends(get_current_tenant_id),
 ) -> RefreshTokenRepository:
     return SQLAlchemyRefreshTokenRepository(db, tenant_id)
 
@@ -77,14 +75,14 @@ def get_token_revocation_service() -> TokenRevocationService:
 
 def get_audit_service(
     db: AsyncSession = Depends(get_db),
-    tenant_id: UUID = Depends(get_current_tenant_id),
+    tenant_id: int = Depends(get_current_tenant_id),
 ) -> AuditService:
     return AuditService(SQLAlchemyAuditRepository(db, tenant_id))
 
 
 def get_account_lockout_service(
     db: AsyncSession = Depends(get_db),
-    tenant_id: UUID = Depends(get_current_tenant_id),
+    tenant_id: int = Depends(get_current_tenant_id),
 ) -> AccountLockoutService:
     return AccountLockoutService(SQLAlchemyLoginAttemptRepository(db, tenant_id))
 
