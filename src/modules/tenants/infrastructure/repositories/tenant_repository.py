@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,7 +24,7 @@ class SQLAlchemyTenantRepository(TenantRepository):
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
 
-    async def get_by_id(self, tenant_id: UUID) -> Tenant | None:
+    async def get_by_id(self, tenant_id: int) -> Tenant | None:
         result = await self._db.execute(
             select(TenantModel).where(TenantModel.id == tenant_id)
         )
@@ -45,7 +43,6 @@ class SQLAlchemyTenantRepository(TenantRepository):
             model.domain = tenant.domain
         else:
             model = TenantModel(
-                id=tenant.id,
                 name=tenant.name,
                 slug=tenant.slug,
                 domain=tenant.domain,
@@ -56,7 +53,7 @@ class SQLAlchemyTenantRepository(TenantRepository):
         await self._db.refresh(model)
         return self._to_entity(model)
 
-    async def _get_model(self, tenant_id: UUID) -> TenantModel:
+    async def _get_model(self, tenant_id: int) -> TenantModel:
         result = await self._db.execute(
             select(TenantModel).where(TenantModel.id == tenant_id)
         )
