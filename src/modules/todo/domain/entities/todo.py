@@ -1,21 +1,20 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from uuid import UUID, uuid4
 
 
 @dataclass
 class Todo:
-    id: UUID
-    title: str
-    description: str | None
-    is_completed: bool
-    user_id: UUID
+    id: int | None = None
+    title: str = ""
+    description: str | None = None
+    is_completed: bool = False
+    user_id: int = 0
 
     @classmethod
-    def create(cls, title: str, user_id: UUID, description: str | None = None) -> Todo:
+    def create(cls, title: str, user_id: int, description: str | None = None) -> Todo:
         return cls(
-            id=uuid4(),
+            id=None,
             title=title,
             description=description,
             is_completed=False,

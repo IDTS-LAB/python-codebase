@@ -1,15 +1,14 @@
 from datetime import datetime
-from uuid import UUID
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from src.shared.database.mixin.tenant import TenantMixin
 from src.shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
 from src.shared.database.model import Base
 
 
-class UserSessionModel(Base, TimeStampMixin, SoftDeleteMixin):
+class UserSessionModel(Base, TimeStampMixin, SoftDeleteMixin, TenantMixin):
     """User session management for tracking active sessions.
 
     One-to-many relationship with users table.
@@ -25,8 +24,7 @@ class UserSessionModel(Base, TimeStampMixin, SoftDeleteMixin):
         Index("ix_user_sessions_device_info", "device_info"),
     )
 
-    user_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
+    user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id"),
         nullable=False,
     )

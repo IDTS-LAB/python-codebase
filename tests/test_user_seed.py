@@ -1,5 +1,4 @@
 import asyncio
-from uuid import uuid4
 
 from src.core.seed.user import SeedUserConfig, seed_user
 from src.modules.authorization.domain.permissions import (
@@ -119,7 +118,7 @@ def test_seed_user_does_not_modify_an_existing_user(monkeypatch):
         lambda password: f"hashed:{password}",
     )
     existing_user = User(
-        id=uuid4(),
+        id=1,
         email="admin@example.com",
         password_hash="existing-hash",
         username="existing-admin",

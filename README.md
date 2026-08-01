@@ -48,7 +48,15 @@ The API is currently versioned under `/api/v1`.
 - Redis-backed rate limiting.
 - Request ID, structured logging, audit logging, and security headers.
 - Request size limiting and idempotency support.
-- Health, liveness, and readiness endpoints.
+- Health, liveness, and readiness endpoints with structured RFC-style responses.
+- Prometheus metrics at `/metrics`.
+- OpenTelemetry distributed tracing (FastAPI, SQLAlchemy, Redis instrumentations).
+- API key management for machine-to-machine authentication.
+- CSRF protection middleware (double-submit cookie pattern).
+- Extensible `AuthenticationProvider` abstraction (JWT + API key).
+- Secret scanning with Gitleaks in CI.
+- CycloneDX SBOM generation.
+- Container image signing with Cosign in CI.
 - API route grouping under `/api/v1`.
 - Async SQLAlchemy persistence.
 - Alembic database migrations.
@@ -70,6 +78,8 @@ The API is currently versioned under `/api/v1`.
 - Passlib for password hashing
 - Casbin for authorization policies
 - Redis and fastapi-limiter for rate limiting and token revocation
+- Prometheus for metrics collection
+- OpenTelemetry for distributed tracing
 - Pytest
 - Ruff
 - Poetry
@@ -94,6 +104,7 @@ The API is currently versioned under `/api/v1`.
 │   │   ├── schemas/                 # Shared response schemas
 │   │   ├── security/                # JWT, password, revocation, audit helpers
 │   │   ├── seed/                    # Database seeding orchestration
+│   │   ├── telemetry/               # Prometheus metrics and OpenTelemetry tracing setup
 │   │   └── lifespan.py              # FastAPI lifespan hook
 │   ├── modules/
 │   │   ├── authorization/
@@ -122,8 +133,16 @@ The API is currently versioned under `/api/v1`.
 ├── pyproject.toml                   # Project metadata and dependencies
 ├── poetry.lock                      # Poetry lock file
 ├── alembic.ini                      # Alembic configuration
+├── .devcontainer/                    # Dev container configuration
+│   ├── Dockerfile                    # Development image
+│   ├── devcontainer.json             # VS Code Dev Containers config
+│   ├── docker-compose.yml            # Dev stack (app, PostgreSQL, Redis)
+│   └── prometheus.yml                # Dev Prometheus scrape config (targets dev:8000)
 ├── Dockerfile                       # Docker image definition
-└── docker-compose.yml               # Local API, PostgreSQL, and Redis services
+├── docker-compose.yml               # Local API, PostgreSQL, Redis, Prometheus, and OTEL collector services
+└── docker/
+    ├── prometheus/prometheus.yml     # Prometheus scrape configuration
+    └── otel-collector/config.yaml    # OpenTelemetry collector configuration
 ```
 
 ## Architecture
@@ -232,9 +251,13 @@ GET    /api/v1/permissions/?cursor=<cursor>&limit=10
 GET    /api/v1/permissions/{permission_id}
 PATCH  /api/v1/permissions/{permission_id}
 DELETE /api/v1/permissions/{permission_id}
+POST   /api/v1/admin/api-keys/
+GET    /api/v1/admin/api-keys/?skip=0&limit=100
+DELETE /api/v1/admin/api-keys/{api_key_id}
 GET    /health
 GET    /live
 GET    /ready
+GET    /metrics
 ```
 
 Public routes:
@@ -242,6 +265,7 @@ Public routes:
 - `/health`
 - `/live`
 - `/ready`
+- `/metrics`
 - `/docs`
 - `/redoc`
 - `/openapi.json`
@@ -291,7 +315,7 @@ DATABASE_POOL_TIMEOUT=30
 DATABASE_POOL_RECYCLE=3600
 REDIS_URL=
 SECRET_KEY=
-MAX_REQUEST_SIZE_MB=5242880
+MAX_REQUEST_SIZE_BYTES=5242880
 ALGORITHM=HS256
 JWT_ISSUER=todo-modulith-api
 JWT_AUDIENCE=todo-modulith-client
@@ -307,6 +331,10 @@ ACCOUNT_LOCKOUT_MAX_ATTEMPTS=5
 ACCOUNT_LOCKOUT_WINDOW_MINUTES=15
 ACCOUNT_LOCKOUT_DURATION_MINUTES=15
 LOG_FORMAT=json
+OTEL_ENABLED=false
+OTEL_SERVICE_NAME=fastapi-modulith
+OTEL_EXPORTER_OTLP_ENDPOINT=
+OTEL_EXPORTER_OTLP_HEADERS=
 EMAIL_PROVIDER=ses
 AWS_REGION=us-east-1
 AWS_ACCESS_KEY_ID=
@@ -327,7 +355,7 @@ SEED_ADMIN_FULLNAME=System Administrator
 SEED_DEVELOPMENT_USERS_PASSWORD=
 ```
 
-`MAX_REQUEST_SIZE_MB` is currently interpreted as a byte count despite its name. Keep it at `5242880` for a 5 MiB limit.
+`MAX_REQUEST_SIZE_BYTES` controls the maximum request body size. Default is `5242880` (5 MiB).
 
 For local development without Docker, use development mode and point the service URLs at local PostgreSQL and Redis instances, for example:
 
@@ -338,6 +366,10 @@ REDIS_URL=redis://127.0.0.1:6379/0
 ```
 
 Production mode requires a non-default `SECRET_KEY`, non-empty database and Redis URLs, JWT issuer and audience values, positive token lifetimes, and explicit CORS origins.
+
+OpenTelemetry tracing is off by default. To enable it, set `OTEL_ENABLED=true` and point `OTEL_EXPORTER_OTLP_ENDPOINT` at an OTLP HTTP collector endpoint.
+
+Metrics from Prometheus are always available at `/metrics` and require no additional setup.
 
 ## Local Setup
 
@@ -355,6 +387,37 @@ poetry run pytest -q
 ```
 
 This repository also has a local `.venv`, so the Makefile uses `.venv/bin/...` where practical.
+
+## Development Container
+
+The repository includes a [Dev Container](https://containers.dev/) configuration for VS Code that provides a complete development environment with PostgreSQL and Redis without installing anything locally besides Docker.
+
+Open the project in VS Code with the Dev Containers extension installed and click **Reopen in Container**. The container:
+
+- Installs all dependencies (including dev) with Poetry.
+- Mounts the source tree for live editing with hot-reload.
+- Starts PostgreSQL and Redis as companion services.
+- Forwards port 8000 for the API.
+
+No `.env` file is required — the dev container uses safe defaults (`devpass`) for database and Redis passwords. To customize, create `.env` in the project root before opening.
+
+### Running the dev server inside the container
+
+```bash
+make run
+```
+
+Or directly:
+
+```bash
+poetry run uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### Database migrations inside the container
+
+```bash
+make migrate && make seed
+```
 
 ## Running the Application
 
@@ -389,6 +452,12 @@ Operational checks:
 ```text
 http://localhost:8000/live
 http://localhost:8000/ready
+
+Metrics:
+
+```text
+http://localhost:8000/metrics
+```
 ```
 
 ## Database and Migrations
@@ -536,13 +605,37 @@ make clean
 
 Before starting Docker Compose, set non-empty `POSTGRES_PASSWORD`, `REDIS_PASSWORD`, and `SECRET_KEY` in `.env`. Compose intentionally fails fast when database or Redis passwords are missing.
 
-Run API, PostgreSQL, and Redis services:
+Run all services (API, PostgreSQL, Redis, Prometheus, and OpenTelemetry Collector):
 
 ```bash
 make db-up
 ```
 
 The API container applies Alembic migrations before starting Uvicorn. Database seeding remains an explicit `make seed` step.
+
+### Docker Services
+
+| Service | Image | Port | Purpose |
+| --- | --- | --- | --- |
+| `api` | `fastapi-modulith:local` | 8000 | FastAPI application |
+| `db` | `postgres:17-alpine` | — | PostgreSQL database |
+| `redis` | `redis:8-alpine` | — | Redis for rate limiting and token revocation |
+| `prometheus` | `prom/prometheus:latest` | 9090 | Metrics scraping and storage |
+| `otel-collector` | `otel/opentelemetry-collector-contrib:latest` | 4318 | OTLP trace ingestion and export |
+
+### Dev Container Services
+
+The dev container (`docker compose -f .devcontainer/docker-compose.yml`) runs the same services with development defaults:
+
+| Service | Image | Port | Purpose |
+| --- | --- | --- | --- |
+| `dev` | `fastapi-modulith:dev` | 8000 | FastAPI with hot-reload |
+| `db` | `postgres:17-alpine` | — | PostgreSQL database |
+| `redis` | `redis:8-alpine` | — | Redis for rate limiting and token revocation |
+| `prometheus` | `prom/prometheus:latest` | 9090 | Metrics scraping and storage |
+| `otel-collector` | `otel/opentelemetry-collector-contrib:latest` | 4318 | OTLP trace ingestion and export |
+
+Tracing is automatically enabled in Docker Compose — the API sends spans to the `otel-collector` service via OTLP HTTP. Prometheus scrapes `/metrics` from the API every 15 seconds.
 
 Stop services:
 
@@ -663,13 +756,18 @@ Legend: `Implemented` means code exists in the repository. `Partial` means code 
 | OpenAPI Authentication | Required | Implemented | Swagger OAuth2 auth is configured, and docs/OpenAPI endpoints are disabled when `APP_ENV=production`. |
 | Health Check Endpoint | Required | Implemented | `/health` endpoint returns service health. |
 | Readiness/Liveness Endpoints | Required | Implemented | Adds `/live` and `/ready` operational endpoints. |
+| Prometheus Metrics | Recommended | Implemented | Request count, latency histogram, active requests at `/metrics`. |
+| Distributed Tracing (OpenTelemetry) | Recommended | Implemented | FastAPI, SQLAlchemy, and Redis instrumentations with OTLP HTTP export. Configurable via `OTEL_ENABLED`. |
 | Request Size Limiting | Required | Implemented | `LimitRequestSizeMiddleware` rejects oversized write requests. |
 | Idempotency Support (for applicable POST endpoints) | Optional but valuable | Implemented | Supports `Idempotency-Key` replay caching for POST responses. |
 | Database Migrations | Required | Implemented | Alembic is configured with migration commands in the README and Makefile. |
 | Dependency Injection | Required | Implemented | FastAPI dependencies wire repositories, handlers, auth, authorization, and database sessions. |
 | Configuration via Environment Variables | Required | Implemented | Pydantic settings read `.env` and reject the default secret key in production. |
-
-### Next Implementation Checklist
+| CSRF Protection | Recommended | Implemented | Double-submit cookie pattern with `DoubleSubmitCSRFService`. Configurable via `CSRF_PROTECTION_ENABLED`. |
+| API Key Management (M2M) | Recommended | Implemented | Service account keys with SHA256 hashing. `ApiKeyRepository` ABC, `ApiKeyService` with generate/validate. Admin CRUD at `/api/v1/admin/api-keys/`. |
+| Secret Scanning in CI | Recommended | Implemented | Gitleaks action runs on every PR and push in the `verify` job. |
+| SBOM Generation | Recommended | Implemented | CycloneDX SBOM generated after Docker build using Trivy, uploaded as CI artifact. |
+| Container Image Signing | Recommended | Implemented | Cosign keyless signing of Docker images on push to GHCR. |
 
 - [x] Fix and verify rate limit configuration wiring.
 - [x] Add security headers middleware.
@@ -684,6 +782,11 @@ Legend: `Implemented` means code exists in the repository. `Partial` means code 
 - [x] Review exception responses to avoid leaking token parsing details or internal exception messages.
 - [ ] Add automated tests for request size limits, rate limiting, auth failures, authorization failures, CORS, security headers, and request IDs.
 - [x] Add dependency vulnerability scanning to local or CI checks, for example `pip-audit` or an equivalent Poetry-compatible scanner.
+- [x] Add CSRF protection middleware.
+- [x] Add API key management for machine-to-machine auth.
+- [x] Add secret scanning (Gitleaks) to CI.
+- [x] Add SBOM generation (CycloneDX) to CI.
+- [x] Add container image signing (Cosign) to CI.
 
 ## Known Notes
 

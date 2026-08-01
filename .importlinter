@@ -8,6 +8,7 @@ allow_indirect_imports = True
 source_modules =
     src.modules.todo
 forbidden_modules =
+    src.modules.user.providers
     src.modules.user.application
     src.modules.user.domain
     src.modules.user.infrastructure

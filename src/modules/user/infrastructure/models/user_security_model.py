@@ -1,16 +1,15 @@
 from datetime import datetime
-from uuid import UUID
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.modules.user.infrastructure.models.user_model import UserModel
+from src.shared.database.mixin.tenant import TenantMixin
 from src.shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
 from src.shared.database.model import Base
 
 
-class UserSecurityModel(Base, TimeStampMixin, SoftDeleteMixin):
+class UserSecurityModel(Base, TimeStampMixin, SoftDeleteMixin, TenantMixin):
     """User security configuration and state.
 
     One-to-one relationship with users table.
@@ -24,8 +23,7 @@ class UserSecurityModel(Base, TimeStampMixin, SoftDeleteMixin):
         Index("ix_user_security_two_factor_enabled", "two_factor_enabled"),
     )
 
-    user_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
+    user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id"),
         unique=True,
         nullable=False,

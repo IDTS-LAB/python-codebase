@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from src.modules.todo.domain.exceptions.todo_exception import (
     TodoNotFoundError,
     UnauthorizedTodoAccessError,
@@ -13,7 +11,7 @@ class DeleteTodoHandler:
         self.todo_repo = todo_repo
         self._unit_of_work = unit_of_work
 
-    async def execute(self, todo_id: UUID, user_id: UUID) -> None:
+    async def execute(self, todo_id: int, user_id: int) -> None:
         todo = await self.todo_repo.get_by_id(todo_id)
         if not todo:
             raise TodoNotFoundError("Todo not found")

@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import Optional
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -120,7 +119,7 @@ async def list_roles(
     dependencies=[Depends(require_permission(ROLE_RESOURCE, READ_ACTION))],
 )
 async def get_role(
-    role_id: UUID,
+    role_id: int,
     service: CasbinAuthorizationService = Depends(get_authorization_service),
 ):
     role = await service.get_role(role_id)
@@ -137,7 +136,7 @@ async def get_role(
     dependencies=[Depends(require_permission(ROLE_RESOURCE, UPDATE_ACTION))],
 )
 async def update_role(
-    role_id: UUID,
+    role_id: int,
     request: UpdateRoleRequest,
     service: CasbinAuthorizationService = Depends(get_authorization_service),
     unit_of_work: UnitOfWork = Depends(get_unit_of_work),
@@ -169,7 +168,7 @@ async def update_role(
     dependencies=[Depends(require_permission(ROLE_RESOURCE, DELETE_ACTION))],
 )
 async def delete_role(
-    role_id: UUID,
+    role_id: int,
     service: CasbinAuthorizationService = Depends(get_authorization_service),
     unit_of_work: UnitOfWork = Depends(get_unit_of_work),
 ):
@@ -184,8 +183,8 @@ async def delete_role(
     dependencies=[Depends(require_permission(ROLE_RESOURCE, CREATE_ACTION))],
 )
 async def assign_permission_to_role(
-    role_id: UUID,
-    permission_id: UUID,
+    role_id: int,
+    permission_id: int,
     service: CasbinAuthorizationService = Depends(get_authorization_service),
     unit_of_work: UnitOfWork = Depends(get_unit_of_work),
 ):
@@ -200,8 +199,8 @@ async def assign_permission_to_role(
     dependencies=[Depends(require_permission(ROLE_RESOURCE, DELETE_ACTION))],
 )
 async def remove_permission_from_role(
-    role_id: UUID,
-    permission_id: UUID,
+    role_id: int,
+    permission_id: int,
     service: CasbinAuthorizationService = Depends(get_authorization_service),
     unit_of_work: UnitOfWork = Depends(get_unit_of_work),
 ):
@@ -215,7 +214,7 @@ def _role_response(role: Role | None) -> RoleResponse:
         raise HTTPException(status_code=404, detail="Role not found")
 
     return RoleResponse(
-        id=str(role.id),
+        id=role.id,
         name=role.name,
         description=role.description,
         created_at=role.created_at,

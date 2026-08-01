@@ -3,10 +3,11 @@ from datetime import datetime
 from sqlalchemy import DateTime, JSON, String
 from sqlalchemy.orm import Mapped, mapped_column
 
+from src.shared.database.mixin.tenant import TenantMixin
 from src.shared.database.model import Base
 
 
-class AuditLogModel(Base):
+class AuditLogModel(Base, TenantMixin):
     __tablename__ = "audit_logs"
 
     action: Mapped[str] = mapped_column(String(120), index=True)

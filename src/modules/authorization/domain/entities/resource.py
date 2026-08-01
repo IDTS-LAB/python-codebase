@@ -1,10 +1,9 @@
 from dataclasses import dataclass
-from uuid import UUID, uuid4
 
 
-@dataclass
+@dataclass(kw_only=True)
 class AuthorizationResource:
-    id: UUID
+    id: int | None = None
     key: str
     name: str
     description: str | None = None
@@ -17,7 +16,7 @@ class AuthorizationResource:
         description: str | None = None,
     ) -> "AuthorizationResource":
         return cls(
-            id=uuid4(),
+            id=None,
             key=key,
             name=name,
             description=description,

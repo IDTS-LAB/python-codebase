@@ -7,11 +7,12 @@ from src.modules.authorization.infrastructure.models.role_permission_model impor
 from src.modules.authorization.infrastructure.models.user_has_role_model import (
     UserHasRoleModel,
 )
+from src.shared.database.mixin.tenant import TenantMixin
 from src.shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
 from src.shared.database.model import Base
 
 
-class RoleModel(Base, TimeStampMixin, SoftDeleteMixin):
+class RoleModel(Base, TimeStampMixin, SoftDeleteMixin, TenantMixin):
     """Role definition for RBAC system.
 
     Roles group permissions and can be assigned to users.

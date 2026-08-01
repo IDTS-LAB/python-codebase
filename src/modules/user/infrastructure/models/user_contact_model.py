@@ -1,11 +1,10 @@
 from enum import Enum
-from uuid import UUID
 
 from sqlalchemy import Boolean, ForeignKey, Index, String
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.modules.user.infrastructure.models.user_model import UserModel
+from src.shared.database.mixin.tenant import TenantMixin
 from src.shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
 from src.shared.database.model import Base
 
@@ -19,7 +18,7 @@ class ContactType(str, Enum):
     OTHER = "other"
 
 
-class UserContactModel(Base, TimeStampMixin, SoftDeleteMixin):
+class UserContactModel(Base, TimeStampMixin, SoftDeleteMixin, TenantMixin):
     """User contact methods supporting multiple channels.
 
     One-to-many relationship with users table.
@@ -33,8 +32,7 @@ class UserContactModel(Base, TimeStampMixin, SoftDeleteMixin):
         Index("ix_user_contacts_is_primary", "is_primary"),
     )
 
-    user_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
+    user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id"),
         nullable=False,
     )

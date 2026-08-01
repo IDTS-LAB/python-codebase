@@ -1,11 +1,12 @@
 from sqlalchemy import Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from src.shared.database.mixin.tenant import TenantMixin
 from src.shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
 from src.shared.database.model import Base
 
 
-class AuthorizationResourceModel(Base, TimeStampMixin, SoftDeleteMixin):
+class AuthorizationResourceModel(Base, TimeStampMixin, SoftDeleteMixin, TenantMixin):
     """Authorization resource definition for grouping permissions.
 
     Resources represent domain entities that permissions act upon.

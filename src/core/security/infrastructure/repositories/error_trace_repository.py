@@ -3,8 +3,9 @@ from src.core.security.infrastructure.models.error_trace_model import ErrorTrace
 
 
 class SQLAlchemyErrorTraceRepository:
-    def __init__(self, db):
+    def __init__(self, db, tenant_id: str | None = None):
         self._db = db
+        self._tenant_id = tenant_id
 
     async def save(self, trace: ErrorTrace) -> ErrorTrace:
         self._db.add(
@@ -17,6 +18,7 @@ class SQLAlchemyErrorTraceRepository:
                 path=trace.path,
                 actor_id=trace.actor_id,
                 request_id=trace.request_id,
+                tenant_id=self._tenant_id,
                 meta=trace.metadata,
                 created_at=trace.created_at,
             )

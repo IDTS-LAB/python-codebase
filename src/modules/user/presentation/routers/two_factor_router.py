@@ -60,9 +60,7 @@ async def setup_totp(
     - Microsoft Authenticator
     - Any TOTP-compatible authenticator app
     """
-    from uuid import UUID
-
-    command = SetupTOTPCommand(user_id=UUID(current_user_id))
+    command = SetupTOTPCommand(user_id=int(current_user_id))
     result = await handler.execute(command)
 
     return SuccessResponse(
@@ -88,10 +86,8 @@ async def verify_totp_setup(
     After scanning the QR code, submit the 6-digit code from your authenticator app
     to complete the setup. This will return backup codes - store them safely!
     """
-    from uuid import UUID
-
     command = VerifyTOTPSetupCommand(
-        user_id=UUID(current_user_id),
+        user_id=int(current_user_id),
         code=request.code,
     )
     result = await handler.execute(command)
@@ -118,10 +114,8 @@ async def disable_totp(
 
     Requires either a current TOTP code or a backup code to verify identity.
     """
-    from uuid import UUID
-
     command = DisableTOTPCommand(
-        user_id=UUID(current_user_id),
+        user_id=int(current_user_id),
         code=request.code,
     )
     result = await handler.execute(command)
@@ -152,9 +146,7 @@ async def send_email_2fa_code(
     Alternative to TOTP for users who prefer email-based verification.
     The code will expire in 10 minutes.
     """
-    from uuid import UUID
-
-    command = SendEmail2FACodeCommand(user_id=UUID(current_user_id))
+    command = SendEmail2FACodeCommand(user_id=int(current_user_id))
     result = await handler.execute(command)
 
     if result:
@@ -179,10 +171,8 @@ async def verify_email_2fa_code(
     handler: VerifyEmail2FACodeHandler = Depends(get_verify_email_2fa_code_handler),
 ):
     """Verify an email-based 2FA code."""
-    from uuid import UUID
-
     command = VerifyEmail2FACodeCommand(
-        user_id=UUID(current_user_id),
+        user_id=int(current_user_id),
         code=request.code,
     )
     result = await handler.execute(command)
@@ -215,10 +205,8 @@ async def regenerate_backup_codes(
     This will invalidate all previous backup codes and generate new ones.
     Requires a current TOTP code for verification.
     """
-    from uuid import UUID
-
     command = RegenerateBackupCodesCommand(
-        user_id=UUID(current_user_id),
+        user_id=int(current_user_id),
         verify_code=request.verify_code,
     )
     result = await handler.execute(command)
@@ -246,10 +234,8 @@ async def verify_2fa(
     Used in the login flow when 2FA is required.
     Supports TOTP, email, and backup code methods.
     """
-    from uuid import UUID
-
     command = Verify2FACommand(
-        user_id=UUID(current_user_id),
+        user_id=int(current_user_id),
         code=request.code,
         method=request.method,
     )

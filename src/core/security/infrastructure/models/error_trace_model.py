@@ -3,10 +3,11 @@ from datetime import datetime
 from sqlalchemy import DateTime, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
+from src.shared.database.mixin.tenant import TenantMixin
 from src.shared.database.model import Base
 
 
-class ErrorTraceModel(Base):
+class ErrorTraceModel(Base, TenantMixin):
     __tablename__ = "error_traces"
 
     error_type: Mapped[str] = mapped_column(String(120), index=True)

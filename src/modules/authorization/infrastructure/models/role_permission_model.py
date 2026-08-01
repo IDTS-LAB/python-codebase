@@ -1,12 +1,11 @@
-from uuid import UUID
-
 from sqlalchemy import ForeignKey, Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from src.shared.database.mixin.tenant import TenantMixin
 from src.shared.database.model import Base
 
 
-class RolePermissionModel(Base):
+class RolePermissionModel(Base, TenantMixin):
     """Junction table for role-to-permission assignments.
 
     Many-to-many relationship between roles and permissions.
@@ -23,8 +22,8 @@ class RolePermissionModel(Base):
         Index("ix_role_permissions_permission_id", "permission_id"),
     )
 
-    role_id: Mapped[UUID] = mapped_column(ForeignKey("roles.id"), nullable=False)
-    permission_id: Mapped[UUID] = mapped_column(
+    role_id: Mapped[int] = mapped_column(ForeignKey("roles.id"), nullable=False)
+    permission_id: Mapped[int] = mapped_column(
         ForeignKey("permissions.id"),
         nullable=False,
     )

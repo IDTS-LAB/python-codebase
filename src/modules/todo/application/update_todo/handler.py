@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from src.modules.todo.application.update_todo.command import UpdateTodoCommand
 from src.modules.todo.application.update_todo.validation import (
     validate_update_todo_command,
@@ -19,7 +17,7 @@ class UpdateTodoHandler:
         self._unit_of_work = unit_of_work
 
     async def execute(
-        self, todo_id: UUID, command: UpdateTodoCommand, user_id: UUID
+        self, todo_id: int, command: UpdateTodoCommand, user_id: int
     ) -> Todo:
         validate_update_todo_command(command)
 

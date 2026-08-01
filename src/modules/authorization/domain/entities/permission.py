@@ -1,10 +1,9 @@
 from dataclasses import dataclass
-from uuid import UUID, uuid4
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Permission:
-    id: UUID
+    id: int | None = None
     key: str
     resource: str
     action: str
@@ -21,7 +20,7 @@ class Permission:
         description: str | None,
     ) -> "Permission":
         return cls(
-            id=uuid4(),
+            id=None,
             key=key,
             resource=resource,
             action=action,

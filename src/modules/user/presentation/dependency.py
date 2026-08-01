@@ -2,6 +2,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.database.postgres.session import get_db, get_unit_of_work
+from src.core.dependency.tenant import get_current_tenant_id
 from src.core.email.factory import create_email_service
 from src.core.email.service import EmailService
 from src.core.security.account_lockout import AccountLockoutService
@@ -50,8 +51,11 @@ from src.modules.user.infrastructure.repositories.user_repository import (
 from src.shared.unit_of_work import UnitOfWork
 
 
-def get_user_repository(db: AsyncSession = Depends(get_db)) -> UserRepository:
-    return SQLAlchemyUserRepository(db)
+def get_user_repository(
+    db: AsyncSession = Depends(get_db),
+    tenant_id: int = Depends(get_current_tenant_id),
+) -> UserRepository:
+    return SQLAlchemyUserRepository(db, tenant_id)
 
 
 def get_email_service() -> EmailService:
@@ -60,22 +64,27 @@ def get_email_service() -> EmailService:
 
 def get_refresh_token_repository(
     db: AsyncSession = Depends(get_db),
+    tenant_id: int = Depends(get_current_tenant_id),
 ) -> RefreshTokenRepository:
-    return SQLAlchemyRefreshTokenRepository(db)
+    return SQLAlchemyRefreshTokenRepository(db, tenant_id)
 
 
 def get_token_revocation_service() -> TokenRevocationService:
     return TokenRevocationService()
 
 
-def get_audit_service(db: AsyncSession = Depends(get_db)) -> AuditService:
-    return AuditService(SQLAlchemyAuditRepository(db))
+def get_audit_service(
+    db: AsyncSession = Depends(get_db),
+    tenant_id: int = Depends(get_current_tenant_id),
+) -> AuditService:
+    return AuditService(SQLAlchemyAuditRepository(db, tenant_id))
 
 
 def get_account_lockout_service(
     db: AsyncSession = Depends(get_db),
+    tenant_id: int = Depends(get_current_tenant_id),
 ) -> AccountLockoutService:
-    return AccountLockoutService(SQLAlchemyLoginAttemptRepository(db))
+    return AccountLockoutService(SQLAlchemyLoginAttemptRepository(db, tenant_id))
 
 
 def get_register_handler(

@@ -1,15 +1,13 @@
-from uuid import UUID
-
 from sqlalchemy import Date, ForeignKey, Index, String, Text
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.modules.user.infrastructure.models.user_model import UserModel
+from src.shared.database.mixin.tenant import TenantMixin
 from src.shared.database.mixin.timestamp import SoftDeleteMixin, TimeStampMixin
 from src.shared.database.model import Base
 
 
-class UserProfileModel(Base, TimeStampMixin, SoftDeleteMixin):
+class UserProfileModel(Base, TimeStampMixin, SoftDeleteMixin, TenantMixin):
     """User profile containing personal information.
 
     One-to-one relationship with users table.
@@ -19,8 +17,7 @@ class UserProfileModel(Base, TimeStampMixin, SoftDeleteMixin):
     __tablename__ = "user_profiles"
     __table_args__ = (Index("ix_user_profiles_user_id", "user_id", unique=True),)
 
-    user_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
+    user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id"),
         unique=True,
         nullable=False,

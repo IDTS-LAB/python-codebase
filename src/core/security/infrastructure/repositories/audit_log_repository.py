@@ -3,8 +3,9 @@ from src.core.security.infrastructure.models.audit_log_model import AuditLogMode
 
 
 class SQLAlchemyAuditRepository:
-    def __init__(self, db):
+    def __init__(self, db, tenant_id: str | None = None):
         self._db = db
+        self._tenant_id = tenant_id
 
     async def save(self, event: AuditEvent) -> AuditEvent:
         self._db.add(
@@ -15,6 +16,7 @@ class SQLAlchemyAuditRepository:
                 resource_type=event.resource_type,
                 resource_id=event.resource_id,
                 request_id=event.request_id,
+                tenant_id=self._tenant_id,
                 meta=event.metadata,
                 created_at=event.created_at,
             )

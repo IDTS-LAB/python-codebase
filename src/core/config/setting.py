@@ -54,8 +54,8 @@ class Settings(BaseSettings):
         default="default-src 'self'; frame-ancestors 'none'",
     )
     IDEMPOTENCY_TTL_SECONDS: int = Field(alias="IDEMPOTENCY_TTL_SECONDS", default=86400)
-    MAX_REQUEST_SIZE_MB: int = Field(
-        alias="MAX_REQUEST_SIZE_MB", default=5 * 1024 * 1024
+    MAX_REQUEST_SIZE_BYTES: int = Field(
+        alias="MAX_REQUEST_SIZE_BYTES", default=5 * 1024 * 1024
     )
 
     # Account lockout thresholds used to slow repeated failed login attempts.
@@ -69,8 +69,28 @@ class Settings(BaseSettings):
         alias="ACCOUNT_LOCKOUT_DURATION_MINUTES", default=15
     )
 
+    # CSRF protection settings.
+    CSRF_PROTECTION_ENABLED: bool = Field(
+        alias="CSRF_PROTECTION_ENABLED", default=True
+    )
+
     # Logging output format for application logs.
     LOG_FORMAT: str = Field(alias="LOG_FORMAT", default="json")
+
+    # Multitenancy toggle. When disabled all data uses a single "Default" tenant.
+    MULTITENANT_ENABLED: bool = Field(alias="MULTITENANT_ENABLED", default=False)
+
+    # OpenTelemetry distributed tracing configuration.
+    OTEL_ENABLED: bool = Field(alias="OTEL_ENABLED", default=False)
+    OTEL_SERVICE_NAME: str = Field(
+        alias="OTEL_SERVICE_NAME", default="fastapi-modulith"
+    )
+    OTEL_EXPORTER_OTLP_ENDPOINT: str = Field(
+        alias="OTEL_EXPORTER_OTLP_ENDPOINT", default=""
+    )
+    OTEL_EXPORTER_OTLP_HEADERS: str = Field(
+        alias="OTEL_EXPORTER_OTLP_HEADERS", default=""
+    )
 
     # Email provider selection and provider-specific credentials.
     EMAIL_PROVIDER: str = Field(alias="EMAIL_PROVIDER", default="ses")

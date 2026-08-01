@@ -4,13 +4,13 @@ from src.modules.user import UserProfile
 
 
 class TodoResponse(BaseModel):
-    id: str
+    id: int
     title: str
     is_completed: bool
 
 
 class TodoWithOwnerResponse(BaseModel):
-    id: str
+    id: int
     title: str
     description: str | None = None
     is_completed: bool

@@ -1,5 +1,4 @@
 from typing import Optional
-from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,31 +18,34 @@ from src.modules.user.infrastructure.models.user_settings_model import UserSetti
 
 
 class SQLAlchemyUserRepository(UserRepository):
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession, tenant_id: int | None = None):
         self._db = db
+        self._tenant_id = tenant_id
 
     async def get_by_email(self, email: str) -> Optional[User]:
-        result = await self._db.execute(
-            select(UserModel).where(UserModel.email == email)
-        )
+        stmt = select(UserModel).where(UserModel.email == email)
+        if self._tenant_id:
+            stmt = stmt.where(UserModel.tenant_id == self._tenant_id)
+        result = await self._db.execute(stmt)
         user_model = result.scalar_one_or_none()
         if user_model is None:
             return None
 
         return self._map_to_entity(user_model)
 
-    async def get_by_id(self, user_id: UUID) -> Optional[User]:
-        result = await self._db.execute(
-            select(UserModel).where(UserModel.id == user_id)
-        )
+    async def get_by_id(self, user_id: int) -> Optional[User]:
+        stmt = select(UserModel).where(UserModel.id == user_id)
+        if self._tenant_id:
+            stmt = stmt.where(UserModel.tenant_id == self._tenant_id)
+        result = await self._db.execute(stmt)
         user_model = result.scalar_one_or_none()
         if not user_model:
             return None
         return self._map_to_entity(user_model)
 
-    async def get_by_id_with_relations(self, user_id: UUID) -> Optional[User]:
+    async def get_by_id_with_relations(self, user_id: int) -> Optional[User]:
         """Get user with profile, settings, and security eagerly loaded."""
-        result = await self._db.execute(
+        stmt = (
             select(UserModel)
             .options(
                 selectinload(UserModel.profile),
@@ -52,6 +54,9 @@ class SQLAlchemyUserRepository(UserRepository):
             )
             .where(UserModel.id == user_id)
         )
+        if self._tenant_id:
+            stmt = stmt.where(UserModel.tenant_id == self._tenant_id)
+        result = await self._db.execute(stmt)
         user_model = result.scalar_one_or_none()
         if not user_model:
             return None
@@ -72,16 +77,20 @@ class SQLAlchemyUserRepository(UserRepository):
             user_model.external_id = user.external_id
         else:
             # Create new user
-            user_model = UserModel(
-                id=user.id,
-                email=user.email,
-                username=user.username,
-                password_hash=user.password_hash,
-                auth_provider=user.auth_provider,
-                status=user.status,
-                external_id=user.external_id,
-            )
+            model_kwargs = {
+                "email": user.email,
+                "username": user.username,
+                "password_hash": user.password_hash,
+                "auth_provider": user.auth_provider,
+                "status": user.status,
+                "external_id": user.external_id,
+                "tenant_id": self._tenant_id or user.tenant_id,
+            }
+            if user.id is not None:
+                model_kwargs["id"] = user.id
+            user_model = UserModel(**model_kwargs)
             self._db.add(user_model)
+            await self._db.flush()
 
             # Create default related records
             await self._create_default_related_records(user_model.id)
@@ -106,6 +115,7 @@ class SQLAlchemyUserRepository(UserRepository):
         else:
             profile_model = UserProfileModel(
                 user_id=profile.user_id,
+                tenant_id=self._tenant_id,
                 first_name=profile.first_name,
                 last_name=profile.last_name,
                 display_name=profile.display_name,
@@ -132,6 +142,7 @@ class SQLAlchemyUserRepository(UserRepository):
         else:
             settings_model = UserSettingsModel(
                 user_id=settings.user_id,
+                tenant_id=self._tenant_id,
                 preferences=settings.preferences,
             )
             self._db.add(settings_model)
@@ -158,6 +169,7 @@ class SQLAlchemyUserRepository(UserRepository):
         else:
             security_model = UserSecurityModel(
                 user_id=security.user_id,
+                tenant_id=self._tenant_id,
                 failed_login_attempts=security.failed_login_attempts,
                 locked_until=security.locked_until,
                 password_changed_at=security.password_changed_at,
@@ -171,21 +183,23 @@ class SQLAlchemyUserRepository(UserRepository):
         await self._db.refresh(security_model)
         return self._map_security_to_entity(security_model)
 
-    async def _get_user_model(self, user_id: UUID) -> UserModel:
-        result = await self._db.execute(
-            select(UserModel).where(UserModel.id == user_id)
-        )
+    async def _get_user_model(self, user_id: int) -> UserModel:
+        stmt = select(UserModel).where(UserModel.id == user_id)
+        if self._tenant_id:
+            stmt = stmt.where(UserModel.tenant_id == self._tenant_id)
+        result = await self._db.execute(stmt)
         return result.scalar_one()
 
-    async def _create_default_related_records(self, user_id: UUID) -> None:
+    async def _create_default_related_records(self, user_id: int) -> None:
         """Create default profile, settings, and security records for a new user."""
         # Default profile
-        profile_model = UserProfileModel(user_id=user_id)
+        profile_model = UserProfileModel(user_id=user_id, tenant_id=self._tenant_id)
         self._db.add(profile_model)
 
         # Default settings
         settings_model = UserSettingsModel(
             user_id=user_id,
+            tenant_id=self._tenant_id,
             preferences={
                 "language": "en",
                 "timezone": "UTC",
@@ -201,6 +215,7 @@ class SQLAlchemyUserRepository(UserRepository):
         # Default security
         security_model = UserSecurityModel(
             user_id=user_id,
+            tenant_id=self._tenant_id,
             failed_login_attempts=0,
             two_factor_enabled=False,
         )

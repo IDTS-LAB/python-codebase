@@ -1,18 +1,20 @@
-from fastapi import status
-from jose import JWTError
+from typing import Optional
+
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
-from src.core.security.jwt import JWTService
-from src.core.security.token_revocation import TokenRevocationService
-from src.shared.exceptions.credential_exception import InvalidCredentialsError
+from src.core.security.providers import (
+    AuthenticationProvider,
+    JWTAuthProvider,
+)
 
 PUBLIC_PATHS = frozenset(
     {
         "/health",
         "/live",
         "/ready",
+        "/metrics",
         "/docs",
         "/docs/",
         "/redoc",
@@ -26,6 +28,10 @@ PUBLIC_PATHS = frozenset(
 
 
 class AuthenticationMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app, providers: Optional[list[AuthenticationProvider]] = None):
+        super().__init__(app)
+        self._providers = providers or [JWTAuthProvider()]
+
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
@@ -39,42 +45,22 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
             return JSONResponse(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=401,
                 content={"detail": "Authorization header missing or malformed"},
             )
 
         token = auth_header.split(" ", 1)[1]
 
-        try:
-            payload = JWTService.decode_token(token)
-            JWTService.require_token_type(payload, JWTService.ACCESS_TOKEN_TYPE)
-            if await TokenRevocationService.is_access_token_revoked(token):
-                return JSONResponse(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    content={"detail": "Token has been revoked"},
-                )
+        for provider in self._providers:
+            result = await provider.authenticate(token, request)
+            if result is not None:
+                request.state.user_id = result["user_id"]
+                request.state.auth_provider = result["provider"]
+                request.state.token_payload = result.get("payload", {})
+                response = await call_next(request)
+                return response
 
-            user_id = payload.get("sub")
-            if not user_id:
-                raise ValueError("Token missing 'sub' claim")
-
-            request.state.user_id = user_id
-            request.state.token_payload = payload
-        except JWTError:
-            return JSONResponse(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                content={"detail": "Invalid or expired token"},
-            )
-        except InvalidCredentialsError as e:
-            return JSONResponse(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                content={"detail": str(e)},
-            )
-        except Exception:
-            return JSONResponse(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                content={"detail": "Authentication failed"},
-            )
-
-        response = await call_next(request)
-        return response
+        return JSONResponse(
+            status_code=401,
+            content={"detail": "Invalid or expired token"},
+        )

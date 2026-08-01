@@ -5,19 +5,29 @@ from src.core.config.setting import get_settings
 from src.core.middleware.audit_logging import AuditLoggingMiddleware
 from src.core.middleware.auth import AuthenticationMiddleware
 from src.core.middleware.csp import CSPMiddleware
+from src.core.middleware.csrf import CSRFMiddleware
 from src.core.middleware.idempotency import IdempotencyMiddleware
+from src.core.middleware.metrics import MetricsMiddleware
 from src.core.middleware.request_id import RequestIDMiddleware
 from src.core.middleware.request_size import LimitRequestSizeMiddleware
 from src.core.middleware.security_headers import SecurityHeadersMiddleware
 from src.core.middleware.structured_logging import StructuredLoggingMiddleware
+from src.core.middleware.tenant import TenantMiddleware
+from src.core.security.providers import JWTAuthProvider
 
 settings = get_settings()
+
+
+async def _get_api_key_service() -> ApiKeyService:
+    async with AsyncSessionLocal() as session:
+        repo = SQLAlchemyApiKeyRepository(session, None)
+        return ApiKeyService(repo)
 
 
 def register_middleware(app: FastAPI):
     app.add_middleware(
         LimitRequestSizeMiddleware,
-        max_upload_size=settings.MAX_REQUEST_SIZE_MB,
+        max_upload_size=settings.MAX_REQUEST_SIZE_BYTES,
     )
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(CSPMiddleware)
@@ -29,7 +39,13 @@ def register_middleware(app: FastAPI):
         allow_headers=settings.cors_allow_headers,
     )
     app.add_middleware(IdempotencyMiddleware)
+    app.add_middleware(CSRFMiddleware)
+    app.add_middleware(MetricsMiddleware)
     app.add_middleware(StructuredLoggingMiddleware)
     app.add_middleware(AuditLoggingMiddleware)
-    app.add_middleware(AuthenticationMiddleware)
+    app.add_middleware(TenantMiddleware)
+    app.add_middleware(
+        AuthenticationMiddleware,
+        providers=[JWTAuthProvider()],
+    )
     app.add_middleware(RequestIDMiddleware)

@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from typing import Optional
-from uuid import UUID
 
 from src.modules.user.domain.entities.user import User, UserProfile, UserSettings, UserSecurity
 
@@ -11,11 +10,11 @@ class UserRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_by_id(self, user_id: UUID) -> Optional[User]:
+    async def get_by_id(self, user_id: int) -> Optional[User]:
         pass
 
     @abstractmethod
-    async def get_by_id_with_relations(self, user_id: UUID) -> Optional[User]:
+    async def get_by_id_with_relations(self, user_id: int) -> Optional[User]:
         """Get user with profile, settings, and security loaded."""
         pass
 

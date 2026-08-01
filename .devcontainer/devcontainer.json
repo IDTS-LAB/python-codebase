@@ -1,0 +1,50 @@
+{
+  "name": "fastapi-modulith",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "dev",
+  "workspaceFolder": "/app",
+  "forwardPorts": [8000, 9090, 4318],
+  "portsAttributes": {
+    "8000": {
+      "label": "API",
+      "onAutoForward": "notify"
+    },
+    "9090": {
+      "label": "Prometheus",
+      "onAutoForward": "notify"
+    },
+    "4318": {
+      "label": "OTLP HTTP",
+      "onAutoForward": "silent"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "ms-python.mypy-type-checker",
+        "tamasfe.even-better-toml"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/app/.venv/bin/python",
+        "python.terminal.activateEnvironment": true,
+        "python.testing.pytestEnabled": true,
+        "python.testing.cwd": "/app",
+        "python.testing.pytestPath": "/app/.venv/bin/pytest",
+        "mypy-type-checker.path": ["/app/.venv/bin/mypy"],
+        "mypy-type-checker.cwd": "/app",
+        "[python]": {
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+          }
+        }
+      }
+    }
+  },
+  "postCreateCommand": "cp -n .env.example .env 2>/dev/null; poetry install --with dev",
+  "remoteUser": "app"
+}

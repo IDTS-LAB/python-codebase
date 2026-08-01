@@ -1,5 +1,3 @@
-from uuid import uuid4
-
 import pytest
 
 from src.modules.todo.application.create_todo.command import CreateTodoCommand
@@ -65,21 +63,21 @@ def test_register_validation_rejects_short_password():
 
 
 def test_logout_validation_rejects_invalid_user_id():
-    with pytest.raises(ValueError, match="User id must be a valid UUID"):
+    with pytest.raises(ValueError, match="User id must be a valid integer"):
         validate_logout_user_command(
-            LogoutUserCommand(user_id="not-a-uuid", access_token="access-token")
+            LogoutUserCommand(user_id="not-an-int", access_token="access-token")
         )
 
 
 def test_logout_validation_rejects_blank_access_token():
     with pytest.raises(ValueError, match="Access token is required"):
         validate_logout_user_command(
-            LogoutUserCommand(user_id=str(uuid4()), access_token=" ")
+            LogoutUserCommand(user_id="1", access_token=" ")
         )
 
 
 def test_query_validation_accepts_valid_queries():
-    user_id = uuid4()
+    user_id = 1
 
     validate_get_todos_query(GetTodosQuery(user_id=user_id))
     validate_detail_user_query(DetailUserQuery(user_id=user_id))
