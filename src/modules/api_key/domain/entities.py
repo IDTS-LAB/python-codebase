@@ -1,11 +1,10 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from uuid import UUID, uuid4
 
 
 @dataclass
 class ApiKey:
-    id: UUID = field(default_factory=uuid4)
+    id: int | None = None
     key_prefix: str = ""
     key_hash: str = ""
     name: str = ""

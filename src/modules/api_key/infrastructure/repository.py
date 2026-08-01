@@ -1,6 +1,5 @@
 import json
 from datetime import datetime, timezone
-from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,13 +10,12 @@ from src.modules.api_key.infrastructure.models import ApiKeyModel
 
 
 class SQLAlchemyApiKeyRepository(ApiKeyRepository):
-    def __init__(self, session: AsyncSession, tenant_id: UUID | None = None):
+    def __init__(self, session: AsyncSession, tenant_id: int | None = None):
         self._session = session
         self._tenant_id = tenant_id
 
     async def create(self, api_key: ApiKey) -> ApiKey:
         model = ApiKeyModel(
-            id=str(api_key.id),
             key_prefix=api_key.key_prefix,
             key_hash=api_key.key_hash,
             name=api_key.name,
@@ -28,10 +26,12 @@ class SQLAlchemyApiKeyRepository(ApiKeyRepository):
         )
         self._session.add(model)
         await self._session.flush()
+        await self._session.refresh(model)
+        api_key.id = model.id
         return api_key
 
-    async def get_by_id(self, id: UUID) -> ApiKey | None:
-        stmt = select(ApiKeyModel).where(ApiKeyModel.id == str(id))
+    async def get_by_id(self, id: int) -> ApiKey | None:
+        stmt = select(ApiKeyModel).where(ApiKeyModel.id == id)
         if self._tenant_id:
             stmt = stmt.where(ApiKeyModel.tenant_id == self._tenant_id)
         result = await self._session.execute(stmt)
@@ -60,20 +60,20 @@ class SQLAlchemyApiKeyRepository(ApiKeyRepository):
         result = await self._session.execute(stmt)
         return result.scalar() or 0
 
-    async def revoke(self, id: UUID) -> None:
-        model = await self._session.get(ApiKeyModel, str(id))
+    async def revoke(self, id: int) -> None:
+        model = await self._session.get(ApiKeyModel, id)
         if model:
             model.is_active = False
 
-    async def update_last_used(self, id: UUID) -> None:
-        model = await self._session.get(ApiKeyModel, str(id))
+    async def update_last_used(self, id: int) -> None:
+        model = await self._session.get(ApiKeyModel, id)
         if model:
             model.last_used_at = datetime.now(timezone.utc)
 
     @staticmethod
     def _to_entity(model: ApiKeyModel) -> ApiKey:
         return ApiKey(
-            id=UUID(model.id),
+            id=model.id,
             key_prefix=model.key_prefix,
             key_hash=model.key_hash,
             name=model.name,

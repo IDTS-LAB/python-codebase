@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.modules.api_key.application.service import ApiKeyService
@@ -33,7 +31,7 @@ async def create_api_key(
         expires_at=request.expires_at,
     )
     return ApiKeyCreatedResponse(
-        id=str(api_key.id),
+        id=api_key.id,
         name=api_key.name,
         key_prefix=api_key.key_prefix,
         key=raw_key,
@@ -53,7 +51,7 @@ async def list_api_keys(
     return ApiKeyListResponse(
         items=[
             ApiKeyResponse(
-                id=str(k.id),
+                id=k.id,
                 key_prefix=k.key_prefix,
                 name=k.name,
                 permissions=k.permissions,
@@ -70,7 +68,7 @@ async def list_api_keys(
 
 @router.delete("/{api_key_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def revoke_api_key(
-    api_key_id: UUID,
+    api_key_id: int,
     repo: ApiKeyRepository = Depends(get_api_key_repository),
 ):
     existing = await repo.get_by_id(api_key_id)

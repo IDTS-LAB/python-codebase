@@ -10,7 +10,6 @@ from src.shared.database.model import Base
 class ApiKeyModel(Base, TenantMixin):
     __tablename__ = "api_keys"
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True)
     key_prefix: Mapped[str] = mapped_column(String(8), nullable=False)
     key_hash: Mapped[str] = mapped_column(String(128), nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)

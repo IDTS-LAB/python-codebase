@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,7 +12,7 @@ from src.modules.api_key.infrastructure.repository import (
 
 async def get_api_key_repository(
     db: AsyncSession = Depends(get_db),
-    tenant_id: UUID = Depends(get_current_tenant_id),
+    tenant_id: int = Depends(get_current_tenant_id),
 ) -> ApiKeyRepository:
     return SQLAlchemyApiKeyRepository(db, tenant_id)
 
