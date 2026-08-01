@@ -466,7 +466,7 @@ git commit -m "refactor: user infrastructure models use integer foreign keys"
 - Remove `from uuid import UUID`.
 - `__init__(self, db, tenant_id: int | None = None)`.
 - `get_by_id(self, user_id: int)`, `get_by_id_with_relations(self, user_id: int)`, `_get_user_model(self, user_id: int)`, `_create_default_related_records(self, user_id: int)`.
-- In `save()` create branch, do not pass `id` when it is `None` (DB identity assigns). Replace lines 80-91 with:
+- In `save()` create branch, do not pass `id` when it is `None` (DB identity assigns) AND flush before creating the default related records so `user_model.id` is populated (otherwise `user_id` is NULL → IntegrityError). Replace lines 80-91 with:
 
 ```python
         else:
@@ -484,28 +484,32 @@ git commit -m "refactor: user infrastructure models use integer foreign keys"
                 model_kwargs["id"] = user.id
             user_model = UserModel(**model_kwargs)
             self._db.add(user_model)
+            await self._db.flush()
 
             # Create default related records
             await self._create_default_related_records(user_model.id)
 ```
 
-(`user.tenant_id` — add a `tenant_id: int | None = None` field to the `User` dataclass in `user.py` (Task 4) if it does not exist; check first: `user.py` has no `tenant_id` field — add `tenant_id: int | None = None` after `updated_at`.)
+(`user.tenant_id` — add a `tenant_id: int | None = None` field to the `User` dataclass in `user.py` (Task 4) if it does not exist; check first: `user.py` has no `tenant_id` field — add `tenant_id: int | None = None` after `updated_at`. The `User` dataclass is `kw_only` (Task 4), so field order is flexible.)
 
 - [ ] **Step 2: Convert `refresh_token_repository.py`**
 
 - Remove `from uuid import UUID`; `__init__(self, db, tenant_id: int | None = None)`.
-- `save()` — replace the `merge` flow with insert-without-id (identity assigns) and map back from refreshed model:
+- `save()` — do not pass `id` when `None` (DB identity assigns) AND keep update semantics for existing tokens (the caller `refresh_token/handler.py` revokes an existing token then saves it — insert-only would duplicate the row and never revoke the original). Use merge + conditional id:
 
 ```python
     async def save(self, refresh_token: RefreshToken) -> RefreshToken:
-        model = RefreshTokenModel(
-            user_id=refresh_token.user_id,
-            tenant_id=self._tenant_id,
-            refresh_token_hash=refresh_token.token_hash,
-            expires_at=refresh_token.expires_at,
-            is_revoked=refresh_token.is_revoked,
-        )
-        self.db.add(model)
+        model_kwargs = {
+            "user_id": refresh_token.user_id,
+            "tenant_id": self._tenant_id,
+            "refresh_token_hash": refresh_token.token_hash,
+            "expires_at": refresh_token.expires_at,
+            "is_revoked": refresh_token.is_revoked,
+        }
+        if refresh_token.id is not None:
+            model_kwargs["id"] = refresh_token.id
+        model = RefreshTokenModel(**model_kwargs)
+        model = await self.db.merge(model)
         await self.db.flush()
         await self.db.refresh(model)
         return RefreshToken(
