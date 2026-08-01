@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 
 class RoleResponse(BaseModel):
-    id: str
+    id: int
     name: str
     description: str | None
     created_at: str
@@ -10,7 +10,7 @@ class RoleResponse(BaseModel):
 
 
 class PermissionResponse(BaseModel):
-    id: str
+    id: int
     key: str
     resource: str
     action: str

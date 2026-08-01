@@ -31,7 +31,7 @@ class GetTodoDetailWithOwnerHandler:
             raise UserNotFoundError("Todo owner not found")
 
         return TodoWithOwnerResponse(
-            id=str(todo.id),
+            id=todo.id,
             title=todo.title,
             description=todo.description,
             is_completed=todo.is_completed,

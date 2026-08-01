@@ -199,7 +199,7 @@ def _permission_response(permission: Permission | None) -> PermissionResponse:
     if permission is None:
         raise HTTPException(status_code=404, detail="Permission not found")
     return PermissionResponse(
-        id=str(permission.id),
+        id=permission.id,
         key=permission.key,
         resource=permission.resource,
         action=permission.action,

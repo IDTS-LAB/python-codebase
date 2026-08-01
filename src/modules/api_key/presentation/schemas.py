@@ -11,7 +11,7 @@ class CreateApiKeyRequest(BaseModel):
 
 
 class ApiKeyResponse(BaseModel):
-    id: str
+    id: int
     key_prefix: str
     name: str
     permissions: list[str]
@@ -22,7 +22,7 @@ class ApiKeyResponse(BaseModel):
 
 
 class ApiKeyCreatedResponse(BaseModel):
-    id: str
+    id: int
     name: str
     key_prefix: str
     key: str

@@ -214,7 +214,7 @@ def _role_response(role: Role | None) -> RoleResponse:
         raise HTTPException(status_code=404, detail="Role not found")
 
     return RoleResponse(
-        id=str(role.id),
+        id=role.id,
         name=role.name,
         description=role.description,
         created_at=role.created_at,
