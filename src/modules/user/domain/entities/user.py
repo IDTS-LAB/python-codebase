@@ -3,14 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import Optional
-from uuid import UUID, uuid4
 
 
 @dataclass
 class UserProfile:
     """User profile containing personal information."""
 
-    user_id: UUID
+    user_id: int
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     display_name: Optional[str] = None
@@ -25,7 +24,7 @@ class UserProfile:
 class UserSettings:
     """User preferences and settings."""
 
-    user_id: UUID
+    user_id: int
     preferences: dict = field(default_factory=dict)
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
@@ -35,7 +34,7 @@ class UserSettings:
 class UserSecurity:
     """User security configuration and state."""
 
-    user_id: UUID
+    user_id: int
     failed_login_attempts: int = 0
     locked_until: Optional[datetime] = None
     password_changed_at: Optional[datetime] = None
@@ -46,11 +45,11 @@ class UserSecurity:
     updated_at: Optional[str] = None
 
 
-@dataclass
+@dataclass(kw_only=True)
 class User:
     """Core user identity and authentication aggregate root."""
 
-    id: UUID
+    id: int | None = None
     email: str
     password_hash: str
 
@@ -77,7 +76,7 @@ class User:
         auth_provider: str = "local",
     ) -> User:
         return cls(
-            id=uuid4(),
+            id=None,
             email=email,
             password_hash=password_hash,
             username=username,
