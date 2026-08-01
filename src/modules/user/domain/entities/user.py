@@ -66,6 +66,7 @@ class User:
 
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
+    tenant_id: int | None = None
 
     @classmethod
     def create(

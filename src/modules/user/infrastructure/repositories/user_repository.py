@@ -1,5 +1,4 @@
 from typing import Optional
-from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +18,7 @@ from src.modules.user.infrastructure.models.user_settings_model import UserSetti
 
 
 class SQLAlchemyUserRepository(UserRepository):
-    def __init__(self, db: AsyncSession, tenant_id: UUID | None = None):
+    def __init__(self, db: AsyncSession, tenant_id: int | None = None):
         self._db = db
         self._tenant_id = tenant_id
 
@@ -34,7 +33,7 @@ class SQLAlchemyUserRepository(UserRepository):
 
         return self._map_to_entity(user_model)
 
-    async def get_by_id(self, user_id: UUID) -> Optional[User]:
+    async def get_by_id(self, user_id: int) -> Optional[User]:
         stmt = select(UserModel).where(UserModel.id == user_id)
         if self._tenant_id:
             stmt = stmt.where(UserModel.tenant_id == self._tenant_id)
@@ -44,7 +43,7 @@ class SQLAlchemyUserRepository(UserRepository):
             return None
         return self._map_to_entity(user_model)
 
-    async def get_by_id_with_relations(self, user_id: UUID) -> Optional[User]:
+    async def get_by_id_with_relations(self, user_id: int) -> Optional[User]:
         """Get user with profile, settings, and security eagerly loaded."""
         stmt = (
             select(UserModel)
@@ -78,16 +77,18 @@ class SQLAlchemyUserRepository(UserRepository):
             user_model.external_id = user.external_id
         else:
             # Create new user
-            user_model = UserModel(
-                id=user.id,
-                email=user.email,
-                username=user.username,
-                password_hash=user.password_hash,
-                auth_provider=user.auth_provider,
-                status=user.status,
-                external_id=user.external_id,
-                tenant_id=self._tenant_id or user.tenant_id,
-            )
+            model_kwargs = {
+                "email": user.email,
+                "username": user.username,
+                "password_hash": user.password_hash,
+                "auth_provider": user.auth_provider,
+                "status": user.status,
+                "external_id": user.external_id,
+                "tenant_id": self._tenant_id or user.tenant_id,
+            }
+            if user.id is not None:
+                model_kwargs["id"] = user.id
+            user_model = UserModel(**model_kwargs)
             self._db.add(user_model)
 
             # Create default related records
@@ -181,14 +182,14 @@ class SQLAlchemyUserRepository(UserRepository):
         await self._db.refresh(security_model)
         return self._map_security_to_entity(security_model)
 
-    async def _get_user_model(self, user_id: UUID) -> UserModel:
+    async def _get_user_model(self, user_id: int) -> UserModel:
         stmt = select(UserModel).where(UserModel.id == user_id)
         if self._tenant_id:
             stmt = stmt.where(UserModel.tenant_id == self._tenant_id)
         result = await self._db.execute(stmt)
         return result.scalar_one()
 
-    async def _create_default_related_records(self, user_id: UUID) -> None:
+    async def _create_default_related_records(self, user_id: int) -> None:
         """Create default profile, settings, and security records for a new user."""
         # Default profile
         profile_model = UserProfileModel(user_id=user_id, tenant_id=self._tenant_id)
