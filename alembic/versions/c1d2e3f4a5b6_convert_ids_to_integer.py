@@ -68,6 +68,10 @@ FK_MAP = {
 # uuids (see the "Data-preserving downgrade" note in the task brief).
 LEGACY_IDS = '_legacy_ids'
 
+# Shadow table recording indexes on FK columns that DROP COLUMN removes,
+# so the downgrade can recreate them for the earlier migrations' DROP INDEX.
+LEGACY_INDEXES = '_legacy_indexes'
+
 
 def _columns(bind) -> dict[str, list[str]]:
     inspector = sa.inspect(bind)
@@ -83,6 +87,28 @@ def _fk_constraint_name(bind, table: str, column: str) -> str | None:
         if column in fk["constrained_columns"]:
             return fk["name"]
     return None
+
+
+def _fk_name(child: str, column: str) -> str:
+    """Constraint names as created by the preceding migrations, so that
+    `alembic downgrade` further down the chain can still drop them by
+    name: multitenant FKs are named fk_<table>_tenant_id (8efb2c8c7b20),
+    the initial schemas' unnamed constraints get PostgreSQL's default
+    <table>_<column>_fkey (b0de87aaeb97)."""
+    if column == 'tenant_id':
+        return f'fk_{child}_tenant_id'
+    return f'{child}_{column}_fkey'
+
+
+def _indexes_on_column(bind, table: str, column: str) -> list[tuple[str, bool]]:
+    """(name, is_unique) of single-column indexes containing the column."""
+    inspector = sa.inspect(bind)
+    out = []
+    for idx in inspector.get_indexes(table):
+        cols = idx["column_names"] or []
+        if column in cols and len(cols) == 1:
+            out.append((idx["name"], bool(idx.get("unique", False))))
+    return out
 
 
 def _convert_pk(bind, table: str) -> None:
@@ -126,18 +152,33 @@ def _convert_pk(bind, table: str) -> None:
 
 def _convert_fk(bind, child: str, column: str, parent: str) -> None:
     """Remap a child FK column to the parent's new integer ids."""
+    # The constraint is usually already gone: dropping a parent's PK with
+    # CASCADE removed every incoming FK. Drop by name only if it survives.
+    fk_name = _fk_constraint_name(bind, child, column)
+    if fk_name:
+        op.execute(sa.text(f'ALTER TABLE {child} DROP CONSTRAINT {fk_name}'))
     op.execute(sa.text(f'ALTER TABLE {child} ADD COLUMN _fk INTEGER'))
     op.execute(sa.text(
         f'UPDATE {child} SET _fk = l.new_id FROM {LEGACY_IDS} l '
         f'WHERE l.table_name = \'{parent}\' AND {child}.{column} = l.legacy_uuid'
     ))
-    fk_name = _fk_constraint_name(bind, child, column)
-    if fk_name:
-        op.execute(sa.text(f'ALTER TABLE {child} DROP CONSTRAINT {fk_name}'))
+    # DROP COLUMN removes indexes on the column; record them so the
+    # downgrade can recreate them for the earlier migrations' DROP INDEX.
+    indexes = _indexes_on_column(bind, child, column)
+    if indexes:
+        op.execute(sa.text(
+            f'CREATE TABLE IF NOT EXISTS {LEGACY_INDEXES} '
+            f'(table_name TEXT, index_name TEXT, column_name TEXT, is_unique BOOLEAN)'
+        ))
+        for name, unique in indexes:
+            op.execute(sa.text(
+                f"INSERT INTO {LEGACY_INDEXES} (table_name, index_name, column_name, is_unique) "
+                f"VALUES ('{child}', '{name}', '{column}', {unique})"
+            ))
     op.execute(sa.text(f'ALTER TABLE {child} DROP COLUMN {column}'))
     op.execute(sa.text(f'ALTER TABLE {child} RENAME COLUMN _fk TO {column}'))
     op.execute(sa.text(
-        f'ALTER TABLE {child} ADD CONSTRAINT {child}_{column}_fkey '
+        f'ALTER TABLE {child} ADD CONSTRAINT {_fk_name(child, column)} '
         f'FOREIGN KEY ({column}) REFERENCES {parent} (id)'
     ))
 
@@ -188,9 +229,19 @@ def _restore_fk(bind, child: str, column: str, parent: str) -> None:
     op.execute(sa.text(f'ALTER TABLE {child} DROP COLUMN {column}'))
     op.execute(sa.text(f'ALTER TABLE {child} RENAME COLUMN _fk TO {column}'))
     op.execute(sa.text(
-        f'ALTER TABLE {child} ADD CONSTRAINT {child}_{column}_fkey '
+        f'ALTER TABLE {child} ADD CONSTRAINT {_fk_name(child, column)} '
         f'FOREIGN KEY ({column}) REFERENCES {parent} (id)'
     ))
+    # Recreate indexes on the restored column so the earlier migrations'
+    # downgrades can drop them by name again.
+    rows = bind.execute(sa.text(
+        f'SELECT index_name, is_unique FROM {LEGACY_INDEXES} '
+        f"WHERE table_name = '{child}' AND column_name = '{column}'"
+    )).fetchall()
+    for name, unique in rows:
+        op.execute(sa.text(
+            f"CREATE {'UNIQUE ' if unique else ''}INDEX {name} ON {child} ({column})"
+        ))
 
 
 def downgrade() -> None:
@@ -222,4 +273,5 @@ def downgrade() -> None:
     if 'api_keys' in tables:
         _restore_fk(bind, 'api_keys', 'tenant_id', 'tenants')
 
+    op.execute(sa.text(f'DROP TABLE IF EXISTS {LEGACY_INDEXES}'))
     op.execute(sa.text(f'DROP TABLE IF EXISTS {LEGACY_IDS}'))
