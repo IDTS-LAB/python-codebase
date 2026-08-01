@@ -1,5 +1,3 @@
-from uuid import uuid4
-
 from sqlalchemy import select
 
 from src.core.config.setting import get_settings
@@ -25,7 +23,6 @@ async def seed_default_tenant() -> None:
             return
 
         tenant = TenantModel(
-            id=uuid4(),
             name="Default Tenant",
             slug=DEFAULT_TENANT_SLUG,
             domain=None,
