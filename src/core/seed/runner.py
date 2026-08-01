@@ -15,6 +15,7 @@ from src.modules.authorization.infrastructure.services.casbin_authorization_serv
 from src.modules.user.infrastructure.repositories.user_repository import (
     SQLAlchemyUserRepository,
 )
+from src.modules.tenants.infrastructure.models.tenant_model import TenantModel  # noqa: F401
 
 
 @dataclass(frozen=True)
