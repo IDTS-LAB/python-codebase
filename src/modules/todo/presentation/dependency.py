@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.database.postgres.session import get_db, get_unit_of_work
 from src.core.dependency.tenant import get_current_tenant_id
-from src.core.dependency.providers import get_user_module_provider
+from src.core.dependency.facades import get_user_module_facade
 from src.modules.todo.application.create_todo.handler import CreateTodoHandler
 from src.modules.todo.application.delete_todo.handler import DeleteTodoHandler
 from src.modules.todo.application.detail_todo.handler import (
@@ -17,7 +17,7 @@ from src.modules.todo.domain.repositories.todo_repository import TodoRepository
 from src.modules.todo.infrastructure.repositories.todo_repository import (
     SQLAlchemyTodoRepository,
 )
-from src.modules.user.providers import UserModuleProvider
+from src.modules.user.facade import UserModuleFacade
 from src.shared.unit_of_work import UnitOfWork
 
 
@@ -51,9 +51,9 @@ def get_delete_todo_handler(
 
 def get_todo_detail_with_owner_handler(
     todo_repo: TodoRepository = Depends(get_todo_repository),
-    user_provider: UserModuleProvider = Depends(get_user_module_provider),
+    user_facade: UserModuleFacade = Depends(get_user_module_facade),
 ) -> GetTodoDetailWithOwnerHandler:
-    return GetTodoDetailWithOwnerHandler(todo_repo, user_provider=user_provider)
+    return GetTodoDetailWithOwnerHandler(todo_repo, user_facade=user_facade)
 
 
 def get_todos_query_handler(
