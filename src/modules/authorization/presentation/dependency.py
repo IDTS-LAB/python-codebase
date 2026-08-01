@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,7 +19,7 @@ from src.modules.authorization.infrastructure.services.casbin_authorization_serv
 
 def get_authorization_service(
     db: AsyncSession = Depends(get_db),
-    tenant_id: UUID = Depends(get_current_tenant_id),
+    tenant_id: int = Depends(get_current_tenant_id),
 ) -> AuthorizationService:
     return CasbinAuthorizationService(SQLAlchemyCasbinPolicyRepository(db, tenant_id))
 

@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import Optional
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -129,7 +128,7 @@ async def list_permissions(
     dependencies=[Depends(require_permission(PERMISSION_RESOURCE, READ_ACTION))],
 )
 async def get_permission(
-    permission_id: UUID,
+    permission_id: int,
     service: CasbinAuthorizationService = Depends(get_authorization_service),
 ):
     permission = await service.get_permission(permission_id)
@@ -148,7 +147,7 @@ async def get_permission(
     dependencies=[Depends(require_permission(PERMISSION_RESOURCE, UPDATE_ACTION))],
 )
 async def update_permission(
-    permission_id: UUID,
+    permission_id: int,
     request: UpdatePermissionRequest,
     service: CasbinAuthorizationService = Depends(get_authorization_service),
     unit_of_work: UnitOfWork = Depends(get_unit_of_work),
@@ -187,7 +186,7 @@ async def update_permission(
     dependencies=[Depends(require_permission(PERMISSION_RESOURCE, DELETE_ACTION))],
 )
 async def delete_permission(
-    permission_id: UUID,
+    permission_id: int,
     service: CasbinAuthorizationService = Depends(get_authorization_service),
     unit_of_work: UnitOfWork = Depends(get_unit_of_work),
 ):

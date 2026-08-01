@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from sqlalchemy import ForeignKey, Index, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -25,7 +23,7 @@ class PermissionModel(Base, TimeStampMixin, SoftDeleteMixin, TenantMixin):
     )
 
     key: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
-    resource_id: Mapped[UUID] = mapped_column(
+    resource_id: Mapped[int] = mapped_column(
         ForeignKey("authorization_resources.id"),
         nullable=False,
     )

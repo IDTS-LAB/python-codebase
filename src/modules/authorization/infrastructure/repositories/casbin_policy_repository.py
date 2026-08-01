@@ -1,5 +1,4 @@
 from datetime import datetime
-from uuid import UUID
 
 from sqlalchemy import and_, delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,7 +24,7 @@ from src.shared.utils.cursor import CursorDirection
 
 
 class SQLAlchemyCasbinPolicyRepository:
-    def __init__(self, db: AsyncSession, tenant_id: UUID | None = None):
+    def __init__(self, db: AsyncSession, tenant_id: int | None = None):
         self._db = db
         self._tenant_id = tenant_id
 
@@ -98,7 +97,7 @@ class SQLAlchemyCasbinPolicyRepository:
         if role_model is None:
             raise ValueError(f"Role does not exist: {role}")
 
-        user_id = UUID(subject)
+        user_id = int(subject)
         stmt = select(UserHasRoleModel).where(
             UserHasRoleModel.user_id == user_id,
             UserHasRoleModel.role_id == role_model.id,
@@ -118,7 +117,7 @@ class SQLAlchemyCasbinPolicyRepository:
         await self.add_policy("g", subject, role)
 
     async def get_roles_for_subject(self, subject: str) -> list[str]:
-        user_id = UUID(subject)
+        user_id = int(subject)
         stmt = (
             select(RoleModel.name)
             .join(UserHasRoleModel, UserHasRoleModel.role_id == RoleModel.id)
@@ -134,7 +133,6 @@ class SQLAlchemyCasbinPolicyRepository:
         resource: AuthorizationResource,
     ) -> AuthorizationResource:
         model = AuthorizationResourceModel(
-            id=resource.id,
             key=resource.key,
             name=resource.name,
             description=resource.description,
@@ -153,7 +151,6 @@ class SQLAlchemyCasbinPolicyRepository:
 
     async def create_role(self, role: Role) -> Role:
         model = RoleModel(
-            id=role.id,
             name=role.name,
             description=role.description,
             tenant_id=self._tenant_id,
@@ -162,7 +159,7 @@ class SQLAlchemyCasbinPolicyRepository:
         await self._db.flush()
         return self._role_from_model(model)
 
-    async def get_role(self, role_id: UUID) -> Role | None:
+    async def get_role(self, role_id: int) -> Role | None:
         stmt = select(RoleModel).where(RoleModel.id == role_id)
         if self._tenant_id:
             stmt = stmt.where(RoleModel.tenant_id == self._tenant_id)
@@ -182,7 +179,7 @@ class SQLAlchemyCasbinPolicyRepository:
     async def list_roles_cursor(
         self,
         cursor_created_at: datetime | None = None,
-        cursor_id: UUID | None = None,
+        cursor_id: int | None = None,
         limit: int = 10,
         direction: CursorDirection = CursorDirection.DIRECTION_NEXT,
     ) -> tuple[list[Role], bool]:
@@ -231,7 +228,7 @@ class SQLAlchemyCasbinPolicyRepository:
             return stmt.where(CasbinRuleModel.tenant_id == self._tenant_id)
         return stmt
 
-    async def delete_role(self, role_id: UUID) -> None:
+    async def delete_role(self, role_id: int) -> None:
         role = await self.get_role(role_id)
         if role is None:
             return
@@ -259,7 +256,6 @@ class SQLAlchemyCasbinPolicyRepository:
     async def create_permission(self, permission: Permission) -> Permission:
         resource = await self._get_or_create_resource(permission.resource)
         model = PermissionModel(
-            id=permission.id,
             key=permission.key,
             resource_id=resource.id,
             resource=permission.resource,
@@ -271,7 +267,7 @@ class SQLAlchemyCasbinPolicyRepository:
         await self._db.flush()
         return self._permission_from_model(model)
 
-    async def get_permission(self, permission_id: UUID) -> Permission | None:
+    async def get_permission(self, permission_id: int) -> Permission | None:
         stmt = select(PermissionModel).where(PermissionModel.id == permission_id)
         if self._tenant_id:
             stmt = stmt.where(PermissionModel.tenant_id == self._tenant_id)
@@ -291,7 +287,7 @@ class SQLAlchemyCasbinPolicyRepository:
     async def list_permissions_cursor(
         self,
         cursor_created_at: datetime | None = None,
-        cursor_id: UUID | None = None,
+        cursor_id: int | None = None,
         limit: int = 10,
         direction: CursorDirection = CursorDirection.DIRECTION_NEXT,
     ) -> tuple[list[Permission], bool]:
@@ -339,7 +335,7 @@ class SQLAlchemyCasbinPolicyRepository:
 
         return self._permission_from_model(model)
 
-    async def delete_permission(self, permission_id: UUID) -> None:
+    async def delete_permission(self, permission_id: int) -> None:
         permission = await self.get_permission(permission_id)
         if permission is None:
             return
@@ -365,8 +361,8 @@ class SQLAlchemyCasbinPolicyRepository:
 
     async def assign_permission_to_role(
         self,
-        role_id: UUID,
-        permission_id: UUID,
+        role_id: int,
+        permission_id: int,
     ) -> None:
         role = await self.get_role(role_id)
         permission = await self.get_permission(permission_id)
@@ -411,8 +407,8 @@ class SQLAlchemyCasbinPolicyRepository:
 
     async def remove_permission_from_role(
         self,
-        role_id: UUID,
-        permission_id: UUID,
+        role_id: int,
+        permission_id: int,
     ) -> None:
         role = await self.get_role(role_id)
         permission = await self.get_permission(permission_id)
@@ -541,7 +537,7 @@ class SQLAlchemyCasbinPolicyRepository:
         query,
         model,
         cursor_created_at: datetime | None,
-        cursor_id: UUID | None,
+        cursor_id: int | None,
         direction: CursorDirection,
     ):
         if cursor_created_at and cursor_id:

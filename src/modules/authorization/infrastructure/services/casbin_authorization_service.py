@@ -1,5 +1,4 @@
 from datetime import datetime
-from uuid import UUID
 
 from src.modules.authorization.domain.entities.permission import Permission
 from src.modules.authorization.domain.entities.role import Role
@@ -50,10 +49,10 @@ class CasbinAuthorizationService(AuthorizationService):
     async def update_role(self, role: Role) -> Role | None:
         return await self._policy_repository.update_role(role)
 
-    async def delete_role(self, role_id: UUID) -> None:
+    async def delete_role(self, role_id: int) -> None:
         await self._policy_repository.delete_role(role_id)
 
-    async def get_role(self, role_id: UUID) -> Role | None:
+    async def get_role(self, role_id: int) -> Role | None:
         return await self._policy_repository.get_role(role_id)
 
     async def list_roles(self) -> list[Role]:
@@ -62,7 +61,7 @@ class CasbinAuthorizationService(AuthorizationService):
     async def list_roles_cursor(
         self,
         cursor_created_at: datetime | None = None,
-        cursor_id: UUID | None = None,
+        cursor_id: int | None = None,
         limit: int = 10,
         direction: CursorDirection = CursorDirection.DIRECTION_NEXT,
     ) -> tuple[list[Role], bool]:
@@ -79,10 +78,10 @@ class CasbinAuthorizationService(AuthorizationService):
     async def update_permission(self, permission: Permission) -> Permission | None:
         return await self._policy_repository.update_permission(permission)
 
-    async def delete_permission(self, permission_id: UUID) -> None:
+    async def delete_permission(self, permission_id: int) -> None:
         await self._policy_repository.delete_permission(permission_id)
 
-    async def get_permission(self, permission_id: UUID) -> Permission | None:
+    async def get_permission(self, permission_id: int) -> Permission | None:
         return await self._policy_repository.get_permission(permission_id)
 
     async def list_permissions(self) -> list[Permission]:
@@ -91,7 +90,7 @@ class CasbinAuthorizationService(AuthorizationService):
     async def list_permissions_cursor(
         self,
         cursor_created_at: datetime | None = None,
-        cursor_id: UUID | None = None,
+        cursor_id: int | None = None,
         limit: int = 10,
         direction: CursorDirection = CursorDirection.DIRECTION_NEXT,
     ) -> tuple[list[Permission], bool]:
@@ -104,15 +103,15 @@ class CasbinAuthorizationService(AuthorizationService):
 
     async def assign_permission_to_role(
         self,
-        role_id: UUID,
-        permission_id: UUID,
+        role_id: int,
+        permission_id: int,
     ) -> None:
         await self._policy_repository.assign_permission_to_role(role_id, permission_id)
 
     async def remove_permission_from_role(
         self,
-        role_id: UUID,
-        permission_id: UUID,
+        role_id: int,
+        permission_id: int,
     ) -> None:
         await self._policy_repository.remove_permission_from_role(
             role_id,

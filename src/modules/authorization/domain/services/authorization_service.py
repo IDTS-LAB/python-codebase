@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from uuid import UUID
 
 from src.modules.authorization import Permission, Role
 from src.shared.utils.cursor import CursorDirection
@@ -28,11 +27,11 @@ class AuthorizationService(ABC):
         pass
 
     @abstractmethod
-    async def delete_role(self, role_id: UUID) -> None:
+    async def delete_role(self, role_id: int) -> None:
         pass
 
     @abstractmethod
-    async def get_role(self, role_id: UUID) -> Role | None:
+    async def get_role(self, role_id: int) -> Role | None:
         pass
 
     @abstractmethod
@@ -43,7 +42,7 @@ class AuthorizationService(ABC):
     async def list_roles_cursor(
         self,
         cursor_created_at: datetime | None = None,
-        cursor_id: UUID | None = None,
+        cursor_id: int | None = None,
         limit: int = 10,
         direction: CursorDirection = CursorDirection.DIRECTION_NEXT,
     ) -> tuple[list[Role], bool]:
@@ -58,11 +57,11 @@ class AuthorizationService(ABC):
         pass
 
     @abstractmethod
-    async def delete_permission(self, permission_id: UUID) -> None:
+    async def delete_permission(self, permission_id: int) -> None:
         pass
 
     @abstractmethod
-    async def get_permission(self, permission_id: UUID) -> Permission | None:
+    async def get_permission(self, permission_id: int) -> Permission | None:
         pass
 
     @abstractmethod
@@ -73,7 +72,7 @@ class AuthorizationService(ABC):
     async def list_permissions_cursor(
         self,
         cursor_created_at: datetime | None = None,
-        cursor_id: UUID | None = None,
+        cursor_id: int | None = None,
         limit: int = 10,
         direction: CursorDirection = CursorDirection.DIRECTION_NEXT,
     ) -> tuple[list[Permission], bool]:
@@ -82,15 +81,15 @@ class AuthorizationService(ABC):
     @abstractmethod
     async def assign_permission_to_role(
         self,
-        role_id: UUID,
-        permission_id: UUID,
+        role_id: int,
+        permission_id: int,
     ) -> None:
         pass
 
     @abstractmethod
     async def remove_permission_from_role(
         self,
-        role_id: UUID,
-        permission_id: UUID,
+        role_id: int,
+        permission_id: int,
     ) -> None:
         pass

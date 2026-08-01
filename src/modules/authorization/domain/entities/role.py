@@ -1,10 +1,9 @@
 from dataclasses import dataclass
-from uuid import UUID, uuid4
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Role:
-    id: UUID
+    id: int | None = None
     name: str
     description: str | None = None
     created_at: str | None = None
@@ -13,7 +12,7 @@ class Role:
     @classmethod
     def create(cls, name: str, description: str | None = None) -> "Role":
         return cls(
-            id=uuid4(),
+            id=None,
             name=name,
             description=description,
         )
