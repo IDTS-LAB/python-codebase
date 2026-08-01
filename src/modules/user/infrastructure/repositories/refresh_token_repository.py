@@ -33,14 +33,17 @@ class SQLAlchemyRefreshTokenRepository(RefreshTokenRepository):
         )
 
     async def save(self, refresh_token: RefreshToken) -> RefreshToken:
-        model = RefreshTokenModel(
-            user_id=refresh_token.user_id,
-            tenant_id=self._tenant_id,
-            refresh_token_hash=refresh_token.token_hash,
-            expires_at=refresh_token.expires_at,
-            is_revoked=refresh_token.is_revoked,
-        )
-        self.db.add(model)
+        model_kwargs = {
+            "user_id": refresh_token.user_id,
+            "tenant_id": self._tenant_id,
+            "refresh_token_hash": refresh_token.token_hash,
+            "expires_at": refresh_token.expires_at,
+            "is_revoked": refresh_token.is_revoked,
+        }
+        if refresh_token.id is not None:
+            model_kwargs["id"] = refresh_token.id
+        model = RefreshTokenModel(**model_kwargs)
+        model = await self.db.merge(model)
         await self.db.flush()
         await self.db.refresh(model)
         return RefreshToken(

@@ -90,6 +90,7 @@ class SQLAlchemyUserRepository(UserRepository):
                 model_kwargs["id"] = user.id
             user_model = UserModel(**model_kwargs)
             self._db.add(user_model)
+            await self._db.flush()
 
             # Create default related records
             await self._create_default_related_records(user_model.id)
