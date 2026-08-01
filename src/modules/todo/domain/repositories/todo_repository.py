@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from uuid import UUID
 
 from src.modules.todo.domain.entities.todo import Todo
 from src.shared.utils.cursor import CursorDirection
@@ -8,19 +7,19 @@ from src.shared.utils.cursor import CursorDirection
 
 class TodoRepository(ABC):
     @abstractmethod
-    async def get_by_id(self, todo_id: UUID) -> Todo | None:
+    async def get_by_id(self, todo_id: int) -> Todo | None:
         pass
 
     @abstractmethod
-    async def get_all_by_user(self, user_id: UUID) -> list[Todo]:
+    async def get_all_by_user(self, user_id: int) -> list[Todo]:
         pass
 
     @abstractmethod
     async def get_by_user_cursor(
         self,
-        user_id: UUID,
+        user_id: int,
         cursor_created_at: datetime | None = None,
-        cursor_id: UUID | None = None,
+        cursor_id: int | None = None,
         limit: int = 10,
         direction: CursorDirection = CursorDirection.DIRECTION_NEXT,
     ) -> tuple[list[Todo], bool]:
@@ -35,5 +34,5 @@ class TodoRepository(ABC):
         pass
 
     @abstractmethod
-    async def delete(self, todo_id: UUID) -> None:
+    async def delete(self, todo_id: int) -> None:
         pass

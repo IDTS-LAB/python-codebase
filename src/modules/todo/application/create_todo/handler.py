@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from src.modules.todo.application.create_todo.command import CreateTodoCommand
 from src.modules.todo.application.create_todo.validation import (
     validate_create_todo_command,
@@ -14,7 +12,7 @@ class CreateTodoHandler:
         self.todo_repo = todo_repo
         self._unit_of_work = unit_of_work
 
-    async def execute(self, command: CreateTodoCommand, user_id: UUID) -> Todo:
+    async def execute(self, command: CreateTodoCommand, user_id: int) -> Todo:
         validate_create_todo_command(command)
 
         todo = Todo.create(

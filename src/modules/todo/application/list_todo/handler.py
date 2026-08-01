@@ -1,5 +1,4 @@
 from datetime import datetime
-from uuid import UUID
 
 from src.modules.todo.application.list_todo.query import GetTodosQuery
 from src.modules.todo.application.list_todo.validation import validate_get_todos_query
@@ -24,9 +23,9 @@ class GetTodosCursorQuery:
 
     async def execute(
         self,
-        user_id: UUID,
+        user_id: int,
         cursor_created_at: datetime | None = None,
-        cursor_id: UUID | None = None,
+        cursor_id: int | None = None,
         limit: int = 10,
         direction: CursorDirection = CursorDirection.DIRECTION_NEXT,
     ) -> tuple[list[Todo], bool]:

@@ -1,5 +1,4 @@
 from typing import Optional
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -64,7 +63,7 @@ async def create_todo(
         message="create todo success",
         success=True,
         data=TodoResponse(
-            id=str(todo.id),
+            id=todo.id,
             title=todo.title,
             is_completed=todo.is_completed,
         ),
@@ -96,7 +95,7 @@ async def get_todos(
     )
     response_todos = [
         TodoResponse(
-            id=str(t.id),
+            id=t.id,
             title=t.title,
             is_completed=t.is_completed,
         )
@@ -137,7 +136,7 @@ async def get_todos(
 
 @router.get("/{todo_id}", response_model=SuccessResponse[TodoWithOwnerResponse])
 async def get_todo_detail(
-    todo_id: UUID,
+    todo_id: int,
     current_user: dict = Depends(require_permission(TODO_RESOURCE, READ_ACTION)),
     handler: GetTodoDetailWithOwnerHandler = Depends(
         get_todo_detail_with_owner_handler
@@ -160,7 +159,7 @@ async def get_todo_detail(
 
 @router.patch("/{todo_id}", response_model=SuccessResponse[TodoResponse])
 async def update_todo(
-    todo_id: UUID,
+    todo_id: int,
     command: UpdateTodoCommand,
     current_user: dict = Depends(require_permission(TODO_RESOURCE, UPDATE_ACTION)),
     handler: UpdateTodoHandler = Depends(get_update_todo_handler),
@@ -171,7 +170,7 @@ async def update_todo(
             message="update todo success",
             success=True,
             data=TodoResponse(
-                id=str(todo.id),
+                id=todo.id,
                 title=todo.title,
                 is_completed=todo.is_completed,
             ),
@@ -184,7 +183,7 @@ async def update_todo(
 
 @router.delete("/{todo_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_todo(
-    todo_id: UUID,
+    todo_id: int,
     current_user: dict = Depends(require_permission(TODO_RESOURCE, DELETE_ACTION)),
     handler: DeleteTodoHandler = Depends(get_delete_todo_handler),
 ):

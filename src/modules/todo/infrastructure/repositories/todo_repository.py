@@ -1,5 +1,4 @@
 from datetime import datetime
-from uuid import UUID
 
 from sqlalchemy import and_, delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,11 +10,11 @@ from src.shared.utils.cursor import CursorDirection
 
 
 class SQLAlchemyTodoRepository(TodoRepository):
-    def __init__(self, db: AsyncSession, tenant_id: UUID | None = None):
+    def __init__(self, db: AsyncSession, tenant_id: int | None = None):
         self.db = db
         self._tenant_id = tenant_id
 
-    async def get_by_id(self, todo_id: UUID) -> Todo | None:
+    async def get_by_id(self, todo_id: int) -> Todo | None:
         stmt = select(TodoModel).where(TodoModel.id == todo_id)
         if self._tenant_id:
             stmt = stmt.where(TodoModel.tenant_id == self._tenant_id)
@@ -33,9 +32,9 @@ class SQLAlchemyTodoRepository(TodoRepository):
 
     async def get_by_user_cursor(
         self,
-        user_id: UUID,
+        user_id: int,
         cursor_created_at: datetime | None = None,
-        cursor_id: UUID | None = None,
+        cursor_id: int | None = None,
         limit: int = 10,
         direction: CursorDirection = CursorDirection.DIRECTION_NEXT,
     ) -> tuple[list[Todo], bool]:
@@ -97,7 +96,7 @@ class SQLAlchemyTodoRepository(TodoRepository):
 
         return [self._to_entity(m) for m in models], has_more
 
-    async def get_all_by_user(self, user_id: UUID) -> list[Todo]:
+    async def get_all_by_user(self, user_id: int) -> list[Todo]:
         stmt = select(TodoModel).where(TodoModel.user_id == user_id)
         if self._tenant_id:
             stmt = stmt.where(TodoModel.tenant_id == self._tenant_id)
@@ -115,14 +114,16 @@ class SQLAlchemyTodoRepository(TodoRepository):
         ]
 
     async def save(self, todo: Todo) -> Todo:
-        model = TodoModel(
-            id=todo.id,
-            title=todo.title,
-            description=todo.description,
-            is_completed=todo.is_completed,
-            user_id=todo.user_id,
-            tenant_id=self._tenant_id,
-        )
+        model_kwargs = {
+            "title": todo.title,
+            "description": todo.description,
+            "is_completed": todo.is_completed,
+            "user_id": todo.user_id,
+            "tenant_id": self._tenant_id,
+        }
+        if todo.id is not None:
+            model_kwargs["id"] = todo.id
+        model = TodoModel(**model_kwargs)
         model = await self.db.merge(model)
         await self.db.flush()
         await self.db.refresh(model)
@@ -134,7 +135,7 @@ class SQLAlchemyTodoRepository(TodoRepository):
             user_id=model.user_id,
         )
 
-    async def delete(self, todo_id: UUID) -> None:
+    async def delete(self, todo_id: int) -> None:
         stmt = delete(TodoModel).where(TodoModel.id == todo_id)
         if self._tenant_id:
             stmt = stmt.where(TodoModel.tenant_id == self._tenant_id)
@@ -143,7 +144,7 @@ class SQLAlchemyTodoRepository(TodoRepository):
 
     def _to_entity(self, model: TodoModel) -> Todo:
         return Todo(
-            id=str(model.id),
+            id=model.id,
             description=model.description,
             is_completed=model.is_completed,
             title=model.title,

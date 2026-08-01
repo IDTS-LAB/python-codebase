@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from src.modules.todo import (
     TodoNotFoundError,
     TodoRepository,
@@ -19,7 +17,7 @@ class GetTodoDetailWithOwnerHandler:
         self._todo_repo = todo_repo
         self._user_provider = user_provider
 
-    async def execute(self, todo_id: UUID, user_id: UUID) -> TodoWithOwnerResponse:
+    async def execute(self, todo_id: int, user_id: int) -> TodoWithOwnerResponse:
         todo = await self._todo_repo.get_by_id(todo_id)
         if not todo:
             raise TodoNotFoundError("Todo not found")

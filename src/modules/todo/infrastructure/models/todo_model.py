@@ -1,5 +1,3 @@
-import uuid
-
 from sqlalchemy import Boolean, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -14,4 +12,4 @@ class TodoModel(Base, TimeStampMixin, SoftDeleteMixin, TenantMixin):
     title: Mapped[str] = mapped_column(String(255))
     description: Mapped[str | None] = mapped_column(String(500), nullable=True)
     is_completed: Mapped[bool] = mapped_column(Boolean, default=False)
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
